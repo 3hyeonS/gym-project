@@ -11,7 +11,7 @@ export class AppService {
   ){}
 
   getHello(): string {
-    return 'Hello World!';
+    return 'GYMS';
   }
 
   async getGym(): Promise<GymEntity[]> {
