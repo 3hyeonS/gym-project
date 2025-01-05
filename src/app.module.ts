@@ -8,11 +8,11 @@ import { GymEntity } from './entities/gym.entity';
   imports: [
     TypeOrmModule.forRoot({
       type:'mysql',
-      host:'127.0.0.1',
+      host:'database-1.chusuuo8u7fk.ap-northeast-2.rds.amazonaws.com',
       port:3306,
-      username:'root',
-      password:'1234',
-      database:'gym_db',
+      username:'admin',
+      password:'songgenius3310',
+      database:'gyms',
       entities:[GymEntity]
     }),
     TypeOrmModule.forFeature([GymEntity])
