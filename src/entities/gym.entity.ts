@@ -8,6 +8,9 @@ export class GymEntity{
     @Column({type:'text', name:'centerName'})
     centerName: string;
 
+    @Column({type:'text', name:'city'})
+    city: string;
+
     @Column({type:'text', name:'location'})
     location: string;
 
