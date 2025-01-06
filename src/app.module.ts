@@ -11,7 +11,7 @@ import { GymEntity } from './entities/gym.entity';
       host:'database-1.chusuuo8u7fk.ap-northeast-2.rds.amazonaws.com',
       port:3306,
       username:'admin',
-      password:'songgenius3310',
+      password:'RDSkey1234',
       database:'gyms',
       entities:[GymEntity]
     }),
