@@ -12,7 +12,7 @@ import { GymEntity } from './entities/gym.entity';
       port:3306,
       username:'admin',
       password:'RDSkey1234',
-      database:'gymsU',
+      database:'gyms',
       entities:[GymEntity]
     }),
     TypeOrmModule.forFeature([GymEntity])
