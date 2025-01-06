@@ -32,8 +32,8 @@ export class GymEntity{
     @Column({type:'text', name:'salary'})
     salary: string;
 
-    @Column({type:'text', name:'maxClassFee'})
-    maxClassFee: string;
+    @Column({type:'int', name:'maxClassFee'})
+    maxClassFee: number;
 
     @Column({type:'text', name:'gender'})
     gender: string;
