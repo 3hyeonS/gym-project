@@ -25,7 +25,7 @@ export class AppController {
 
   @Post()
   getObject3(
-    @Body('selectedOptions') option: number[],
+    @Body('flexibleOptions') option: number[],
     @Body('selectedLocation') location: Record<string, string[]>, 
     @Body('selectedWorkType') workType: string[],
     @Body('selectedWorkTime') workTime: string[],

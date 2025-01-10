@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GymEntity } from './entities/gym.entity';
+import { GymsModule } from './gyms/gyms.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { GymEntity } from './entities/gym.entity';
       database:'gyms',
       entities:[GymEntity]
     }),
-    TypeOrmModule.forFeature([GymEntity])
+    TypeOrmModule.forFeature([GymEntity]),
+    GymsModule
   ],
   controllers: [AppController],
   providers: [AppService],
