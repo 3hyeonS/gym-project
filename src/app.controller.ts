@@ -25,17 +25,17 @@ export class AppController {
 
   @Post()
   getObject3(
-    @Body('option') option: number[],
-    @Body('location') location: Record<string, string[]>, 
-    @Body('workType') workType: string[],
-    @Body('workTime') workTime: string[],
-    @Body('workDays') workDays: string[],
-    @Body('weekendDuty') weekendDuty: string[],
-    @Body('salary') salary: string[],
-    @Body('maxClassFee') maxClassFee: number,
-    @Body('gender') gender: string[],
-    @Body('qualifications') qualification: string[],
-    @Body('preference') preference: string[]): 
+    @Body('selectedOptions') option: number[],
+    @Body('selectedLocation') location: Record<string, string[]>, 
+    @Body('selectedWorkType') workType: string[],
+    @Body('selectedWorkTime') workTime: string[],
+    @Body('selectedWorkDays') workDays: string[],
+    @Body('selectedWeekendDuty') weekendDuty: string[],
+    @Body('selectedSalary') salary: string[],
+    @Body('selectedMaxClassFee') maxClassFee: number,
+    @Body('selectedGender') gender: string[],
+    @Body('selectedQualifications') qualification: string[],
+    @Body('selectedPreference') preference: string[]): 
     Promise<GymEntity[]> {
       return this.appService.getObject3(
         option, location, workType, workTime, workDays, weekendDuty, 
