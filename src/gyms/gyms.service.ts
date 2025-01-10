@@ -5,6 +5,10 @@ import { GymEntity } from './entity/gyms.entity';
 
 @Injectable()
 export class GymsService {
+    getHello(): string {
+        return 'Welcome Gyms';
+    }
+
     constructor(
         @InjectRepository(GymEntity)
         private readonly gymRepository:Repository<GymEntity>
