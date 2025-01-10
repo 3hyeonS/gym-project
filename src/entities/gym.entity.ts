@@ -12,40 +12,40 @@ export class GymEntity{
     city: string;
 
     @Column({type:'json', name:'location'})
-    location: JSON;
+    location: string[];
 
     @Column({type:'json', name:'subway'})
-    subway: JSON;
+    subway: string[];
 
     @Column({type:'json', name:'workType'})
-    workType: JSON;
+    workType: string[];
 
     @Column({type:'json', name:'workTime'})
-    workTime: JSON;
+    workTime: string[];
 
     @Column({type:'json', name:'workDays'})
-    workDays: JSON;
+    workDays: string[];
 
     @Column({type:'json', name:'weekendDuty'})
-    weekendDuty: JSON;
+    weekendDuty: string[];
 
     @Column({type:'json', name:'salary'})
-    salary: JSON;
+    salary: string[];
 
     @Column({type:'int', name:'maxClassFee'})
     maxClassFee: number;
 
     @Column({type:'json', name:'gender'})
-    gender: JSON;
+    gender: string[];
 
     @Column({type:'json', name:'qualifications'})
-    qualifications: JSON;
+    qualifications: string[];
 
     @Column({type:'json', name:'preference'})
-    preference: JSON;
+    preference: string[];
 
     @Column({type:'json', name:'site'})
-    site: JSON;
+    site: string[];
 
     @Column({type:'date', name:'date'})
     date: Date;

@@ -30,8 +30,23 @@ export class AppController {
 
 
   @Post()
-  getObject3(@Body('location') location: JSON, @Body('workTime') workTime: JSON): Promise<GymEntity[]> {
-    return this.appService.getObject3(location, workTime)
-  }
- 
+  getObject3(
+    @Body('option') option: number[],
+    @Body('location') location: string[], 
+    @Body('workType') workType: string[],
+    @Body('workTime') workTime: string[],
+    @Body('workDays') workDays: string[],
+    @Body('weekendDuty') weekendDuty: string[],
+    @Body('salary') salary: string[],
+    @Body('maxClassFee') maxClassFee: number,
+    @Body('gender') gender: string[],
+    @Body('qualifications') qualification: string[],
+    @Body('preference') preference: string[]): 
+    Promise<GymEntity[]> {
+      return this.appService.getObject3(
+        option, location, workType, workTime, workDays, weekendDuty, 
+        salary, maxClassFee, gender, qualification, preference
+      )
+    }
+
 }

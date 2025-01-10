@@ -19,5 +19,5 @@ import { GymEntity } from './entities/gym.entity';
   ],
   controllers: [AppController],
   providers: [AppService],
-})
+})  
 export class AppModule {}
