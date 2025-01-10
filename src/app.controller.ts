@@ -23,16 +23,10 @@ export class AppController {
   return this.appService.getObject1(parsedLocations);
 }
 
-  // @Get('gym/:location/:workTime')
-  // getObject2(@Param('location')location: string, @Param('workTime')workTime: string): Promise<GymEntity[]> {
-  //   return this.appService.getObject2(location, workTime);
-  // }
-
-
   @Post()
   getObject3(
     @Body('option') option: number[],
-    @Body('location') location: string[], 
+    @Body('location') location: Record<string, string[]>, 
     @Body('workType') workType: string[],
     @Body('workTime') workTime: string[],
     @Body('workDays') workDays: string[],

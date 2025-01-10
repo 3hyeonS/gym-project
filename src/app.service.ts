@@ -11,7 +11,7 @@ export class AppService {
   ){}
 
   getHello(): string {
-    return 'GYMSUpdate';
+    return 'GymsUpdate';
   }
 
   async getGym(): Promise<GymEntity[]> {
@@ -27,29 +27,36 @@ export class AppService {
     return objectList;
   }
 
-  // getObject2(loc: string, wti: string): Promise<GymEntity[]> {
-  //   const objectList = this.gymRepository.find({
-  //     where: {
-  //       location : loc,
-  //       workTime : wti
-  //     }
-  //   })
-  //   return objectList;
-  // }
-
+  
   async getObject3(
-    opt:number[], loc: string[], wty: string[], wti: string[], wkd: string[],
+    opt:number[], loc: Record<string, string[]>, wty: string[], wti: string[], wkd: string[],
     wd: string[], sly: string[], mcf: number, gen: string[], qfc: string[], pre: string[]
   ): Promise<GymEntity[]> {
     
     const queryBuilder = this.gymRepository.createQueryBuilder('gym');
     const conditions: { condition: string; parameters: Record<string, any> }[] = [];
+    
+    // loc 조건 처리
+    if (Object.keys(loc).length > 0) {
+      const locConditions: string[] = [];
+      const locParameters: Record<string, any> = {};
 
-    // 동적으로 조건 추가
-    if (loc.length > 0) {
+      let index = 0;
+      for (const [city, districts] of Object.entries(loc)) {
+        const cityKey = `city_${index}`;
+        const locKey = `loc_${index}`;
+        
+        locConditions.push(
+          `(gym.city = :${cityKey} AND JSON_OVERLAPS(gym.location, :${locKey}))`
+        );
+        locParameters[cityKey] = city;
+        locParameters[locKey] = JSON.stringify(districts);
+        index++;
+      }
+
       conditions.push({
-        condition: 'JSON_OVERLAPS(gym.location, :loc) > 0',
-        parameters: { loc: JSON.stringify(loc) },
+        condition: `(${locConditions.join(' OR ')})`,
+        parameters: locParameters,
       });
     }
 
