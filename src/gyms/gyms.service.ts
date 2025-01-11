@@ -14,11 +14,13 @@ export class GymsService {
         private readonly gymRepository:Repository<GymEntity>
     ){}
     
+    // method1 : 모든 헬스장 리스트 가져오기
     async getAll(): Promise<GymEntity[]> {
         const gymList = await this.gymRepository.find()
         return gymList;
     }
     
+    // method2 : 조건에 맞는 헬스장 리스트 가져오기
     async searchSelected(
     opt:number[], loc: Record<string, string[]>, wty: string[], wti: string[], wkd: string[],
     wd: string[], sly: string[], mcf: number, gen: string[], qfc: string[], pre: string[]
@@ -27,7 +29,7 @@ export class GymsService {
         const queryBuilder = this.gymRepository.createQueryBuilder('gymsUpdate');
         const conditions: { condition: string; parameters: Record<string, any> }[] = [];
         
-        // loc 조건 처리
+        // location 조건 처리
         if (Object.keys(loc).length > 0) {
             const locConditions: string[] = [];
             const locParameters: Record<string, any> = {};
@@ -35,13 +37,18 @@ export class GymsService {
             let index = 0;
             for (const [city, districts] of Object.entries(loc)) {
                 const cityKey = `city_${index}`;
-                const locKey = `loc_${index}`;
                 
-                locConditions.push(
-                    `(gymsUpdate.city = :${cityKey} AND JSON_OVERLAPS(gymsUpdate.location, :${locKey}))`
-                );
-                locParameters[cityKey] = city;
-                locParameters[locKey] = JSON.stringify(districts);
+                if (districts.includes("전체")) {
+                    locConditions.push(`gymsUpdate.city = :${cityKey}`);
+                    locParameters[cityKey] = city;
+                } else {
+                    const locKey = `loc_${index}`;
+                    locConditions.push(
+                        `(gymsUpdate.city = :${cityKey} AND JSON_OVERLAPS(gymsUpdate.location, :${locKey}))`
+                    );
+                    locParameters[cityKey] = city;
+                    locParameters[locKey] = JSON.stringify(districts);
+                }
                 index++;
             }
 
@@ -51,6 +58,7 @@ export class GymsService {
             });
         }
 
+        // workType 조건 처리
         if (wty.length > 0) {
             if (opt[0] == 1) {
                 wty.push("명시 안 됨")
@@ -62,6 +70,7 @@ export class GymsService {
             });
         }
 
+        // workTime 조건 처리
         if (wti.length > 0) {
             if (opt[1] == 1) {
                 wti.push("명시 안 됨")
@@ -73,6 +82,7 @@ export class GymsService {
             });
         }
 
+        // workDays 조건 처리
         if (wkd.length > 0) {
             if (opt[2] == 1) {
                 wkd.push("명시 안 됨")
@@ -84,6 +94,7 @@ export class GymsService {
             });
         }
 
+        // weekendDuty 조건 처리
         if (wd.length > 0) {
             if (opt[3] == 1) {
                 wd.push("명시 안 됨")
@@ -95,6 +106,7 @@ export class GymsService {
             });
         }
 
+        // salary 조건 처리
         if (sly.length > 0) {
             let slyConditions = [`JSON_CONTAINS(gymsUpdate.salary, :sly) > 0`];
         
@@ -111,6 +123,8 @@ export class GymsService {
             });
         }
 
+
+        // maxClassFee 조건 처리
         if(opt[5] == 1) {
             conditions.push({
                 condition: '(gymsUpdate.maxClassFee >= :mcf or gymsUpdate.maxClassFee <= -1)',
@@ -124,6 +138,7 @@ export class GymsService {
         }
         
 
+        // gender 조건 처리
         if (gen.length > 0) {
             if (opt[6] == 1) {
                 gen.push("명시 안 됨")
@@ -135,6 +150,7 @@ export class GymsService {
             });
         }
 
+        // qualifications 조건 처리
         if (qfc.length > 0) {
             if (opt[7] == 1) {
                 qfc.push("명시 안 됨")
@@ -146,6 +162,7 @@ export class GymsService {
             });
         }
 
+        // preference 조건 처리
         if (pre.length > 0) {
             if (opt[8] == 1) {
                 pre.push("명시 안 됨")

@@ -53,6 +53,6 @@ export class GymEntity{
     @Column({type:'text', name:'description'})
     description: string;
 
-    @Column({type:'text', name:'image'})
-    image: string;
+    @Column({type:'json', name:'image'})
+    image: string[];
 }

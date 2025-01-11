@@ -1,19 +1,27 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { GymEntity } from './entity/gyms.entity';
 import { GymsService } from './gyms.service';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('GymsList')
 @Controller('gyms')
 export class GymsController {
 
   constructor(private readonly gymsService: GymsService){};
 
   @Get()
+  // @ApiBearerAuth()
   getHello(): string {
     return this.gymsService.getHello();
   }
 
 
   @Get('getAll')
+  @ApiOkResponse({ description: '성공적으로 모든 헬스장을 불러왔습니다.' })
+  @ApiOperation({
+    summary: '모든 헬스장 불러오기',
+    description: '전체 리스트 출력' 
+  })
   getAll(): Promise<GymEntity[]> {
     return this.gymsService.getAll();
   }
