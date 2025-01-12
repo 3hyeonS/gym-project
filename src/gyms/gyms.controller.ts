@@ -13,6 +13,10 @@ export class GymsController {
 
   //문자 출력
   @Get()
+  @ApiOperation({
+    summary: 'Welcome Gyms 출력',
+    description: 'Welcome Gyms 출력' 
+  })
   // @ApiBearerAuth()
   getHello(): string {
     return this.gymsService.getHello();
