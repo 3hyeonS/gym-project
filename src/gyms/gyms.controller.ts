@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { GymEntity } from './entity/gyms.entity';
 import { GymsService } from './gyms.service';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SearchSelectedDto } from './dto/search-gyms-dto';
+import { gymDto } from './dto/gym-dto';
 
 @ApiTags('GymsList')
 @Controller('gyms')
@@ -9,15 +11,17 @@ export class GymsController {
 
   constructor(private readonly gymsService: GymsService){};
 
+  //문자 출력
   @Get()
   // @ApiBearerAuth()
   getHello(): string {
     return this.gymsService.getHello();
   }
 
-
+  // 모든 헬스장 불러오기
   @Get('getAll')
-  @ApiOkResponse({ description: '성공적으로 모든 헬스장을 불러왔습니다.' })
+  @ApiResponse({ status: 200, description: '성공적으로 모든 헬스장을 불러왔습니다.' }) 
+  @ApiResponse({ status: 403, description: '조회에 실패했습니다.' }) 
   @ApiOperation({
     summary: '모든 헬스장 불러오기',
     description: '전체 리스트 출력' 
@@ -26,23 +30,14 @@ export class GymsController {
     return this.gymsService.getAll();
   }
 
+  // 선택 조건에 맞는 헬스장 불러오기
   @Post()
-  searchSelected(
-    @Body('flexibleOptions') option: number[],
-    @Body('selectedLocation') location: Record<string, string[]>, 
-    @Body('selectedWorkType') workType: string[],
-    @Body('selectedWorkTime') workTime: string[],
-    @Body('selectedWorkDays') workDays: string[],
-    @Body('selectedWeekendDuty') weekendDuty: string[],
-    @Body('selectedSalary') salary: string[],
-    @Body('selectedMaxClassFee') maxClassFee: number,
-    @Body('selectedGender') gender: string[],
-    @Body('selectedQualifications') qualification: string[],
-    @Body('selectedPreference') preference: string[]): 
-    Promise<GymEntity[]> {
-      return this.gymsService.searchSelected(
-        option, location, workType, workTime, workDays, weekendDuty, 
-        salary, maxClassFee, gender, qualification, preference
-      )
-    }
+  @ApiResponse({ status: 201, description: '성공적으로 모든 헬스장을 불러왔습니다.' }) 
+  @ApiOperation({
+    summary: '조건에 맞는 헬스장 불러오기',
+    description: '해당 조건의 헬스장 리스트 출력' 
+  })
+  searchSelected(@Body() searchSelectedDto: SearchSelectedDto) {
+    return this.gymsService.searchSelected(searchSelectedDto)
   }
+}
