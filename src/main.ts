@@ -7,7 +7,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('GYMS API')
-    .setDescription('GYMS API anstjdlqslek.')
+    .setDescription('GYMS API 문서입니다.')
     .setVersion('1.0')
     // .addTag('gyms')
     // .addBearerAuth()   #authorization

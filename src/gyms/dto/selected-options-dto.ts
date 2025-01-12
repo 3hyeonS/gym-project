@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class SearchSelectedDto {
+export class SelectedOptionsDto {
     @ApiProperty({
         type: [Number],
         description: '명시 안 됨, 채용공고 참고, 성별 무관에 대한 옵션 체크 여부  \n순서: 근무 형태, 근무 시간, 근무일 수 , 주말 당직, 급여 조건, 최대 수업료, 성별, 지원자격, 우대사항  \n0 : 포함하지 않음  \n1: 모두 포함',
@@ -62,7 +62,7 @@ export class SearchSelectedDto {
     
     @ApiProperty({
         type: Number,
-        description: '최대 수업료  \n채용공고참고 : -1  \n명시 안 됨 : -2',
+        description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
         example: 50
     })
     selectedMaxClassFee: number;

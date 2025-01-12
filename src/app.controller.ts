@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller()
 export class AppController {
@@ -8,9 +8,18 @@ export class AppController {
 
   @Get()
   @ApiOperation({
-      summary: 'Welcome 출력',
-      description: 'Welcome 출력' 
-    })
+    summary: 'Welcome 출력',
+    description: 'Welcome 출력' 
+  })
+  @ApiResponse({
+    status: 200,
+    description: '성공적으로 문자를 출력했습니다.',
+    content: {
+      'text/plain': { 
+        example: 'Welcome'
+      }
+    }
+  }) 
   getHello(): string {
     return this.appService.getHello();
   }
