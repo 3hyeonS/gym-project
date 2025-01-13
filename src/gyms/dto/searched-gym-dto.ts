@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { GymEntity } from "../entity/gyms.entity";
 
-export class searchedGymDto implements GymEntity{   
+export class SearchedGymDto implements GymEntity{   
     @ApiProperty({
         type: Number,
         description: 'id',

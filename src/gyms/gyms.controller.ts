@@ -1,12 +1,17 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { GymEntity } from './entity/gyms.entity';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
 import { GymsService } from './gyms.service';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { allGymDto } from './dto/all-gym-dto';
-import { searchedGymDto } from './dto/selected-gym-dto';
+import { SearchedGymDto } from './dto/searched-gym-dto';
+import { ResponseMsg } from 'src/decorators/response-message-decorator';
+import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
+import { ResponseDto } from './dto/response-dto';
+import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
 
 @ApiTags('GymsList')
+@UseInterceptors(ResponseTransformInterceptor)
+@ApiExtraModels(ResponseDto)
 @Controller('gyms')
 export class GymsController {
 
@@ -14,20 +19,20 @@ export class GymsController {
 
   //문자 출력
   @Get()
-  @ApiOperation({
-    summary: 'Welcome Gyms 출력',
-    description: 'Welcome Gyms 출력' 
-  })
   @ApiResponse({
     status: 200,
     description: '성공적으로 문자를 출력했습니다.',
     content: {
-      'text/plain': { 
-        example: 'Welcome Gyms'
-      },
-    }, 
+      'application/json': { 
+        example: {
+          message: '성공적으로 문자를 출력했습니다.',
+          statusCode: 200,
+          data: 'Welcome Gyms'
+        }
+      }
+    }
   })
-  // @ApiBearerAuth()
+  @ResponseMsg('성공적으로 문자를 출력했습니다.')
   getHello(): string {
     return this.gymsService.getHello();
   }
@@ -38,30 +43,53 @@ export class GymsController {
     summary: '모든 헬스장 불러오기',
     description: '전체 리스트 출력',
   })
-  @ApiResponse({
+  @GenericApiResponse({
     status: 200,
     description: '성공적으로 모든 헬스장을 불러왔습니다.',
-    type: allGymDto,
+    model: allGymDto,
     isArray: true
-  }) 
-  @ApiResponse({ status: 403, description: '조회에 실패했습니다.' }) 
-  getAll(): Promise<GymEntity[]> {
-    return this.gymsService.getAll();
+  })
+  @ResponseMsg('성공적으로 모든 헬스장을 불러왔습니다.')
+  async getAll() {
+
+    const allGyms = await this.gymsService.getAll();
+
+    return allGyms;
   }
 
   // 선택 조건에 맞는 헬스장 불러오기
   @Post()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: '조건에 맞는 헬스장 불러오기',
     description: '해당 조건의 헬스장 리스트 출력' 
   })
-  @ApiResponse({
-    status: 201,
-    description: '성공적으로 모든 헬스장을 불러왔습니다.',
-    type: searchedGymDto,
+  @GenericApiResponse({
+    status: 200,
+    description: '성공적으로 해당 조건의 헬스장을 불러왔습니다.',
+    model: SearchedGymDto,
     isArray: true
-  }) 
-  searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
-    return this.gymsService.searchSelected(selectedOptionsDto)
+  })
+  @ResponseMsg('성공적으로 모든 헬스장을 불러왔습니다.')
+  @ApiNotFoundResponse({
+    description: '해당 조건의 헬스장이 없습니다.',
+    content: {
+      'application/json': { 
+        example: {
+          message: '해당 조건의 헬스장이 없습니다.',
+          statusCode: 404,
+        }
+      }
+    }
+  })
+  async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
+
+    const searchedGyms = await this.gymsService.searchSelected(selectedOptionsDto);
+
+    if (searchedGyms.length == 0) {
+      throw new HttpException('해당 조건의 헬스장이 없습니다.', HttpStatus.NOT_FOUND);
+    }
+
+    return searchedGyms;
   }
 }

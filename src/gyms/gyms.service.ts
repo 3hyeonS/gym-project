@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GymEntity } from './entity/gyms.entity';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
+import { SearchedGymDto } from './dto/searched-gym-dto';
+import { GymEntity } from './entity/gyms.entity';
+import { allGymDto } from './dto/all-gym-dto';
 
 @Injectable()
 export class GymsService {
@@ -16,13 +18,13 @@ export class GymsService {
     ){}
     
     // method1 : 모든 헬스장 리스트 가져오기
-    async getAll(): Promise<GymEntity[]> {
+    async getAll(): Promise<allGymDto[]> {
         const gymList = await this.gymRepository.find()
         return gymList;
     }
     
     // method2 : 조건에 맞는 헬스장 리스트 가져오기
-    async searchSelected(selectedOptionsDto: SelectedOptionsDto): Promise<GymEntity[]> {
+    async searchSelected(selectedOptionsDto: SelectedOptionsDto): Promise<SearchedGymDto[]> {
         
         const queryBuilder = this.gymRepository.createQueryBuilder('gymsUpdate');
         const conditions: { condition: string; parameters: Record<string, any> }[] = [];
