@@ -61,8 +61,8 @@ export class AuthController {
     }
 
     // 카카오 로그인 콜백 엔드포인트
-    @Get('/kakao/callback')
-    async kakaoCallback(@Query('code') kakaoAuthResCode: string, @Res() res: Response) {  // Authorization Code 받기
+    @Post('/kakao/callback')
+    async kakaoCallback(@Body('authorizationCode') kakaoAuthResCode: string, @Res() res: Response) {  // Authorization Code 받기
         const { jwtToken, user } = await this.authService.signInWithKakao(kakaoAuthResCode);
     
         // 쿠키에 JWT 설정
