@@ -1,6 +1,6 @@
-import { applyDecorators, Type } from "@nestjs/common";
-import { ApiExtraModels, ApiResponse, getSchemaPath } from "@nestjs/swagger";
-import { ResponseDto } from "src/gyms/dto/response-dto";
+import { applyDecorators, Type } from '@nestjs/common';
+import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
+import { ResponseDto } from 'src/gyms/dto/response-dto';
 
 export interface GenericApiResponseOption<TModel extends Type<any>> {
   model: TModel;
@@ -10,10 +10,9 @@ export interface GenericApiResponseOption<TModel extends Type<any>> {
 }
 
 export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
-  
   const isArrray = option.isArray || false;
 
-  if(isArrray) {
+  if (isArrray) {
     return applyDecorators(
       ApiExtraModels(ResponseDto, option.model),
       ApiResponse({
@@ -34,8 +33,7 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
         },
       }),
     );
-  }
-  else {
+  } else {
     return applyDecorators(
       ApiExtraModels(ResponseDto, option.model),
       ApiResponse({
@@ -47,7 +45,7 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
             {
               properties: {
                 data: {
-                  $ref: getSchemaPath(option.model)
+                  $ref: getSchemaPath(option.model),
                 },
               },
             },
@@ -56,5 +54,4 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
       }),
     );
   }
-  
 };

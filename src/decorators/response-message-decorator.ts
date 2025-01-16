@@ -1,3 +1,3 @@
 import { Reflector } from '@nestjs/core';
 
-export const ResponseMsg = Reflector.createDecorator<string>(); 
+export const ResponseMsg = Reflector.createDecorator<string>();

@@ -8,6 +8,6 @@ import { GymEntity } from './entity/gyms.entity';
   imports: [TypeOrmModule.forFeature([GymEntity])],
   exports: [TypeOrmModule],
   controllers: [GymsController],
-  providers: [GymsService]
+  providers: [GymsService],
 })
 export class GymsModule {}
