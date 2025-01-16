@@ -3,20 +3,21 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GymsModule } from './gyms/gyms.module';
-import { GymEntity } from './gyms/entity/gyms.entity';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { typeOrmConfig } from './config/typeorm.config';
+
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type:'mysql',
-      host:'database-1.chusuuo8u7fk.ap-northeast-2.rds.amazonaws.com',
-      port:3306,
-      username:'admin',
-      password:'RDSkey1234',
-      database:'gyms',
-      entities:[GymEntity]
+    ConfigModule.forRoot({
+      isGlobal: true
     }),
-    GymsModule
+    TypeOrmModule.forRoot(
+      typeOrmConfig
+    ),
+    GymsModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

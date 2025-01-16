@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
 import { GymsService } from './gyms.service';
-import { ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiNotFoundResponse, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { allGymDto } from './dto/all-gym-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';

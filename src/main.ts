@@ -2,7 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { LoggingInterceptor } from './interceptors/logging-interceptor';
-import { ResponseTransformInterceptor } from './interceptors/response-transform-interceptor';
+import { ValidationPipe } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser'
+import * as dotenv from 'dotenv';
+
+dotenv.config(); // .env 파일 로드
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,8 +25,20 @@ async function bootstrap() {
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
+
   app.useGlobalInterceptors(new LoggingInterceptor())
+
+  app.useGlobalPipes(new ValidationPipe()); // 글로벌 ValidationPipe 설정
+
   SwaggerModule.setup('api', app, documentFactory);
+
+  // cookie parser 미들웨어 추가
+  app.use(cookieParser());
+
+  app.enableCors({
+    origin: 'http://localhost:3000', // 클라이언트 URL
+    credentials: true, // 쿠키 허용
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }
