@@ -95,12 +95,11 @@ export class AuthController {
   }
 
   @Post('/signup/checkBusinessId')
-  async checkBusinessIdValid(@Body() businessId: string): Promise<{
+  async checkBusinessIdValid(@Body('businessId') businessId: string): Promise<{
     success: boolean;
     message: string;
   }> {
     this.logger.verbose(`Checking if businessId valid: ${businessId}`);
-
     // 10자리 숫자인가?
     if (!/^[0-9]{10}$/.test(businessId)) {
       this.logger.warn(`businessId is not valid: ${businessId}`);
