@@ -9,8 +9,8 @@ export class CenterEntity extends MemberEntity {
   @Column({ type: 'varchar', name: 'ceoName' })
   ceoName: string;
 
-  @Column({ type: 'int', name: 'businessId' })
-  businessId: number;
+  @Column({ type: 'varchar', name: 'businessId' })
+  businessId: string;
 
   @Column({ type: 'varchar', name: 'phone' })
   phone: string;

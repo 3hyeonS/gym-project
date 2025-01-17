@@ -41,10 +41,13 @@ export class AuthService {
     userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<UserEntity> {
     const { signId, userName, email, password, role } = userSignUpRequestDto;
-    this.logger.verbose(`Attempting to sign up user with email: ${email}`);
+    this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
+
+    // signId 중복 확인
+    // await this.checkSignIdExists(signId);
 
     // 이메일 중복 확인
-    await this.checkEmailExists(email);
+    // await this.checkEmailExists(email);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -59,7 +62,7 @@ export class AuthService {
 
     const savedUser = await this.usersRepository.save(newUser);
 
-    this.logger.verbose(`User signed up successfully with email: ${email}`);
+    this.logger.verbose(`User signed up successfully with signId: ${signId}`);
     this.logger.debug(`User details: ${JSON.stringify(savedUser)}`);
 
     return savedUser;
@@ -79,13 +82,13 @@ export class AuthService {
       phone,
       address,
     } = centerSignUpRequestDto;
-    this.logger.verbose(`Attempting to sign up user with email: ${email}`);
+    this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    await this.checkSignIdExists(signId);
+    // await this.checkSignIdExists(signId);
 
     // 이메일 중복 확인
-    await this.checkEmailExists(email);
+    // await this.checkEmailExists(email);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -102,7 +105,7 @@ export class AuthService {
     });
     const savedCenter = await this.centersRepository.save(newCenter);
 
-    this.logger.verbose(`User signed up successfully with email: ${email}`);
+    this.logger.verbose(`User signed up successfully with signId: ${signId}`);
     this.logger.debug(`User details: ${JSON.stringify(savedCenter)}`);
 
     return savedCenter;
@@ -116,7 +119,7 @@ export class AuthService {
     this.logger.verbose(`Attempting to sign in user with signId: ${signId}`);
 
     try {
-      const existingUser = await this.findMemberByEmail(signId);
+      const existingUser = await this.findMemberBySignId(signId);
 
       if (
         !existingUser ||
@@ -167,10 +170,10 @@ export class AuthService {
   }
 
   // signId 중복 확인 메서드
-  private async checkSignIdExists(signId: string): Promise<void> {
+  async checkSignIdExists(signId: string): Promise<void> {
     this.logger.verbose(`Checking if signId exists: ${signId}`);
 
-    const existingMember = await this.findMemberByEmail(signId);
+    const existingMember = await this.findMemberBySignId(signId);
     if (existingMember) {
       this.logger.warn(`signId already exists: ${signId}`);
       throw new ConflictException('signId already exists');
@@ -179,7 +182,7 @@ export class AuthService {
   }
 
   // signId로 멤버 찾기 메서드
-  private async findMemberBySignId(
+  async findMemberBySignId(
     signId: string,
   ): Promise<UserEntity | CenterEntity | undefined> {
     const user: UserEntity = await this.usersRepository.findOne({
@@ -325,6 +328,7 @@ export class AuthService {
   async generateJwtToken(member: MemberEntity): Promise<string> {
     // [1] JWT 토큰 생성 (Secret + Payload)
     const payload = {
+      singId: member.signId,
       email: member.email,
       userId: member.id,
       role: member.role,

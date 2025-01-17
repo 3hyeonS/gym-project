@@ -16,7 +16,7 @@ export class MemberEntity {
   @Column({ type: 'varchar', name: 'signId', unique: true })
   signId: string;
 
-  @Column({ type: 'varchar', name: 'email', unique: true })
+  @Column({ type: 'varchar', name: 'email' })
   email: string;
 
   @Column({ type: 'varchar', name: 'password' })

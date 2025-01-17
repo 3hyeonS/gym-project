@@ -36,16 +36,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // [5] JWT에서 사용자 정보 가져오기(인증)
   async validate(payload) {
-    const { email } = payload;
+    const { signId } = payload;
 
     const user: UserEntity = await this.usersRepository.findOne({
-      where: { email },
+      where: { signId },
     });
 
     const center: CenterEntity = user
       ? null
       : await this.centersRepository.findOne({
-          where: { email },
+          where: { signId },
         });
 
     if (!user && !center) {

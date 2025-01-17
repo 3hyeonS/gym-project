@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   Logger,
@@ -68,6 +69,78 @@ export class AuthController {
       'User signed up successfully',
       centerResponseDto,
     );
+  }
+
+  // signId 중복 체크
+  @Post('/signup/checkId')
+  async checkSignIdExists(@Body() signId: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    this.logger.verbose(`Checking if signId exists: ${signId}`);
+    try {
+      // signId 중복 확인
+      await this.authService.checkSignIdExists(signId);
+      this.logger.verbose(`signId is available: ${signId}`);
+      return { success: true, message: 'signId is available' };
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        this.logger.warn(`signId already exists: ${signId}`);
+        return { success: false, message: 'signId already exists' };
+      }
+
+      this.logger.error(`Error checking signId: ${error.message}`);
+      throw error; // 다른 예외는 그대로 throw
+    }
+  }
+
+  @Post('/signup/checkBusinessId')
+  async checkBusinessIdValid(@Body() businessId: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    this.logger.verbose(`Checking if businessId valid: ${businessId}`);
+
+    // 10자리 숫자인가?
+    if (!/^[0-9]{10}$/.test(businessId)) {
+      this.logger.warn(`businessId is not valid: ${businessId}`);
+      return {
+        success: false,
+        message: '유효하지 않은 사업자 등록 번호입니다.',
+      };
+    }
+
+    // 각 자리에 대한 가중치 값
+    const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
+
+    // 마지막 숫자는 체크디지트
+    const checkDigit = parseInt(businessId[9], 10);
+
+    // 가중치를 곱한 합계를 계산
+    let sum = 0;
+    for (let i = 0; i < weights.length; i++) {
+      const digit = parseInt(businessId[i], 10);
+      if (i === 8) {
+        // 8번째 자리 가중치 계산 시 추가로 10을 곱한 뒤 10으로 나눈 몫을 더함
+        sum += Math.floor((digit * weights[i]) / 10);
+      }
+      sum += digit * weights[i];
+    }
+
+    // 10으로 나눈 나머지를 계산하고, 이를 10에서 뺀 값이 체크디지트와 일치해야 유효함
+    const calculatedCheckDigit = (10 - (sum % 10)) % 10;
+    const isvalid = checkDigit === calculatedCheckDigit;
+
+    if (isvalid) {
+      this.logger.verbose(`businessId is valid: ${businessId}`);
+      return { success: isvalid, message: '유효한 사업자 등록 번호입니다.' };
+    } else {
+      this.logger.warn(`businessId is not valid: ${businessId}`);
+      return {
+        success: isvalid,
+        message: '유효하지 않은 사업자 등록 번호입니다.',
+      };
+    }
   }
 
   // 일반 회원 로그인 기능
