@@ -4,6 +4,7 @@ import {
   Get,
   Logger,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -11,7 +12,6 @@ import {
 import { AuthService } from './auth.service';
 import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import { UserEntity } from './entity/user.entity';
-import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/get-user-decorator';
@@ -20,6 +20,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { CenterResponseDto } from './dto/center-response.dto';
 import { CenterEntity } from './entity/center.entity';
+import { SignInRequestDto } from './dto/sign-in-request.dto';
 
 @Controller('/auth')
 export class AuthController {
@@ -76,7 +77,7 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.verbose(
-      `Attempting to sign in user with email: ${signInRequestDto.email}`,
+      `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
     );
     const { jwtToken, user } =
       await this.authService.userSignIn(signInRequestDto);
@@ -195,5 +196,10 @@ export class AuthController {
         user: userResponseDto,
       }),
     );
+  }
+
+  @Get('address')
+  async searchAddress(@Query('query') query: string) {
+    return this.authService.searchAddress(query);
   }
 }

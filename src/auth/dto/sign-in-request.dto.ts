@@ -7,7 +7,7 @@ export class SignInRequestDto extends MemberEntity {
   password: string;
 
   @IsNotEmpty()
-  @MaxLength(100)
+  @MaxLength(20)
   @IsEmail()
-  email: string;
+  signId: string;
 }

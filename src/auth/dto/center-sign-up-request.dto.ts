@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { CenterEntity } from '../entity/center.entity';
 
-// 사업자 등록 번호 유효성 검사사
+// 사업자 등록 번호 유효성 검사
 @ValidatorConstraint({ name: 'IsValidBusinessID', async: false })
 export class IsValidBusinessIDConstrain
   implements ValidatorConstraintInterface
@@ -59,16 +59,21 @@ export class IsValidBusinessIDConstrain
 }
 
 export class CenterSignUpRequestDto extends CenterEntity {
+  @IsNotEmpty()
+  @MinLength(1)
+  @MaxLength(20)
+  signId: string;
+
   @IsNotEmpty() // null 값 체크
-  @MinLength(2) // 최소 문자 수
+  @MinLength(1) // 최소 문자 수
   @MaxLength(20) // 최대 문자 수
   centerName: string;
 
   @IsNotEmpty() // null 값 체크
   @MinLength(2) // 최소 문자 수
   @MaxLength(20) // 최대 문자 수
-  // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
-  @Matches(/^[가-힣]+$/, { message: 'ceoName 은 한글로 입력되어야 합니다.' })
+  // // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
+  // @Matches(/^[가-힣]+$/, { message: 'ceoName 은 한글로 입력되어야 합니다.' })
   ceoName: string;
 
   @IsNotEmpty()
@@ -85,10 +90,9 @@ export class CenterSignUpRequestDto extends CenterEntity {
 
   @IsNotEmpty()
   @MaxLength(20)
-  @Matches(
-    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-    { message: '비밀번호 보안 요건을 충족시키지 못했습니다.' },
-  ) // 대문자, 소문자, 숫자, 특수문자 포함
+  @Matches(/^(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[a-z\d@$!%*?&]{8,}$/, {
+    message: '비밀번호 보안 요건을 충족시키지 못했습니다.',
+  }) // 소문자, 숫자, 특수문자 포함
   password: string;
 
   @IsNotEmpty()

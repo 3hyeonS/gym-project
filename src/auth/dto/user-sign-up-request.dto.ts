@@ -5,26 +5,35 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { UserEntity } from '../entity/user.entity';
 import { TRole } from '../entity/member.entity';
 
 export class UserSignUpRequestDto extends UserEntity {
+  @IsNotEmpty()
+  @MinLength(1)
+  @MaxLength(20)
+  signId: string;
+
   @IsNotEmpty() // null 값 체크
-  @MinLength(2) // 최소 문자 수
+  @MinLength(1) // 최소 문자 수
   @MaxLength(20) // 최대 문자 수
-  // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
-  @Matches(/^[가-힣]+$/, { message: 'userName 은 한글로 입력되어야 합니다.' })
+  // // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
+  // @Matches(/^[가-힣]+$/, { message: 'userName 은 한글로 입력되어야 합니다.' })
   userName: string;
 
+  @ValidateIf((obj) => obj.role !== undefined) // role이 존재할 경우에만 검증
+  @IsEnum(['ADMIN', 'USER'], {
+    message: 'Role은 ADMIN 또는 USER만 가능합니다.',
+  })
   role: TRole;
 
   @IsNotEmpty()
   @MaxLength(20)
-  @Matches(
-    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-    { message: '비밀번호 보안 요건을 충족시키지 못했습니다.' },
-  ) // 대문자, 소문자, 숫자, 특수문자 포함
+  @Matches(/^(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[a-z\d@$!%*?&]{8,}$/, {
+    message: '비밀번호 보안 요건을 충족시키지 못했습니다.',
+  }) // 소문자, 숫자, 특수문자 포함
   password: string;
 
   @IsNotEmpty()

@@ -13,10 +13,13 @@ export class MemberEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'email', unique: true, length: 255 })
+  @Column({ type: 'varchar', name: 'signId', unique: true })
+  signId: string;
+
+  @Column({ type: 'varchar', name: 'email', unique: true })
   email: string;
 
-  @Column({ type: 'varchar', name: 'password', length: 255 })
+  @Column({ type: 'varchar', name: 'password' })
   password: string;
 
   @Column({
