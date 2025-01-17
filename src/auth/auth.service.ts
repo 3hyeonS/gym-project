@@ -361,6 +361,7 @@ export class AuthService {
 
       // 결과 데이터를 클라이언트에 반환할 형식으로 가공
       return response.data.documents.map((item) => ({
+        postalCode: item.road_address?.zone_no || '우편번호 없음',
         address: item.address_name,
         roadAddress: item.road_address
           ? item.road_address.address_name

@@ -94,6 +94,7 @@ export class AuthController {
     }
   }
 
+  //사업자 등록 번호 유효성 검사
   @Post('/signup/checkBusinessId')
   async checkBusinessIdValid(@Body('businessId') businessId: string): Promise<{
     success: boolean;
@@ -270,6 +271,7 @@ export class AuthController {
     );
   }
 
+  // 주소 검색
   @Get('address')
   async searchAddress(@Query('query') query: string) {
     return this.authService.searchAddress(query);
