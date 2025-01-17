@@ -1,15 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
+import { MemberEntity, MemberRole, TRole } from './member.entity';
 
 @Entity({ name: 'center' })
-export class CenterEntity {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
-  id: number;
-
+export class CenterEntity extends MemberEntity {
   @Column({ type: 'varchar', name: 'centerName' })
   centerName: string;
-
-  @Column({ type: 'varchar', name: 'password' })
-  password: string;
 
   @Column({ type: 'varchar', name: 'ceoName' })
   ceoName: string;
@@ -20,9 +15,14 @@ export class CenterEntity {
   @Column({ type: 'varchar', name: 'phone' })
   phone: string;
 
-  @Column({ type: 'varchar', name: 'email', unique: true })
-  email: string;
-
   @Column({ type: 'varchar', name: 'address' })
   address: string;
+
+  @Column({
+    type: 'enum',
+    name: 'role',
+    enum: MemberRole,
+    default: 'CENTER',
+  })
+  role: TRole;
 }

@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserEntity } from './entity/user.entity';
 import * as dotenv from 'dotenv';
+import { CenterEntity } from './entity/center.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -15,6 +16,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    @InjectRepository(CenterEntity)
+    private centersRepository: Repository<CenterEntity>,
   ) {
     // [3] Cookie에 있는 JWT 토큰을 추출
     super({
@@ -29,7 +32,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
     });
-    console.log('JWT_SECRET from env:', process.env.JWT_SECRET);
   } // [4] Secret Key로 검증 - 인스턴스 생성 자체가 Secret Key로 JWT 토큰 검증과정
 
   // [5] JWT에서 사용자 정보 가져오기(인증)
@@ -40,9 +42,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { email },
     });
 
-    if (!user) {
+    const center: CenterEntity = user
+      ? null
+      : await this.centersRepository.findOne({
+          where: { email },
+        });
+
+    if (!user && !center) {
       throw new UnauthorizedException();
     }
-    return user;
+    return user || center;
   }
 }

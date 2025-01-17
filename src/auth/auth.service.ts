@@ -8,13 +8,16 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entity/user.entity';
-import { SignUpRequestDto } from './dto/sign-up-request.dto';
+import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import * as bcrypt from 'bcryptjs';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { v4 as uuidv4 } from 'uuid';
 import { firstValueFrom } from 'rxjs';
+import { CenterEntity } from './entity/center.entity';
+import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
+import { MemberEntity } from './entity/member.entity';
 
 @Injectable()
 export class AuthService {
@@ -23,13 +26,17 @@ export class AuthService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    @InjectRepository(CenterEntity)
+    private centersRepository: Repository<CenterEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
   ) {}
 
-  // 회원 가입
-  async signUp(signUpRequestDto: SignUpRequestDto): Promise<UserEntity> {
-    const { userName, password, email, role } = signUpRequestDto;
+  // 일반 회원 가입
+  async userSignUp(
+    userSignUpRequestDto: UserSignUpRequestDto,
+  ): Promise<UserEntity> {
+    const { userName, email, password, role } = userSignUpRequestDto;
     this.logger.verbose(`Attempting to sign up user with email: ${email}`);
 
     // 이메일 중복 확인
@@ -53,8 +60,39 @@ export class AuthService {
     return savedUser;
   }
 
-  // 로그인
-  async signIn(
+  // 일반 회원 가입
+  async centerSignUp(
+    centerSignUpRequestDto: CenterSignUpRequestDto,
+  ): Promise<CenterEntity> {
+    const { centerName, ceoName, email, password, businessId, phone, address } =
+      centerSignUpRequestDto;
+    this.logger.verbose(`Attempting to sign up user with email: ${email}`);
+
+    // 이메일 중복 확인
+    await this.checkEmailExists(email);
+
+    // 비밀번호 해싱
+    const hashedPassword = await this.hashPassword(password);
+
+    const newCenter = this.centersRepository.create({
+      centerName,
+      ceoName,
+      email,
+      password: hashedPassword, // 해싱된 비밀번호 사용
+      businessId,
+      phone,
+      address,
+    });
+    const savedCenter = await this.centersRepository.save(newCenter);
+
+    this.logger.verbose(`User signed up successfully with email: ${email}`);
+    this.logger.debug(`User details: ${JSON.stringify(savedCenter)}`);
+
+    return savedCenter;
+  }
+
+  // 일반 회원 로그인
+  async userSignIn(
     signInRequestDto: SignInRequestDto,
   ): Promise<{ jwtToken: string; user: UserEntity }> {
     const { email, password } = signInRequestDto;
@@ -65,6 +103,7 @@ export class AuthService {
 
       if (
         !existingUser ||
+        existingUser instanceof CenterEntity ||
         !(await bcrypt.compare(password, existingUser.password))
       ) {
         this.logger.warn(`Failed login attempt for email: ${email}`);
@@ -81,12 +120,41 @@ export class AuthService {
     }
   }
 
+  // 센터 회원 로그인
+  async centerSignIn(
+    signInRequestDto: SignInRequestDto,
+  ): Promise<{ jwtToken: string; center: CenterEntity }> {
+    const { email, password } = signInRequestDto;
+    this.logger.verbose(`Attempting to sign in user with email: ${email}`);
+
+    try {
+      const existingCenter = await this.findUserByEmail(email);
+
+      if (
+        !existingCenter ||
+        existingCenter instanceof UserEntity ||
+        !(await bcrypt.compare(password, existingCenter.password))
+      ) {
+        this.logger.warn(`Failed login attempt for email: ${email}`);
+        throw new UnauthorizedException('Incorrect email or password.');
+      }
+      // [1] JWT 토큰 생성 (Secret + Payload)
+      const jwtToken = await this.generateJwtToken(existingCenter);
+
+      // [2] 사용자 정보 반환
+      return { jwtToken, center: existingCenter };
+    } catch (error) {
+      this.logger.error('Signin failed', error.stack);
+      throw error;
+    }
+  }
+
   // 이메일 중복 확인 메서드
   private async checkEmailExists(email: string): Promise<void> {
     this.logger.verbose(`Checking if email exists: ${email}`);
 
-    const existingUser = await this.findUserByEmail(email);
-    if (existingUser) {
+    const existingMember = await this.findUserByEmail(email);
+    if (existingMember) {
       this.logger.warn(`Email already exists: ${email}`);
       throw new ConflictException('Email already exists');
     }
@@ -96,8 +164,18 @@ export class AuthService {
   // 이메일로 유저 찾기 메서드
   private async findUserByEmail(
     email: string,
-  ): Promise<UserEntity | undefined> {
-    return await this.usersRepository.findOne({ where: { email } });
+  ): Promise<UserEntity | CenterEntity | undefined> {
+    const user: UserEntity = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    const center: CenterEntity = user
+      ? null
+      : await this.centersRepository.findOne({
+          where: { email },
+        });
+
+    return user || center;
   }
 
   // 비밀번호 해싱 암호화 메서드
@@ -170,7 +248,7 @@ export class AuthService {
       client_id: process.env.KAKAO_CLIENT_ID, // Kakao REST API Key
       redirect_uri: process.env.KAKAO_REDIRECT_URI,
       code,
-      client_secret: process.env.KAKAO_CLIENT_SECRET, // 필요시 사용
+      // client_secret: process.env.KAKAO_CLIENT_SECRET, // 필요시 사용
     };
 
     const response = await firstValueFrom(
@@ -196,16 +274,16 @@ export class AuthService {
   }
 
   // JWT 생성 공통 메서드
-  async generateJwtToken(user: UserEntity): Promise<string> {
+  async generateJwtToken(member: MemberEntity): Promise<string> {
     // [1] JWT 토큰 생성 (Secret + Payload)
     const payload = {
-      email: user.email,
-      userId: user.id,
-      role: user.role,
+      email: member.email,
+      userId: member.id,
+      role: member.role,
     };
     const accessToken = await this.jwtService.sign(payload);
     this.logger.debug(`Generated JWT Token: ${accessToken}`);
-    this.logger.debug(`User details: ${JSON.stringify(user)}`);
+    this.logger.debug(`User details: ${JSON.stringify(member)}`);
     return accessToken;
   }
 }

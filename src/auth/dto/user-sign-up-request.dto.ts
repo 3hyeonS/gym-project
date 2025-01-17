@@ -6,15 +6,18 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { TRole, UserEntity, UserRole } from '../entity/user.entity';
+import { UserEntity } from '../entity/user.entity';
+import { TRole } from '../entity/member.entity';
 
-export class SignUpRequestDto extends UserEntity {
+export class UserSignUpRequestDto extends UserEntity {
   @IsNotEmpty() // null 값 체크
   @MinLength(2) // 최소 문자 수
   @MaxLength(20) // 최대 문자 수
   // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
-  @Matches(/^[가-힣]+$/, { message: 'Username 은 한글로 입력되어야 합니다.' })
+  @Matches(/^[가-힣]+$/, { message: 'userName 은 한글로 입력되어야 합니다.' })
   userName: string;
+
+  role: TRole;
 
   @IsNotEmpty()
   @MaxLength(20)
@@ -28,10 +31,6 @@ export class SignUpRequestDto extends UserEntity {
   @IsEmail() // 이메일 형식
   @MaxLength(100)
   email: string;
-
-  @IsNotEmpty()
-  @IsEnum(UserRole, { message: 'Role은 ADMIN 또는 USER만 가능합니다.' })
-  role: TRole;
 
   // @IsNotEmpty()
   // @Matches(/^\d{5}$/, { message: 'Postal code must be 5 digits' }) // 우편번호는 5자리 숫자

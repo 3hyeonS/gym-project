@@ -1,7 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { UserEntity, TRole, UserRole } from './entity/user.entity';
+import { UserEntity } from './entity/user.entity';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from 'src/decorators/roles-decorator';
+import { CenterEntity } from './entity/center.entity';
+import { TRole } from './entity/member.entity';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -20,9 +22,11 @@ export class RolesGuard implements CanActivate {
     }
 
     // 요청 객체에서 사용자 정보를 가져오기
-    const { user }: { user: UserEntity } = context.switchToHttp().getRequest();
+    const { member }: { member: UserEntity | CenterEntity } = context
+      .switchToHttp()
+      .getRequest();
 
     // 사용자의 역할이 필요한 역할 목록에 포함되는지 권한 확인
-    return requiredRoles.some((role) => user.role === role);
+    return requiredRoles.some((role) => member.role === role);
   }
 }

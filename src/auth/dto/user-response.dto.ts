@@ -1,14 +1,15 @@
-import { TRole, UserEntity } from '../entity/user.entity';
+import { TRole } from '../entity/member.entity';
+import { UserEntity } from '../entity/user.entity';
 
 export class UserResponseDto {
   id: number;
-  username: string;
+  userName: string;
   email: string;
   role: TRole;
 
   constructor(user: UserEntity) {
     this.id = user.id;
-    this.username = user.userName;
+    this.userName = user.userName;
     this.email = user.email;
     this.role = user.role;
   }

@@ -1,39 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-
-export type TRole = 'ADMIN' | 'USER';
-
-export const UserRole = {
-  ADMIN: 'ADMIN',
-  USER: 'USER',
-} as const;
+import { Column, Entity } from 'typeorm';
+import { MemberEntity, MemberRole, TRole } from './member.entity';
 
 @Entity({ name: 'user' })
-export class UserEntity {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
-  id: number;
-
+export class UserEntity extends MemberEntity {
   @Column({ type: 'varchar', name: 'userName' })
   userName: string;
-
-  @Column({ type: 'varchar', name: 'password' })
-  password: string;
-
-  @Column({ type: 'varchar', name: 'email', unique: true })
-  email: string;
 
   @Column({
     type: 'enum',
     name: 'role',
-    enum: UserRole,
+    enum: MemberRole,
+    default: 'USER',
   })
   role: TRole;
-
-  // @Column({ type:'varchar', name:'[postalCode]' })
-  // postalCode: string;
-
-  // @Column({ type:'varchar', name:'address' })
-  // address: string;
-
-  // @Column({ type:'varchar', name:'detailAddress' })
-  // detailAddress: string;
 }
