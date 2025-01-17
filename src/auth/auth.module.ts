@@ -10,7 +10,6 @@ import * as dotenv from 'dotenv';
 import { KakaoStrategy } from './kakao.strategy';
 import { HttpModule } from '@nestjs/axios';
 import { CenterEntity } from './entity/center.entity';
-import { MemberEntity } from './entity/member.entity';
 
 // .env 파일 로드
 dotenv.config();
