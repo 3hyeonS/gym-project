@@ -4,10 +4,6 @@ import {
   Matches,
   MaxLength,
   MinLength,
-  Validate,
-  ValidationArguments,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
 } from 'class-validator';
 import { CenterEntity } from '../entity/center.entity';
 
@@ -45,12 +41,9 @@ export class CenterSignUpRequestDto extends CenterEntity {
 
   @IsNotEmpty()
   @MaxLength(20)
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[a-zA-Z\d@$!%*?&]{8,}$/,
-    {
-      message: '비밀번호 보안 요건을 충족시키지 못했습니다.',
-    },
-  ) // 소문자, 숫자, 특수문자 포함
+  @Matches(/^(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*\d).+$/, {
+    message: '비밀번호 보안 요건을 충족시키지 못했습니다.',
+  }) // 소문자, 숫자, 특수문자 포함
   password: string;
 
   @IsNotEmpty()
