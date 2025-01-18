@@ -20,6 +20,8 @@ import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
+import { RefreshTokenEntity } from './entity/refreshToken.entity';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +34,8 @@ export class AuthService {
     private usersRepository: Repository<UserEntity>,
     @InjectRepository(CenterEntity)
     private centersRepository: Repository<CenterEntity>,
+    @InjectRepository(RefreshTokenEntity)
+    private refreshTokenRepository: Repository<RefreshTokenEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
   ) {}
@@ -114,7 +118,7 @@ export class AuthService {
   // 일반 회원 로그인
   async userSignIn(
     signInRequestDto: SignInRequestDto,
-  ): Promise<{ jwtToken: string; user: UserEntity }> {
+  ): Promise<{ jwtToken: string; refreshToken: string; user: UserEntity }> {
     const { signId, password } = signInRequestDto;
     this.logger.verbose(`Attempting to sign in user with signId: ${signId}`);
 
@@ -129,11 +133,12 @@ export class AuthService {
         this.logger.warn(`Failed login attempt for signId: ${signId}`);
         throw new UnauthorizedException('Incorrect signId or password.');
       }
-      // [1] JWT 토큰 생성 (Secret + Payload)
+      // [1] JWT 토큰 생성 (Secret + Payload), refresh 토큰 생성
       const jwtToken = await this.generateJwtToken(existingUser);
+      const refreshToken = await this.generateRefreshToken(existingUser);
 
       // [2] 사용자 정보 반환
-      return { jwtToken, user: existingUser };
+      return { jwtToken, refreshToken, user: existingUser };
     } catch (error) {
       this.logger.error('Signin failed', error.stack);
       throw error;
@@ -143,7 +148,7 @@ export class AuthService {
   // 센터 회원 로그인
   async centerSignIn(
     signInRequestDto: SignInRequestDto,
-  ): Promise<{ jwtToken: string; center: CenterEntity }> {
+  ): Promise<{ jwtToken: string; refreshToken: string; center: CenterEntity }> {
     const { signId, password } = signInRequestDto;
     this.logger.verbose(`Attempting to sign in user with signId: ${signId}`);
 
@@ -158,11 +163,12 @@ export class AuthService {
         this.logger.warn(`Failed login attempt for signId: ${signId}`);
         throw new UnauthorizedException('Incorrect signId or password.');
       }
-      // [1] JWT 토큰 생성 (Secret + Payload)
+      // [1] JWT 토큰 생성 (Secret + Payload), refresh 토큰 생성
       const jwtToken = await this.generateJwtToken(existingCenter);
+      const refreshToken = await this.generateRefreshToken(existingCenter);
 
       // [2] 사용자 정보 반환
-      return { jwtToken, center: existingCenter };
+      return { jwtToken, refreshToken, center: existingCenter };
     } catch (error) {
       this.logger.error('Signin failed', error.stack);
       throw error;
@@ -339,6 +345,62 @@ export class AuthService {
     return accessToken;
   }
 
+  // Refresh Token 생성 및 저장
+  async generateRefreshToken(member: MemberEntity): Promise<string> {
+    const refreshToken = crypto.randomBytes(64).toString('hex'); // Refresh Token 생성
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
+
+    const refreshTokenEntity = this.refreshTokenRepository.create({
+      token: refreshToken,
+      signId: member.signId,
+      expiresAt,
+      user: member instanceof UserEntity ? member : null,
+      center: member instanceof CenterEntity ? member : null,
+    });
+
+    await this.refreshTokenRepository.save(refreshTokenEntity);
+    return refreshToken;
+  }
+
+  // Refresh Token 검증
+  async validateRefreshToken(
+    signId: string,
+    refreshToken: string,
+  ): Promise<MemberEntity> {
+    const tokenEntity = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken, signId },
+      relations: ['user', 'center'],
+    });
+
+    if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token.');
+    }
+
+    return tokenEntity.user || tokenEntity.center;
+  }
+
+  // Refresh Token 삭제 (로그아웃 및 회원 탈퇴 시)
+  async revokeRefreshToken(signId: string): Promise<void> {
+    await this.refreshTokenRepository.delete({ signId });
+  }
+
+  // Access Token 갱신
+  async refreshAccessToken(
+    signId: string,
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const member = await this.validateRefreshToken(signId, refreshToken);
+
+    // 새 Access Token 생성
+    const newAccessToken = await this.generateJwtToken(member);
+
+    // 새 Refresh Token 생성
+    const newRefreshToken = await this.generateRefreshToken(member);
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
   // 카카오 주소 검색
   async searchAddress(query: string): Promise<any> {
     if (!query) {
@@ -362,10 +424,10 @@ export class AuthService {
       // 결과 데이터를 클라이언트에 반환할 형식으로 가공
       return response.data.documents.map((item) => ({
         postalCode: item.road_address?.zone_no || '우편번호 없음',
-        address: item.address_name,
+        address: item.address ? item.address.address_name : '지번 주소 없음',
         roadAddress: item.road_address
           ? item.road_address.address_name
-          : '지번 주소 없음',
+          : '도로명 주소 없음',
       }));
     } catch (error) {
       console.error('주소 검색 API 호출 오류:', error);
@@ -382,6 +444,7 @@ export class AuthService {
 
     // 사용자 조회
     const existingMember = await this.findMemberBySignId(signId);
+    console.log(existingMember);
 
     if (!existingMember) {
       this.logger.warn(`Member not found with signId: ${signId}`);
@@ -394,7 +457,7 @@ export class AuthService {
       existingMember.password,
     );
     if (!isPasswordValid) {
-      this.logger.warn(`Invalid password for signId: ${signId}`);
+      this.logger.warn(`Invalid password for signId: ${password}`);
       throw new UnauthorizedException('Invalid password.');
     }
 
@@ -404,6 +467,8 @@ export class AuthService {
     } else if (existingMember instanceof CenterEntity) {
       await this.centersRepository.delete({ signId });
     }
+    //refreshToken 삭제
+    this.revokeRefreshToken(signId);
 
     this.logger.verbose(`User deleted successfully with signId: ${signId}`);
   }

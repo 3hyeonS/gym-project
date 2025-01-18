@@ -8,12 +8,13 @@ import {
   Query,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import { UserEntity } from './entity/user.entity';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { ApiResponse } from './dto/api-response.dto';
@@ -22,10 +23,13 @@ import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { CenterResponseDto } from './dto/center-response.dto';
 import { CenterEntity } from './entity/center.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
+import { MemberEntity } from './entity/member.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('/auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name); // Logger 인스턴스 생성
+  private readonly jwtService: JwtService; // JwtService 주입
 
   constructor(private authService: AuthService) {}
 
@@ -152,7 +156,7 @@ export class AuthController {
     this.logger.verbose(
       `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
     );
-    const { jwtToken, user } =
+    const { jwtToken, refreshToken, user } =
       await this.authService.userSignIn(signInRequestDto);
     const userResponseDto = new UserResponseDto(user);
     this.logger.verbose(
@@ -165,6 +169,13 @@ export class AuthController {
       secure: false, // HTTPS에서만 쿠키 전송, 임시 비활성화
       maxAge: 3600000, // 1시간
       sameSite: 'none', // CSRF 공격 방어
+    });
+
+    res.cookie('RefreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 7 * 24 * 3600000, // 7일
+      sameSite: 'none',
     });
 
     res.status(200).json(
@@ -184,7 +195,7 @@ export class AuthController {
     this.logger.verbose(
       `Attempting to sign in user with email: ${signInRequestDto.email}`,
     );
-    const { jwtToken, center } =
+    const { jwtToken, refreshToken, center } =
       await this.authService.centerSignIn(signInRequestDto);
     const centerResponsetDto = new CenterResponseDto(center);
     this.logger.verbose(
@@ -197,6 +208,13 @@ export class AuthController {
       secure: false, // HTTPS에서만 쿠키 전송, 임시 비활성화
       maxAge: 3600000, // 1시간
       sameSite: 'none', // CSRF 공격 방어
+    });
+
+    res.cookie('RefreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 7 * 24 * 3600000, // 7일
+      sameSite: 'none',
     });
 
     res.status(200).json(
@@ -295,5 +313,74 @@ export class AuthController {
       success: true,
       message: 'User deleted successfully.',
     };
+  }
+
+  // refresh
+  @Post('/refresh')
+  async refresh(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies?.RefreshToken; // 쿠키에서 Refresh Token 가져오기
+
+    if (!refreshToken) {
+      this.logger.warn('No refresh token found in cookies');
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token is required.',
+      });
+    }
+
+    try {
+      // 쿠키에서 signId를 추출하거나, Refresh Token에서 직접 처리 가능
+      const decodedToken = this.jwtService.decode(refreshToken) as any;
+      const signId = decodedToken?.signId;
+
+      if (!signId) {
+        throw new UnauthorizedException('Invalid token payload.');
+      }
+
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.authService.refreshAccessToken(signId, refreshToken);
+
+      // 새 Access Token과 Refresh Token을 쿠키에 저장
+      res.cookie('Authorization', accessToken, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 3600000, // 1시간
+        sameSite: 'none',
+      });
+
+      res.cookie('RefreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 7 * 24 * 3600000, // 7일
+        sameSite: 'none',
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Token refreshed successfully',
+        accessToken,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to refresh token: ${error.message}`);
+      res.status(401).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // 로그아웃
+  @Post('/signout')
+  @UseGuards(AuthGuard())
+  async logout(@GetUser() member: MemberEntity, @Res() res: Response) {
+    await this.authService.revokeRefreshToken(member.signId);
+
+    res.clearCookie('Authorization');
+    res.clearCookie('RefreshToken');
+
+    res.status(200).json({
+      success: true,
+      message: 'User logged out successfully.',
+    });
   }
 }

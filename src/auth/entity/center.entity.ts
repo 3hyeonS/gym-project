@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { MemberEntity, MemberRole, TRole } from './member.entity';
+import { RefreshTokenEntity } from './refreshToken.entity';
 
 @Entity({ name: 'center' })
 export class CenterEntity extends MemberEntity {
@@ -25,4 +26,7 @@ export class CenterEntity extends MemberEntity {
     default: 'CENTER',
   })
   role: TRole;
+
+  @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.center)
+  refreshTokens: RefreshTokenEntity[];
 }

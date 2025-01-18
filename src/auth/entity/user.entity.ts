@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { MemberEntity, MemberRole, TRole } from './member.entity';
+import { RefreshTokenEntity } from './refreshToken.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity extends MemberEntity {
@@ -13,4 +14,8 @@ export class UserEntity extends MemberEntity {
     default: 'USER',
   })
   role: TRole;
+
+  // user.entity.ts
+  @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.user)
+  refreshTokens: RefreshTokenEntity[];
 }
