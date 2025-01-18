@@ -276,4 +276,24 @@ export class AuthController {
   async searchAddress(@Query('query') query: string) {
     return this.authService.searchAddress(query);
   }
+
+  // 회원 탈퇴 엔드포인트
+  @Post('/delete')
+  @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
+  async deleteUser(
+    @GetUser() member: UserEntity | CenterEntity,
+    @Body('password') password: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    this.logger.verbose(`Request to delete user: ${member.signId}`);
+
+    await this.authService.deleteUser(member.signId, password);
+
+    return {
+      success: true,
+      message: 'User deleted successfully.',
+    };
+  }
 }

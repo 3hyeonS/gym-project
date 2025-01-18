@@ -339,7 +339,7 @@ export class AuthService {
     return accessToken;
   }
 
-  // 카카오 주소 검색색
+  // 카카오 주소 검색
   async searchAddress(query: string): Promise<any> {
     if (!query) {
       throw new HttpException(
@@ -374,5 +374,37 @@ export class AuthService {
         error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  // 회원 탈퇴 기능
+  async deleteUser(signId: string, password: string): Promise<void> {
+    this.logger.verbose(`Attempting to delete user with signId: ${signId}`);
+
+    // 사용자 조회
+    const existingMember = await this.findMemberBySignId(signId);
+
+    if (!existingMember) {
+      this.logger.warn(`Member not found with signId: ${signId}`);
+      throw new UnauthorizedException('User not found.');
+    }
+
+    // 비밀번호 확인
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      existingMember.password,
+    );
+    if (!isPasswordValid) {
+      this.logger.warn(`Invalid password for signId: ${signId}`);
+      throw new UnauthorizedException('Invalid password.');
+    }
+
+    // 탈퇴 처리
+    if (existingMember instanceof UserEntity) {
+      await this.usersRepository.delete({ signId });
+    } else if (existingMember instanceof CenterEntity) {
+      await this.centersRepository.delete({ signId });
+    }
+
+    this.logger.verbose(`User deleted successfully with signId: ${signId}`);
   }
 }
