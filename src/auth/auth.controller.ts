@@ -25,13 +25,20 @@ import { CenterEntity } from './entity/center.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { MemberEntity } from './entity/member.entity';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { RefreshTokenEntity } from './entity/refreshToken.entity';
+import { Repository } from 'typeorm';
 
 @Controller('/auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name); // Logger 인스턴스 생성
-  private readonly jwtService: JwtService; // JwtService 주입
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    @InjectRepository(RefreshTokenEntity)
+    private readonly refreshTokenRepository: Repository<RefreshTokenEntity>,
+    private readonly jwtService: JwtService, // JwtService 주입
+  ) {}
 
   // 일반 회원 가입 기능
   @Post('/signup/user')
@@ -260,9 +267,9 @@ export class AuthController {
   }
 
   // 카카오 로그인 콜백 엔드포인트
-  @Post('/kakao/callback')
+  @Get('/kakao/callback')
   async kakaoCallback(
-    @Body('authorizationCode') kakaoAuthResCode: string,
+    @Query('authorizationCode') kakaoAuthResCode: string,
     @Res() res: Response,
   ) {
     // Authorization Code 받기
@@ -307,6 +314,8 @@ export class AuthController {
   }> {
     this.logger.verbose(`Request to delete user: ${member.signId}`);
 
+    await this.refreshTokenRepository.delete({ signId: member.signId });
+
     await this.authService.deleteUser(member.signId, password);
 
     return {
@@ -332,7 +341,6 @@ export class AuthController {
       // 쿠키에서 signId를 추출하거나, Refresh Token에서 직접 처리 가능
       const decodedToken = this.jwtService.decode(refreshToken) as any;
       const signId = decodedToken?.signId;
-
       if (!signId) {
         throw new UnauthorizedException('Invalid token payload.');
       }

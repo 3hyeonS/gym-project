@@ -347,7 +347,11 @@ export class AuthService {
 
   // Refresh Token 생성 및 저장
   async generateRefreshToken(member: MemberEntity): Promise<string> {
-    const refreshToken = crypto.randomBytes(64).toString('hex'); // Refresh Token 생성
+    const payload = { signId: member.signId };
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: 'refresh_secret', // Refresh Token 비밀 키
+      expiresIn: '7d', // 만료 시간 (7일)
+    }); // Refresh Token 생성
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
 

@@ -17,7 +17,7 @@ export class RefreshTokenEntity {
   @Column({ type: 'varchar', name: 'token' })
   token: string;
 
-  @Column({ type: 'varchar', name: 'signId', unique: true })
+  @Column({ type: 'varchar', name: 'signId' })
   signId: string;
 
   @Column({ type: 'datetime', name: 'expiresAt' })
@@ -31,9 +31,9 @@ export class RefreshTokenEntity {
   })
   center: CenterEntity;
 
-  @CreateDateColumn({ type: 'datetime', name: 'expiresAt' })
+  @CreateDateColumn({ type: 'datetime', name: 'createdAt' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'datetime', name: 'expiresAt' })
+  @UpdateDateColumn({ type: 'datetime', name: 'updateAt' })
   updatedAt: Date;
 }
