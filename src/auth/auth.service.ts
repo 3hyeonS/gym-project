@@ -47,7 +47,7 @@ export class AuthService {
     this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    await this.checkSignIdExists(signId);
+    // await this.checkSignIdExists(signId);
 
     // 이메일 중복 확인
     // await this.checkEmailExists(email);
@@ -88,7 +88,7 @@ export class AuthService {
     this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    await this.checkSignIdExists(signId);
+    // await this.checkSignIdExists(signId);
 
     // 이메일 중복 확인
     // await this.checkEmailExists(email);
@@ -115,9 +115,7 @@ export class AuthService {
   }
 
   // 통합 로그인 메서드
-  async signIn(
-    signInRequestDto: SignInRequestDto,
-  ): Promise<{
+  async signIn(signInRequestDto: SignInRequestDto): Promise<{
     accessToken: string;
     refreshToken: string;
     member: UserEntity | CenterEntity;
@@ -154,6 +152,7 @@ export class AuthService {
     this.logger.verbose(`Checking if signId exists: ${signId}`);
 
     const existingMember = await this.findMemberBySignId(signId);
+    console.log(existingMember);
     if (existingMember) {
       this.logger.warn(`signId already exists: ${signId}`);
       throw new ConflictException('signId already exists');
@@ -174,7 +173,7 @@ export class AuthService {
       : await this.centersRepository.findOne({
           where: { signId },
         });
-
+    console.log(user, center);
     return user || center;
   }
 

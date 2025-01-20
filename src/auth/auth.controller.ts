@@ -84,7 +84,7 @@ export class AuthController {
 
   // signId 중복 체크
   @Post('/signup/checkId')
-  async checkSignIdExists(@Body() signId: string): Promise<{
+  async checkSignIdExists(@Body('signId') signId: string): Promise<{
     success: boolean;
     message: string;
   }> {
@@ -145,7 +145,7 @@ export class AuthController {
           : new CenterResponseDto(member);
 
       this.logger.verbose(
-        `User signed in successfully: ${JSON.stringify(responseDto)}`,
+        `${member.role} signed in successfully: ${JSON.stringify(responseDto)}`,
       );
 
       // [2] 응답 반환 JSON으로 토큰 전송
@@ -158,13 +158,11 @@ export class AuthController {
       );
     } catch (error) {
       this.logger.error(`Signin failed: ${error.message}`);
-      res
-        .status(401)
-        .json(
-          new ApiResponse(false, 401, 'Sign in failed', {
-            error: error.message,
-          }),
-        );
+      res.status(401).json(
+        new ApiResponse(false, 401, 'Sign in failed', {
+          error: error.message,
+        }),
+      );
     }
   }
 
@@ -205,7 +203,7 @@ export class AuthController {
   // 카카오 로그인 콜백 엔드포인트
   @Get('/kakao/callback')
   async kakaoCallback(
-    @Query('authorizationCode') kakaoAuthResCode: string,
+    @Query('code') kakaoAuthResCode: string,
     @Res() res: Response,
   ) {
     // Authorization Code 받기
@@ -221,7 +219,7 @@ export class AuthController {
       new ApiResponse(true, 200, 'Sign in successful', {
         accessToken: accessToken, // 헤더로 사용할 Access Token
         refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-        user: userResponseDto,
+        member: userResponseDto,
       }),
     );
   }
