@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { UserEntity } from './entity/user.entity';
 import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import * as bcrypt from 'bcryptjs';
@@ -21,7 +21,6 @@ import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -387,6 +386,12 @@ export class AuthService {
   // Refresh Token 삭제 (로그아웃 및 회원 탈퇴 시)
   async revokeRefreshToken(signId: string): Promise<void> {
     await this.refreshTokenRepository.delete({ signId });
+  }
+
+  // 만료된 refresh token 삭제
+  async removeExpiredTokens(): Promise<void> {
+    const now = new Date();
+    await this.refreshTokenRepository.delete({ expiresAt: LessThan(now) });
   }
 
   // Access Token 갱신
