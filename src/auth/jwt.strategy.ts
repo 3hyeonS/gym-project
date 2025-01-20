@@ -7,6 +7,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserEntity } from './entity/user.entity';
 import * as dotenv from 'dotenv';
 import { CenterEntity } from './entity/center.entity';
+import { JwtSecretRequestType } from '@nestjs/jwt';
 
 // .env 파일 로드
 dotenv.config();
@@ -22,15 +23,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // [3] Cookie에 있는 JWT 토큰을 추출
     super({
       secretOrKey: process.env.JWT_SECRET || 'default-secret', // 검증하기 위한 Secret Key
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => {
-          let token = null;
-          if (req && req.cookies) {
-            token = req.cookies['Authorization']; // 쿠키에서 JWT 추출
-          }
-          return token;
-        },
-      ]),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization 헤더에서 토큰 추
+      // jwtFromRequest: ExtractJwt.fromExtractors([
+      //   (req: Request) => {
+      //     let token = null;
+      //     if (req && req.cookies) {
+      //       token = req.cookies['Authorization']; // 쿠키에서 JWT 추출
+      //     }
+      //     return token;
+      //   },
+      // ]),
     });
   } // [4] Secret Key로 검증 - 인스턴스 생성 자체가 Secret Key로 JWT 토큰 검증과정
 

@@ -63,7 +63,7 @@ export class AuthController {
 
   // 센터 회원 가입 기능
   @Post('/signup/center')
-  async centersignUp(
+  async centerSignUp(
     @Body() centerSignUpRequestDto: CenterSignUpRequestDto,
   ): Promise<ApiResponse<CenterResponseDto>> {
     this.logger.verbose(
@@ -111,90 +111,21 @@ export class AuthController {
     success: boolean;
     message: string;
   }> {
-    this.logger.verbose(`Checking if businessId valid: ${businessId}`);
-    // 10자리 숫자인가?
-    if (!/^[0-9]{10}$/.test(businessId)) {
-      this.logger.warn(`businessId is not valid: ${businessId}`);
-      return {
-        success: false,
-        message: '유효하지 않은 사업자 등록 번호입니다.',
-      };
-    }
-
-    // 각 자리에 대한 가중치 값
-    const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
-
-    // 마지막 숫자는 체크디지트
-    const checkDigit = parseInt(businessId[9], 10);
-
-    // 가중치를 곱한 합계를 계산
-    let sum = 0;
-    for (let i = 0; i < weights.length; i++) {
-      const digit = parseInt(businessId[i], 10);
-      if (i === 8) {
-        // 8번째 자리 가중치 계산 시 추가로 10을 곱한 뒤 10으로 나눈 몫을 더함
-        sum += Math.floor((digit * weights[i]) / 10);
-      }
-      sum += digit * weights[i];
-    }
-
-    // 10으로 나눈 나머지를 계산하고, 이를 10에서 뺀 값이 체크디지트와 일치해야 유효함
-    const calculatedCheckDigit = (10 - (sum % 10)) % 10;
-    const isvalid = checkDigit === calculatedCheckDigit;
-
-    if (isvalid) {
+    const isValid = await this.authService.checkBusinessIdValid(businessId);
+    if (isValid) {
       this.logger.verbose(`businessId is valid: ${businessId}`);
-      return { success: isvalid, message: '유효한 사업자 등록 번호입니다.' };
+      return { success: isValid, message: '유효한 사업자 등록 번호입니다.' };
     } else {
       this.logger.warn(`businessId is not valid: ${businessId}`);
       return {
-        success: isvalid,
+        success: isValid,
         message: '유효하지 않은 사업자 등록 번호입니다.',
       };
     }
   }
 
-  // 일반 회원 로그인 기능
-  @Post('/signin/user')
-  async userSignIn(
-    @Body() signInRequestDto: SignInRequestDto,
-    @Res() res: Response,
-  ): Promise<void> {
-    this.logger.verbose(
-      `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
-    );
-    const { jwtToken, refreshToken, user } =
-      await this.authService.userSignIn(signInRequestDto);
-    const userResponseDto = new UserResponseDto(user);
-    this.logger.verbose(
-      `User signed in successfully: ${JSON.stringify(userResponseDto)}`,
-    );
-
-    // [3] 쿠키 설정
-    res.cookie('Authorization', jwtToken, {
-      httpOnly: true, // 클라이언트 측 스크립트에서 쿠키 접근 금지
-      secure: false, // HTTPS에서만 쿠키 전송, 임시 비활성화
-      maxAge: 3600000, // 1시간
-      sameSite: 'none', // CSRF 공격 방어
-    });
-
-    res.cookie('RefreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 7 * 24 * 3600000, // 7일
-      sameSite: 'none',
-    });
-
-    res.status(200).json(
-      new ApiResponse(true, 200, 'Sign in successful', {
-        jwtToken,
-        user: userResponseDto,
-      }),
-    );
-  }
-
-  // 센터 회원 로그인 기능
-  @Post('/signin/center')
+  // 통합 로그인 엔드포인트
+  @Post('/signin')
   async signIn(
     @Body() signInRequestDto: SignInRequestDto,
     @Res() res: Response,
@@ -202,34 +133,39 @@ export class AuthController {
     this.logger.verbose(
       `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
     );
-    const { jwtToken, refreshToken, center } =
-      await this.authService.centerSignIn(signInRequestDto);
-    const centerResponsetDto = new CenterResponseDto(center);
-    this.logger.verbose(
-      `User signed in successfully: ${JSON.stringify(centerResponsetDto)}`,
-    );
 
-    // [3] 쿠키 설정
-    res.cookie('Authorization', jwtToken, {
-      httpOnly: true, // 클라이언트 측 스크립트에서 쿠키 접근 금지
-      secure: false, // HTTPS에서만 쿠키 전송, 임시 비활성화
-      maxAge: 3600000, // 1시간
-      sameSite: 'none', // CSRF 공격 방어
-    });
+    try {
+      // [1] 로그인 처리
+      const { accessToken, refreshToken, member } =
+        await this.authService.signIn(signInRequestDto);
 
-    res.cookie('RefreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 7 * 24 * 3600000, // 7일
-      sameSite: 'none',
-    });
+      const responseDto =
+        member instanceof UserEntity
+          ? new UserResponseDto(member)
+          : new CenterResponseDto(member);
 
-    res.status(200).json(
-      new ApiResponse(true, 200, 'Sign in successful', {
-        jwtToken,
-        center: centerResponsetDto,
-      }),
-    );
+      this.logger.verbose(
+        `User signed in successfully: ${JSON.stringify(responseDto)}`,
+      );
+
+      // [2] 응답 반환 JSON으로 토큰 전송
+      res.status(200).json(
+        new ApiResponse(true, 200, 'Sign in successful', {
+          accessToken: accessToken, // 헤더로 사용할 Access Token
+          refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
+          member: responseDto,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(`Signin failed: ${error.message}`);
+      res
+        .status(401)
+        .json(
+          new ApiResponse(false, 401, 'Sign in failed', {
+            error: error.message,
+          }),
+        );
+    }
   }
 
   // 인증된 회원이 들어갈 수 있는 테스트 URL 경로
@@ -273,16 +209,9 @@ export class AuthController {
     @Res() res: Response,
   ) {
     // Authorization Code 받기
-    const { jwtToken, user } =
+    const { accessToken, refreshToken, user } =
       await this.authService.signInWithKakao(kakaoAuthResCode);
 
-    // 쿠키에 JWT 설정
-    res.cookie('Authorization', jwtToken, {
-      httpOnly: false, // 클라이언트 측 스크립트에서 쿠키 접근 금지
-      secure: false, // HTTPS에서만 쿠키 전송, 임시 비활성화
-      maxAge: 3600000, // 1시간
-      sameSite: 'none', // CSRF 공격 방어
-    });
     const userResponseDto = new UserResponseDto(user);
 
     this.logger.verbose(
@@ -290,7 +219,8 @@ export class AuthController {
     );
     res.status(200).json(
       new ApiResponse(true, 200, 'Sign in successful', {
-        jwtToken,
+        accessToken: accessToken, // 헤더로 사용할 Access Token
+        refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
         user: userResponseDto,
       }),
     );
@@ -326,11 +256,12 @@ export class AuthController {
 
   // refresh
   @Post('/refresh')
+  @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
   async refresh(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies?.RefreshToken; // 쿠키에서 Refresh Token 가져오기
+    const refreshToken = req.headers['authorization']?.split(' ')[1]; // 헤더에서 Refresh Token 추출
 
     if (!refreshToken) {
-      this.logger.warn('No refresh token found in cookies');
+      this.logger.warn('No refresh token found in header');
       return res.status(401).json({
         success: false,
         message: 'Refresh token is required.',
@@ -338,35 +269,20 @@ export class AuthController {
     }
 
     try {
-      // 쿠키에서 signId를 추출하거나, Refresh Token에서 직접 처리 가능
+      // refresh token 에서 signId 추출출
       const decodedToken = this.jwtService.decode(refreshToken) as any;
       const signId = decodedToken?.signId;
       if (!signId) {
         throw new UnauthorizedException('Invalid token payload.');
       }
-
       const { accessToken, refreshToken: newRefreshToken } =
         await this.authService.refreshAccessToken(signId, refreshToken);
-
-      // 새 Access Token과 Refresh Token을 쿠키에 저장
-      res.cookie('Authorization', accessToken, {
-        httpOnly: true,
-        secure: false,
-        maxAge: 3600000, // 1시간
-        sameSite: 'none',
-      });
-
-      res.cookie('RefreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: false,
-        maxAge: 7 * 24 * 3600000, // 7일
-        sameSite: 'none',
-      });
 
       res.status(200).json({
         success: true,
         message: 'Token refreshed successfully',
-        accessToken,
+        accessToken: accessToken,
+        refreshToken: newRefreshToken,
       });
     } catch (error) {
       this.logger.error(`Failed to refresh token: ${error.message}`);
@@ -382,9 +298,6 @@ export class AuthController {
   @UseGuards(AuthGuard())
   async logout(@GetUser() member: MemberEntity, @Res() res: Response) {
     await this.authService.revokeRefreshToken(member.signId);
-
-    res.clearCookie('Authorization');
-    res.clearCookie('RefreshToken');
 
     res.status(200).json({
       success: true,

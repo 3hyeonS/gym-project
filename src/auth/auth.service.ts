@@ -114,60 +114,35 @@ export class AuthService {
     return savedCenter;
   }
 
-  // 일반 회원 로그인
-  async userSignIn(
+  // 통합 로그인 메서드
+  async signIn(
     signInRequestDto: SignInRequestDto,
-  ): Promise<{ jwtToken: string; refreshToken: string; user: UserEntity }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    member: UserEntity | CenterEntity;
+  }> {
     const { signId, password } = signInRequestDto;
-    this.logger.verbose(`Attempting to sign in user with signId: ${signId}`);
+    this.logger.verbose(`Attempting to sign in for with signId: ${signId}`);
 
     try {
-      const existingUser = await this.findMemberBySignId(signId);
+      // [1] 회원 정보 조회
+      const existingMember = await this.findMemberBySignId(signId);
 
       if (
-        !existingUser ||
-        existingUser instanceof CenterEntity ||
-        !(await bcrypt.compare(password, existingUser.password))
+        !existingMember ||
+        !(await bcrypt.compare(password, existingMember.password))
       ) {
         this.logger.warn(`Failed login attempt for signId: ${signId}`);
         throw new UnauthorizedException('Incorrect signId or password.');
       }
-      // [1] JWT 토큰 생성 (Secret + Payload), refresh 토큰 생성
-      const jwtToken = await this.generateJwtToken(existingUser);
-      const refreshToken = await this.generateRefreshToken(existingUser);
 
-      // [2] 사용자 정보 반환
-      return { jwtToken, refreshToken, user: existingUser };
-    } catch (error) {
-      this.logger.error('Signin failed', error.stack);
-      throw error;
-    }
-  }
+      // [2] 회원 유형 판별 및 토큰 생성
+      const accessToken = await this.generateJwtToken(existingMember);
+      const refreshToken = await this.generateRefreshToken(existingMember);
 
-  // 센터 회원 로그인
-  async centerSignIn(
-    signInRequestDto: SignInRequestDto,
-  ): Promise<{ jwtToken: string; refreshToken: string; center: CenterEntity }> {
-    const { signId, password } = signInRequestDto;
-    this.logger.verbose(`Attempting to sign in user with signId: ${signId}`);
-
-    try {
-      const existingCenter = await this.findMemberBySignId(signId);
-
-      if (
-        !existingCenter ||
-        existingCenter instanceof UserEntity ||
-        !(await bcrypt.compare(password, existingCenter.password))
-      ) {
-        this.logger.warn(`Failed login attempt for signId: ${signId}`);
-        throw new UnauthorizedException('Incorrect signId or password.');
-      }
-      // [1] JWT 토큰 생성 (Secret + Payload), refresh 토큰 생성
-      const jwtToken = await this.generateJwtToken(existingCenter);
-      const refreshToken = await this.generateRefreshToken(existingCenter);
-
-      // [2] 사용자 정보 반환
-      return { jwtToken, refreshToken, center: existingCenter };
+      // [3] 사용자 정보 반환
+      return { accessToken, refreshToken, member: existingMember };
     } catch (error) {
       this.logger.error('Signin failed', error.stack);
       throw error;
@@ -255,7 +230,7 @@ export class AuthService {
       return existingUser;
     }
 
-    // 비밀번호 필드에 랜덤 문자열 생성
+    // signId, password 필드에 랜덤 문자열 생성
     const temporaryId = uuidv4();
     const temporaryPassword = uuidv4(); // 랜덤 문자열 생성
     const hashedPassword = await this.hashPassword(temporaryPassword);
@@ -276,12 +251,12 @@ export class AuthService {
   // 카카오 로그인
   async signInWithKakao(
     kakaoAuthResCode: string,
-  ): Promise<{ jwtToken: string; user: UserEntity }> {
+  ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
     // Authorization Code로 Kakao API에 Access Token 요청
-    const accessToken = await this.getKakaoAccessToken(kakaoAuthResCode);
+    const kakaoAccessToken = await this.getKakaoAccessToken(kakaoAuthResCode);
 
     // Access Token으로 Kakao 사용자 정보 요청
-    const kakaoUserInfo = await this.getKakaoUserInfo(accessToken);
+    const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
 
     // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
     const user = await this.signUpWithKakao(
@@ -290,13 +265,13 @@ export class AuthService {
     );
 
     // [1] JWT 토큰 생성 (Secret + Payload)
-    const jwtToken = await this.generateJwtToken(user);
-
+    const accessToken = await this.generateJwtToken(user);
+    const refreshToken = await this.generateRefreshToken(user);
     // [2] 사용자 정보 반환
-    return { jwtToken, user };
+    return { accessToken, refreshToken, user };
   }
 
-  // Kakao Authorization Code로 Access Token 요청
+  // Kakao Authorization Code로 Kakao Access Token 요청
   async getKakaoAccessToken(code: string): Promise<string> {
     const tokenUrl = 'https://kauth.kakao.com/oauth/token';
     const payload = {
@@ -317,7 +292,7 @@ export class AuthService {
     return response.data.access_token; // Access Token 반환
   }
 
-  // Access Token으로 Kakao 사용자 정보 요청
+  // Kakao Access Token으로 Kakao 사용자 정보 요청
   async getKakaoUserInfo(accessToken: string): Promise<any> {
     const userInfoUrl = 'https://kapi.kakao.com/v2/user/me';
     const response = await firstValueFrom(
@@ -480,5 +455,44 @@ export class AuthService {
     this.revokeRefreshToken(signId);
 
     this.logger.verbose(`User deleted successfully with signId: ${signId}`);
+  }
+
+  //사업자 등록 번호 유효성 검사
+  checkBusinessIdValid(businessId: string): boolean {
+    this.logger.verbose(`Checking if businessId valid: ${businessId}`);
+    // 10자리 숫자인가?
+    if (!/^[0-9]{10}$/.test(businessId)) {
+      this.logger.warn(`businessId is not valid: ${businessId}`);
+      return false;
+    }
+
+    // 각 자리에 대한 가중치 값
+    const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
+
+    // 마지막 숫자는 체크디지트
+    const checkDigit = parseInt(businessId[9], 10);
+
+    // 가중치를 곱한 합계를 계산
+    let sum = 0;
+    for (let i = 0; i < weights.length; i++) {
+      const digit = parseInt(businessId[i], 10);
+      if (i === 8) {
+        // 8번째 자리 가중치 계산 시 추가로 10을 곱한 뒤 10으로 나눈 몫을 더함
+        sum += Math.floor((digit * weights[i]) / 10);
+      }
+      sum += digit * weights[i];
+    }
+
+    // 10으로 나눈 나머지를 계산하고, 이를 10에서 뺀 값이 체크디지트와 일치해야 유효함
+    const calculatedCheckDigit = (10 - (sum % 10)) % 10;
+    const isvalid = checkDigit === calculatedCheckDigit;
+
+    if (isvalid) {
+      this.logger.verbose(`businessId is valid: ${businessId}`);
+    } else {
+      this.logger.warn(`businessId is not valid: ${businessId}`);
+    }
+
+    return isvalid;
   }
 }
