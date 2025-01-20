@@ -48,7 +48,7 @@ export class AuthService {
     this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    // await this.checkSignIdExists(signId);
+    await this.checkSignIdExists(signId);
 
     // 이메일 중복 확인
     // await this.checkEmailExists(email);
@@ -89,7 +89,7 @@ export class AuthService {
     this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    // await this.checkSignIdExists(signId);
+    await this.checkSignIdExists(signId);
 
     // 이메일 중복 확인
     // await this.checkEmailExists(email);

@@ -46,7 +46,7 @@ export class AuthController {
     @Body() userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<ApiResponse<UserResponseDto>> {
     this.logger.verbose(
-      `Attempting to sign up user with email: ${userSignUpRequestDto.email}`,
+      `Attempting to sign up user with signId: ${userSignUpRequestDto.signId}`,
     );
     const user = await this.authService.userSignUp(userSignUpRequestDto);
     const userResponseDto = new UserResponseDto(user);
@@ -67,7 +67,7 @@ export class AuthController {
     @Body() centerSignUpRequestDto: CenterSignUpRequestDto,
   ): Promise<ApiResponse<CenterResponseDto>> {
     this.logger.verbose(
-      `Attempting to sign up user with email: ${centerSignUpRequestDto.email}`,
+      `Attempting to sign up user with signId: ${centerSignUpRequestDto.signId}`,
     );
     const center = await this.authService.centerSignUp(centerSignUpRequestDto);
     const centerResponseDto = new CenterResponseDto(center);
@@ -200,7 +200,7 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.verbose(
-      `Attempting to sign in user with email: ${signInRequestDto.email}`,
+      `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
     );
     const { jwtToken, refreshToken, center } =
       await this.authService.centerSignIn(signInRequestDto);
@@ -242,12 +242,12 @@ export class AuthController {
     if (member instanceof UserEntity) {
       memberResponseDto = new UserResponseDto(member);
       this.logger.verbose(
-        `Authenticated user accessing test route: ${member.email}`,
+        `Authenticated user accessing test route: ${member.signId}`,
       );
     } else {
       memberResponseDto = new CenterResponseDto(member);
       this.logger.verbose(
-        `Authenticated center accessing test route: ${member.email}`,
+        `Authenticated center accessing test route: ${member.signId}`,
       );
     }
 

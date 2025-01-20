@@ -14,7 +14,7 @@ export class RefreshTokenEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'token' })
+  @Column({ type: 'varchar', name: 'token', unique: true })
   token: string;
 
   @Column({ type: 'varchar', name: 'signId' })
