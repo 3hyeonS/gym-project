@@ -4,7 +4,7 @@ export class SignIdRequestDto {
   @ApiProperty({
     type: String,
     description: '중복 검사할 signId',
-    example: 'signidexample',
+    example: 'sampleid',
   })
   sigId: string;
 }

@@ -1,21 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpException,
-  HttpStatus,
-  Post,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { GymsService } from './gyms.service';
-import {
-  ApiExtraModels,
-  ApiNotFoundResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { allGymDto } from './dto/all-gym-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
@@ -36,15 +21,14 @@ export class GymsController {
   @Get()
   @ApiOperation({
     summary: 'Welcome Gyms 출력',
-    description: 'Welcome Gyms 출력',
   })
   @PrimitiveApiResponse({
     status: 200,
-    description: '문자 출력에 성공했습니다.',
+    description: '문자 출력 성공',
     type: 'string',
-    example: 'Welcome',
+    example: 'Welcome Gyms',
   })
-  @ResponseMsg('성공적으로 문자를 출력했습니다.')
+  @ResponseMsg('문자 출력에 성공')
   getHello(): string {
     return this.gymsService.getHello();
   }
@@ -53,15 +37,14 @@ export class GymsController {
   @Get('getAll')
   @ApiOperation({
     summary: '모든 헬스장 불러오기',
-    description: '전체 리스트 출력',
   })
   @GenericApiResponse({
     status: 200,
-    description: '성공적으로 모든 헬스장을 불러왔습니다.',
+    description: '모든 헬스장 불러오기 성공',
     model: allGymDto,
     isArray: true,
   })
-  @ResponseMsg('성공적으로 모든 헬스장을 불러왔습니다.')
+  @ResponseMsg('모든 헬스장 불러오기 성공')
   async getAll() {
     const allGyms = await this.gymsService.getAll();
 
@@ -70,18 +53,16 @@ export class GymsController {
 
   // 선택 조건에 맞는 헬스장 불러오기
   @Post()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: '조건에 맞는 헬스장 불러오기',
-    description: '해당 조건의 헬스장 리스트 출력',
   })
   @GenericApiResponse({
-    status: 200,
-    description: '성공적으로 해당 조건의 헬스장을 불러왔습니다.',
+    status: 201,
+    description: '해당 조건의 헬스장 불러오기 성공',
     model: SearchedGymDto,
     isArray: true,
   })
-  @ResponseMsg('성공적으로 모든 헬스장을 불러왔습니다.')
+  @ResponseMsg('해당 조건의 헬스장 불러오기 성공')
   async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
     const searchedGyms =
       await this.gymsService.searchSelected(selectedOptionsDto);

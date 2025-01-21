@@ -10,18 +10,17 @@ import { PrimitiveApiResponse } from './decorators/primitive-api-response-decora
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  @ResponseMsg('성공적으로 문자를 출력했습니다.')
   @ApiOperation({
     summary: 'Welcome App 출력',
-    description: 'Welcome App 출력',
   })
   @PrimitiveApiResponse({
     status: 200,
-    description: '문자 출력에 성공했습니다.',
+    description: '문자 출력 성공',
     type: 'string',
     example: 'Welcome',
   })
+  @ResponseMsg('문자 출력 성공')
+  @Get()
   getHello(): string {
     return this.appService.getHello();
   }

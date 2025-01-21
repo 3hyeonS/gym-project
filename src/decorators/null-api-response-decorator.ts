@@ -15,7 +15,21 @@ export const NullApiResponse = (option: PrimitiveApiResponseOption) => {
       status: option.status || 777,
       description: option.description || '설명 없음',
       schema: {
-        allOf: [{ $ref: getSchemaPath(ResponseDto) }],
+        allOf: [
+          { $ref: getSchemaPath(ResponseDto) },
+          {
+            properties: {
+              message: {
+                type: 'string',
+                example: option.description,
+              },
+              statusCode: {
+                type: 'number',
+                example: option.status,
+              },
+            },
+          },
+        ],
       },
     }),
   );

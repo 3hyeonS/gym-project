@@ -25,6 +25,14 @@ export const PrimitiveApiResponse = (option: PrimitiveApiResponseOption) => {
             { $ref: getSchemaPath(ResponseDto) },
             {
               properties: {
+                message: {
+                  type: 'string',
+                  example: option.description,
+                },
+                statusCode: {
+                  type: 'number',
+                  example: option.status,
+                },
                 data: {
                   type: 'array',
                   items: {
@@ -49,6 +57,14 @@ export const PrimitiveApiResponse = (option: PrimitiveApiResponseOption) => {
             { $ref: getSchemaPath(ResponseDto) },
             {
               properties: {
+                message: {
+                  type: 'string',
+                  example: option.description,
+                },
+                statusCode: {
+                  type: 'number',
+                  example: option.status,
+                },
                 data: {
                   type: option.type,
                   example: option.example,

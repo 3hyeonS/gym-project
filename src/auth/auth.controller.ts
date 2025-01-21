@@ -24,12 +24,10 @@ import { MemberEntity } from './entity/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
-import { Repository } from 'typeorm';
 import {
   ApiBearerAuth,
   ApiExtraModels,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
@@ -43,7 +41,8 @@ import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
 import { SignIdRequestDto } from './dto/signId-request-dto';
 import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 import { AddressRequestDto } from './dto/address-request-dto';
-import { NullApiResponse } from 'src/decorators/null-api-response-dto';
+import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
+import { PasswordRequestDto } from './dto/password-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -54,92 +53,37 @@ export class AuthController {
 
   constructor(
     private authService: AuthService,
-    @InjectRepository(RefreshTokenEntity)
     private readonly jwtService: JwtService, // JwtService 주입
   ) {}
 
   //문자 출력
   @ApiOperation({
     summary: 'Welcome Authorization 출력',
-    description: 'Welcome Authorization 출력',
   })
   @PrimitiveApiResponse({
     status: 200,
-    description: '문자 출력에 성공했습니다.',
+    description: '문자 출력 성공',
     type: 'string',
-    example: 'Welcome',
+    example: 'Welcome Authorization',
   })
-  @ResponseMsg('성공적으로 문자를 출력했습니다.')
+  @ResponseMsg('문자 출력 성공')
   @Get()
   getHello(): string {
     return this.authService.getHello();
   }
 
-  // 일반 회원 가입 기능
-  @ApiOperation({
-    summary: '회원가입(유저)',
-    description: '일반유저, 관리자 회원가입',
-  })
-  @ResponseMsg('회원가입에 성공했습니다.')
-  @GenericApiResponse({
-    status: 200,
-    description: '회원가입에 성공했습니다.',
-    model: UserResponseDto,
-  })
-  @Post('/signup/user')
-  async userSignUp(
-    @Body() userSignUpRequestDto: UserSignUpRequestDto,
-  ): Promise<UserResponseDto> {
-    this.logger.verbose(
-      `Attempting to sign up user with signId: ${userSignUpRequestDto.signId}`,
-    );
-    const user = await this.authService.userSignUp(userSignUpRequestDto);
-    const userResponseDto = new UserResponseDto(user);
-    this.logger.verbose(
-      `User signed up successfully: ${JSON.stringify(userResponseDto)}`,
-    );
-    return userResponseDto;
-  }
-
-  // 센터 회원 가입 기능
-  @ApiOperation({
-    summary: '회원가입(센터)',
-    description: '센터 회원가입',
-  })
-  @ResponseMsg('회원가입에 성공했습니다.')
-  @GenericApiResponse({
-    status: 200,
-    description: '회원가입에 성공했습니다.',
-    model: CenterResponseDto,
-  })
-  @Post('/signup/center')
-  async centerSignUp(
-    @Body() centerSignUpRequestDto: CenterSignUpRequestDto,
-  ): Promise<CenterResponseDto> {
-    this.logger.verbose(
-      `Attempting to sign up user with signId: ${centerSignUpRequestDto.signId}`,
-    );
-    const center = await this.authService.centerSignUp(centerSignUpRequestDto);
-    const centerResponseDto = new CenterResponseDto(center);
-    this.logger.verbose(
-      `User signed up successfully: ${JSON.stringify(centerResponseDto)}`,
-    );
-    return centerResponseDto;
-  }
-
   // signId 중복 체크
   @ApiOperation({
     summary: '아이디 중복 검사',
-    description: '기존 회원(유저, 센터, 관리자 모두)과의 signId 중복 여부',
+    description: `- true: 사용 가능한 아이디  \n- false: 사용 불가능한 아이디`,
   })
-  @ResponseMsg('아이디 중복 검사 완료')
   @PrimitiveApiResponse({
-    status: 200,
-    description:
-      '아이디 중복 검사 완료  \ntrue: 사용 가능한 아이디  \nfalse: 사용 불가능한 아이디',
+    status: 201,
+    description: '아이디 중복 검사 완료',
     type: 'boolean',
     example: true,
   })
+  @ResponseMsg('아이디 중복 검사 완료')
   @Post('/signup/checkId')
   async checkSignIdExists(
     @Body() signIdRequestDto: SignIdRequestDto,
@@ -161,19 +105,62 @@ export class AuthController {
     }
   }
 
+  // 일반 회원 가입 기능
+  @ApiOperation({
+    summary: '회원가입 (일반 유저, 관리자)',
+    description:
+      'role은 관리자일 경우만 ADMIN으로 입력  \n(일반 유저는 입력 안해도 무관)',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '회원가입 성공',
+    model: UserResponseDto,
+  })
+  @ResponseMsg('회원가입 성공')
+  @Post('/signup/user')
+  async userSignUp(
+    @Body() userSignUpRequestDto: UserSignUpRequestDto,
+  ): Promise<UserResponseDto> {
+    this.logger.verbose(
+      `Attempting to sign up user with signId: ${userSignUpRequestDto.signId}`,
+    );
+    const user = await this.authService.userSignUp(userSignUpRequestDto);
+    const userResponseDto = new UserResponseDto(user);
+    this.logger.verbose(
+      `User signed up successfully: ${JSON.stringify(userResponseDto)}`,
+    );
+    return userResponseDto;
+  }
+
+  // 주소 검색
+  @ApiOperation({
+    summary: '주소 검색',
+    description: 'query에 주소 검색 시 상세 주소값 후보 반환',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '주소 검색 완료',
+    model: addressResponseDto,
+    isArray: true,
+  })
+  @ResponseMsg('주소 검색 완료')
+  @Get('address')
+  async searchAddress(@Query() addressRequestDto: AddressRequestDto) {
+    return this.authService.searchAddress(addressRequestDto.address);
+  }
+
   //사업자 등록 번호 유효성 검사
   @ApiOperation({
     summary: '사업자 등록 번호 유효성 검사',
-    description: '사업자 등록 번호의 유효성 여부',
+    description: `- true: 유효한 사업자 등록 번호  \n- false: 유효하지 않은 사업자 등록 번호`,
   })
-  @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
   @PrimitiveApiResponse({
-    status: 200,
-    description:
-      '사업자 등록 번호 유효성 검사를 완료했습니다.  \ntrue: 유효한 사업자 등록 번호  \nfalse: 유효하지 않은 사업자 등록 번호',
+    status: 201,
+    description: '사업자 등록 번호 유효성 검사 완료',
     type: 'boolean',
     example: true,
   })
+  @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
   @Post('/signup/checkBusinessId')
   async checkBusinessIdValid(
     @Body() businessIdRequestDto: BusinessIdRequestDto,
@@ -194,21 +181,29 @@ export class AuthController {
     }
   }
 
-  // 주소 검색
+  // 센터 회원 가입 기능
   @ApiOperation({
-    summary: '주소 검색',
-    description: 'query에 주소 검색 시 상세 주소값 후보 반환',
+    summary: '회원가입 (센터)',
   })
-  @ResponseMsg('주소 검색 완료')
   @GenericApiResponse({
-    status: 200,
-    description: '성공적으로 상세 주소값 후보들을 반환했습니다.',
-    model: addressResponseDto,
-    isArray: true,
+    status: 201,
+    description: '회원가입 성공',
+    model: CenterResponseDto,
   })
-  @Get('address')
-  async searchAddress(@Query() addressRequestDto: AddressRequestDto) {
-    return this.authService.searchAddress(addressRequestDto.address);
+  @ResponseMsg('회원가입 성공')
+  @Post('/signup/center')
+  async centerSignUp(
+    @Body() centerSignUpRequestDto: CenterSignUpRequestDto,
+  ): Promise<CenterResponseDto> {
+    this.logger.verbose(
+      `Attempting to sign up user with signId: ${centerSignUpRequestDto.signId}`,
+    );
+    const center = await this.authService.centerSignUp(centerSignUpRequestDto);
+    const centerResponseDto = new CenterResponseDto(center);
+    this.logger.verbose(
+      `User signed up successfully: ${JSON.stringify(centerResponseDto)}`,
+    );
+    return centerResponseDto;
   }
 
   // 통합 로그인 엔드포인트
@@ -216,12 +211,12 @@ export class AuthController {
     summary: '통합 로그인',
     description: '유저, 관리자, 센터 통합 로그인',
   })
-  @ResponseMsg('로그인 성공')
   @GenericApiResponse({
-    status: 200,
-    description: '로그인에 성공했습니다.',
+    status: 201,
+    description: '로그인 성공',
     model: tokenResponseDto,
   })
+  @ResponseMsg('로그인 성공')
   @Post('/signin')
   async signIn(@Body() signInRequestDto: SignInRequestDto): Promise<{
     member: UserResponseDto | CenterResponseDto;
@@ -289,16 +284,16 @@ export class AuthController {
   //   return responseDto;
   // }
 
-  // 카카오 로그인 페이지 요청
+  // 카카오 로그인/회원가입 페이지 요청
   @ApiOperation({
-    summary: '카카오 로그인 페이지',
-    description: '카카오 로그인 페이지로 리다이렉트',
+    summary: '카카오 로그인/회원가입 페이지',
+    description: '카카오 로그인/회원가입 페이지로 리다이렉트',
   })
-  @ResponseMsg('카카오 로그인 페이지 요청 성공')
   @NullApiResponse({
     status: 200,
-    description: '카카오 로그인페이지 요청에 성공했습니다.',
+    description: '카카오 로그인/회원가입 페이지 요청 성공',
   })
+  @ResponseMsg('카카오 로그인/회원가입 페이지 요청 성공')
   @Get('/kakao')
   @UseGuards(AuthGuard('kakao'))
   async kakaoLogin() {
@@ -310,12 +305,12 @@ export class AuthController {
     summary: '카카오 로그인 콜백',
     description: '카카오 로그인 콜백 및 accessToken, refreshToken 생성',
   })
-  @ResponseMsg('카카오 로그인 성공')
   @GenericApiResponse({
     status: 200,
-    description: '로그인에 성공했습니다.',
+    description: '카카오 로그인에 성공',
     model: tokenResponseDto,
   })
+  @ResponseMsg('카카오 로그인 성공')
   @Get('/kakao/callback')
   async kakaoCallback(@Query('code') kakaoAuthResCode: string): Promise<{
     accessToken: string;
@@ -344,11 +339,11 @@ export class AuthController {
     summary: '로그 아웃',
     description: '로그 아웃 및 refreshToken 삭제',
   })
-  @ResponseMsg('로그아웃 성공')
   @NullApiResponse({
-    status: 200,
-    description: '로그아웃에 성공했습니다.',
+    status: 201,
+    description: '로그아웃 성공',
   })
+  @ResponseMsg('로그아웃 성공')
   @Post('/signout')
   @UseGuards(AuthGuard())
   async logout(@GetUser() member: MemberEntity) {
@@ -361,20 +356,23 @@ export class AuthController {
     summary: '회원 탈퇴',
     description: '회원 탈퇴 및 refreshToken 삭제',
   })
-  @ResponseMsg('회원 탈퇴 성공')
   @NullApiResponse({
-    status: 200,
-    description: '회원 탈퇴에 성공했습니다',
+    status: 201,
+    description: '회원 탈퇴 성공',
   })
+  @ResponseMsg('회원 탈퇴 성공')
   @Post('/delete')
   @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
   async deleteUser(
     @GetUser() member: UserEntity | CenterEntity,
-    @Body('password') password: string,
+    @Body() passwordRequestDto: PasswordRequestDto,
   ) {
     this.logger.verbose(`Request to delete user: ${member.signId}`);
     await this.authService.revokeRefreshToken(member.signId);
-    await this.authService.deleteUser(member.signId, password);
+    await this.authService.deleteUser(
+      member.signId,
+      passwordRequestDto.password,
+    );
   }
 
   // 토큰 재발급
@@ -385,8 +383,8 @@ export class AuthController {
   @Post('/refresh')
   @ResponseMsg('토큰 재발급 성공')
   @GenericApiResponse({
-    status: 200,
-    description: '토큰 재발급에 성공했습니다.',
+    status: 201,
+    description: '토큰 재발급 성공',
     model: tokenResponseDto,
   })
   async refresh(
@@ -417,10 +415,14 @@ export class AuthController {
         signId,
         refreshTokenRequestDto.refreshToken,
       );
+      const responseDto =
+        member instanceof UserEntity
+          ? new UserResponseDto(member)
+          : new CenterResponseDto(member);
       return {
         accessToken: accessToken,
         refreshToken: newRefreshToken,
-        member,
+        member: responseDto,
       };
     } catch (error) {
       this.logger.error(`Failed to refresh token: ${error.message}`);

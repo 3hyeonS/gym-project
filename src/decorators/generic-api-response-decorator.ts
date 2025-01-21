@@ -1,6 +1,7 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 import { ResponseDto } from 'src/response-dto';
+import { stringToBytes } from 'uuid/dist/cjs/v35';
 
 export interface GenericApiResponseOption<TModel extends Type<any>> {
   model: TModel;
@@ -23,6 +24,14 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
             { $ref: getSchemaPath(ResponseDto) },
             {
               properties: {
+                message: {
+                  type: 'string',
+                  example: option.description,
+                },
+                statusCode: {
+                  type: 'number',
+                  example: option.status,
+                },
                 data: {
                   type: 'array',
                   items: {
@@ -46,6 +55,14 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
             { $ref: getSchemaPath(ResponseDto) },
             {
               properties: {
+                message: {
+                  type: 'string',
+                  example: option.description,
+                },
+                statusCode: {
+                  type: 'number',
+                  example: option.status,
+                },
                 data: {
                   $ref: getSchemaPath(option.model),
                 },
