@@ -6,8 +6,6 @@ import {
   Logger,
   Post,
   Query,
-  Req,
-  Res,
   UnauthorizedException,
   UseGuards,
   UseInterceptors,
@@ -15,7 +13,6 @@ import {
 import { AuthService } from './auth.service';
 import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import { UserEntity } from './entity/user.entity';
-import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { UserResponseDto } from './dto/user-response.dto';
@@ -30,10 +27,8 @@ import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { Repository } from 'typeorm';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiExtraModels,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
@@ -307,7 +302,7 @@ export class AuthController {
   })
   @Get('/kakao')
   @UseGuards(AuthGuard('kakao'))
-  async kakaoLogin(@Req() req: Request) {
+  async kakaoLogin() {
     // 이 부분은 Passport의 AuthGuard에 의해 카카오 로그인 페이지로 리다이렉트
   }
 
@@ -359,9 +354,10 @@ export class AuthController {
   })
   @Post('/signout')
   @UseGuards(AuthGuard())
-  async logout(@GetUser() member: MemberEntity, @Res() res: Response) {
+  async logout(@GetUser() member: MemberEntity) {
     try {
       await this.authService.revokeRefreshToken(member.signId);
+      return null;
     } catch (error) {
       return error.message;
     }
@@ -391,6 +387,8 @@ export class AuthController {
     await this.refreshTokenRepository.delete({ signId: member.signId });
 
     await this.authService.deleteUser(member.signId, password);
+
+    return null;
   }
 
   // refresh

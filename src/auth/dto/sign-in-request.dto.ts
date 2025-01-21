@@ -15,7 +15,7 @@ export class SignInRequestDto extends MemberEntity {
   @ApiProperty({
     type: String,
     description: '비밀번호',
-    example: 'sampleid',
+    example: 'sample@pw123',
   })
   @IsNotEmpty()
   @MaxLength(20)

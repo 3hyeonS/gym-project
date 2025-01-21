@@ -45,10 +45,7 @@ async function bootstrap() {
   // // cookie parser 미들웨어 추가
   // app.use(cookieParser());
 
-  // app.enableCors({
-  //   origin: 'http://localhost:3000', // 클라이언트 URL
-  //   credentials: true, // 쿠키 허용
-  // });
+  app.enableCors();
 
   await app.listen(process.env.PORT ?? 3000);
 }
