@@ -144,7 +144,7 @@ export class AuthController {
     isArray: true,
   })
   @ResponseMsg('주소 검색 완료')
-  @Get('address')
+  @Get('/signup/address')
   async searchAddress(@Query() addressRequestDto: AddressRequestDto) {
     return this.authService.searchAddress(addressRequestDto.address);
   }
