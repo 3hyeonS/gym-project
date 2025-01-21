@@ -15,14 +15,13 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
-  getSchemaPath,
 } from '@nestjs/swagger';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { allGymDto } from './dto/all-gym-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
-import { ResponseDto } from './dto/response-dto';
+import { ResponseDto } from '../response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
 
 @ApiTags('GymsList')
@@ -34,6 +33,10 @@ export class GymsController {
 
   //문자 출력
   @Get()
+  @ApiOperation({
+    summary: 'Welcome Gyms 출력',
+    description: 'Welcome Gyms 출력',
+  })
   @ApiResponse({
     status: 200,
     description: '성공적으로 문자를 출력했습니다.',

@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { LoggingInterceptor } from './interceptors/logging-interceptor';
 import { ValidationPipe } from '@nestjs/common';
-import * as cookieParser from 'cookie-parser';
+// import * as cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 
 dotenv.config(); // .env 파일 로드
@@ -32,13 +32,13 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, documentFactory);
 
-  // cookie parser 미들웨어 추가
-  app.use(cookieParser());
+  // // cookie parser 미들웨어 추가
+  // app.use(cookieParser());
 
-  app.enableCors({
-    origin: 'http://localhost:3000', // 클라이언트 URL
-    credentials: true, // 쿠키 허용
-  });
+  // app.enableCors({
+  //   origin: 'http://localhost:3000', // 클라이언트 URL
+  //   credentials: true, // 쿠키 허용
+  // });
 
   await app.listen(process.env.PORT ?? 3000);
 }

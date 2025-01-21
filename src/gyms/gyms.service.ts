@@ -8,6 +8,7 @@ import { allGymDto } from './dto/all-gym-dto';
 
 @Injectable()
 export class GymsService {
+  //문자 출력
   getHello(): string {
     return 'Welcome Gyms';
   }

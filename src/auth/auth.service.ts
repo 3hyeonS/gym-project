@@ -21,12 +21,13 @@ import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
+import { addressResponseDto } from './dto/address-response.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { CenterResponseDto } from './dto/center-response.dto';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly API_URL =
-    'https://dapi.kakao.com/v2/local/search/address.json';
 
   constructor(
     @InjectRepository(UserEntity)
@@ -38,6 +39,11 @@ export class AuthService {
     private jwtService: JwtService,
     private httpService: HttpService,
   ) {}
+
+  // 문자 출력
+  getHello(): string {
+    return 'Welcome Autorization';
+  }
 
   // 일반 회원 가입
   async userSignUp(
@@ -385,7 +391,7 @@ export class AuthService {
   }
 
   // 카카오 주소 검색
-  async searchAddress(query: string): Promise<any> {
+  async searchAddress(query: string): Promise<addressResponseDto> {
     if (!query) {
       throw new HttpException(
         '검색어(query)가 필요합니다.',
@@ -393,10 +399,12 @@ export class AuthService {
       );
     }
 
+    const api_url = 'https://dapi.kakao.com/v2/local/search/address.json';
+
     try {
       // 카카오 API 호출
       const response = await firstValueFrom(
-        this.httpService.get(this.API_URL, {
+        this.httpService.get(api_url, {
           headers: {
             Authorization: `KakaoAK ${process.env.KAKAO_CLIENT_ID}`,
           },
@@ -459,8 +467,9 @@ export class AuthService {
   //사업자 등록 번호 유효성 검사
   checkBusinessIdValid(businessId: string): boolean {
     this.logger.verbose(`Checking if businessId valid: ${businessId}`);
+    const cleanedBusinessId = businessId.replace(/-/g, '');
     // 10자리 숫자인가?
-    if (!/^[0-9]{10}$/.test(businessId)) {
+    if (!/^[0-9]{10}$/.test(cleanedBusinessId)) {
       this.logger.warn(`businessId is not valid: ${businessId}`);
       return false;
     }
@@ -469,12 +478,12 @@ export class AuthService {
     const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
 
     // 마지막 숫자는 체크디지트
-    const checkDigit = parseInt(businessId[9], 10);
+    const checkDigit = parseInt(cleanedBusinessId[9], 10);
 
     // 가중치를 곱한 합계를 계산
     let sum = 0;
     for (let i = 0; i < weights.length; i++) {
-      const digit = parseInt(businessId[i], 10);
+      const digit = parseInt(cleanedBusinessId[i], 10);
       if (i === 8) {
         // 8번째 자리 가중치 계산 시 추가로 10을 곱한 뒤 10으로 나눈 몫을 더함
         sum += Math.floor((digit * weights[i]) / 10);
