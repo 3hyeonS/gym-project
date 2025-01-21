@@ -23,6 +23,7 @@ import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
 import { ResponseDto } from '../response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
+import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -37,18 +38,11 @@ export class GymsController {
     summary: 'Welcome Gyms 출력',
     description: 'Welcome Gyms 출력',
   })
-  @ApiResponse({
+  @PrimitiveApiResponse({
     status: 200,
-    description: '성공적으로 문자를 출력했습니다.',
-    content: {
-      'application/json': {
-        example: {
-          message: '성공적으로 문자를 출력했습니다.',
-          statusCode: 200,
-          data: 'Welcome Gyms',
-        },
-      },
-    },
+    description: '문자 출력에 성공했습니다.',
+    type: 'string',
+    example: 'Welcome',
   })
   @ResponseMsg('성공적으로 문자를 출력했습니다.')
   getHello(): string {
@@ -88,28 +82,9 @@ export class GymsController {
     isArray: true,
   })
   @ResponseMsg('성공적으로 모든 헬스장을 불러왔습니다.')
-  @ApiNotFoundResponse({
-    description: '해당 조건의 헬스장이 없습니다.',
-    content: {
-      'application/json': {
-        example: {
-          message: '해당 조건의 헬스장이 없습니다.',
-          statusCode: 404,
-        },
-      },
-    },
-  })
   async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
     const searchedGyms =
       await this.gymsService.searchSelected(selectedOptionsDto);
-
-    if (searchedGyms.length == 0) {
-      throw new HttpException(
-        '해당 조건의 헬스장이 없습니다.',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
     return searchedGyms;
   }
 }

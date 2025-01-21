@@ -16,7 +16,17 @@ async function bootstrap() {
     .setDescription('GYMS API 문서입니다.')
     .setVersion('1.0')
     // .addTag('gyms')
-    // .addBearerAuth()   #authorization
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'accessToken',
+    )
     // .setTermsOfService('사이트 주소')
     // .setContact('담당자', '사이트 주소', '이메일 주소')
     // .setLicense('라이센스명', '사이트 주소')

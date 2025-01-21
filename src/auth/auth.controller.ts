@@ -29,6 +29,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { Repository } from 'typeorm';
 import {
+  ApiBearerAuth,
+  ApiBody,
   ApiExtraModels,
   ApiOperation,
   ApiResponse,
@@ -41,6 +43,10 @@ import { GenericApiResponse } from 'src/decorators/generic-api-response-decorato
 import { addressResponseDto } from './dto/address-response.dto';
 import { tokenResponseDto } from './dto/token-response-dto';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
+import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
+import { SignIdRequestDto } from './dto/signId-request-dto';
+import { BusinessIdRequestDto } from './dto/businessId-request-dto';
+import { AddressRequestDto } from './dto/address-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -139,16 +145,18 @@ export class AuthController {
     example: true,
   })
   @Post('/signup/checkId')
-  async checkSignIdExists(@Body('signId') signId: string): Promise<boolean> {
-    this.logger.verbose(`Checking if signId exists: ${signId}`);
+  async checkSignIdExists(
+    @Body() signIdRequestDto: SignIdRequestDto,
+  ): Promise<boolean> {
+    this.logger.verbose(`Checking if signId exists: ${signIdRequestDto.sigId}`);
     try {
       // signId 중복 확인
-      await this.authService.checkSignIdExists(signId);
-      this.logger.verbose(`signId is available: ${signId}`);
+      await this.authService.checkSignIdExists(signIdRequestDto.sigId);
+      this.logger.verbose(`signId is available: ${signIdRequestDto.sigId}`);
       return true;
     } catch (error) {
       if (error instanceof ConflictException) {
-        this.logger.warn(`signId already exists: ${signId}`);
+        this.logger.warn(`signId already exists: ${signIdRequestDto.sigId}`);
         return false;
       }
 
@@ -172,14 +180,20 @@ export class AuthController {
   })
   @Post('/signup/checkBusinessId')
   async checkBusinessIdValid(
-    @Body('businessId') businessId: string,
+    @Body() businessIdRequestDto: BusinessIdRequestDto,
   ): Promise<boolean> {
-    const isValid = await this.authService.checkBusinessIdValid(businessId);
+    const isValid = await this.authService.checkBusinessIdValid(
+      businessIdRequestDto.businessId,
+    );
     if (isValid) {
-      this.logger.verbose(`businessId is valid: ${businessId}`);
+      this.logger.verbose(
+        `businessId is valid: ${businessIdRequestDto.businessId}`,
+      );
       return isValid;
     } else {
-      this.logger.warn(`businessId is not valid: ${businessId}`);
+      this.logger.warn(
+        `businessId is not valid: ${businessIdRequestDto.businessId}`,
+      );
       return isValid;
     }
   }
@@ -187,7 +201,7 @@ export class AuthController {
   // 주소 검색
   @ApiOperation({
     summary: '주소 검색',
-    description: '주소 검색 시 상세 주소값 후보 반환',
+    description: 'query에 주소 검색 시 상세 주소값 후보 반환',
   })
   @ResponseMsg('주소 검색 완료')
   @GenericApiResponse({
@@ -197,8 +211,8 @@ export class AuthController {
     isArray: true,
   })
   @Get('address')
-  async searchAddress(@Query('query') query: string) {
-    return this.authService.searchAddress(query);
+  async searchAddress(@Query() addressRequestDto: AddressRequestDto) {
+    return this.authService.searchAddress(addressRequestDto.address);
   }
 
   // 통합 로그인 엔드포인트
@@ -309,10 +323,7 @@ export class AuthController {
     model: tokenResponseDto,
   })
   @Get('/kakao/callback')
-  async kakaoCallback(
-    @Query('code') kakaoAuthResCode: string,
-    @Res() res: Response,
-  ): Promise<{
+  async kakaoCallback(@Query('code') kakaoAuthResCode: string): Promise<{
     accessToken: string;
     refreshToken: string;
     member: UserResponseDto;
@@ -334,6 +345,7 @@ export class AuthController {
   }
 
   // 로그아웃
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '로그 아웃',
     description: '로그 아웃 및 refreshToken 삭제',
@@ -352,6 +364,7 @@ export class AuthController {
   }
 
   // 회원 탈퇴 엔드포인트
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '회원 탈퇴',
     description: '회원 탈퇴 및 refreshToken 삭제',
@@ -388,19 +401,22 @@ export class AuthController {
     description: '토큰 재발급에 성공했습니다.',
     model: tokenResponseDto,
   })
-  @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
-  async refresh(@Body('refreshToekn') refreshToken: string): Promise<{
+  async refresh(
+    @Body() refreshTokenRequestDto: RefreshTokenRequestDto,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
     member: UserResponseDto | CenterResponseDto;
   }> {
-    if (!refreshToken) {
+    if (!refreshTokenRequestDto.refreshToken) {
       throw new UnauthorizedException('보유한 refreshToken 없음');
     }
 
     try {
       // refresh token 에서 signId 추출
-      const decodedToken = this.jwtService.decode(refreshToken) as any;
+      const decodedToken = this.jwtService.decode(
+        refreshTokenRequestDto.refreshToken,
+      ) as any;
       const signId = decodedToken?.signId;
       if (!signId) {
         throw new UnauthorizedException('유효하지 않은 refreshToken');
@@ -409,12 +425,10 @@ export class AuthController {
         accessToken,
         refreshToken: newRefreshToken,
         member,
-      } = await this.authService.refreshAccessToken(signId, refreshToken);
-
-      const responseDto =
-        member instanceof UserEntity
-          ? new UserResponseDto(member)
-          : new CenterResponseDto(member);
+      } = await this.authService.refreshAccessToken(
+        signId,
+        refreshTokenRequestDto.refreshToken,
+      );
       return {
         accessToken: accessToken,
         refreshToken: newRefreshToken,
