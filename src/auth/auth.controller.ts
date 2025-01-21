@@ -29,6 +29,7 @@ import {
   ApiBearerAuth,
   ApiExtraModels,
   ApiOperation,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
@@ -42,6 +43,7 @@ import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
 import { SignIdRequestDto } from './dto/signId-request-dto';
 import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 import { AddressRequestDto } from './dto/address-request-dto';
+import { NullApiResponse } from 'src/decorators/null-api-response-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -53,7 +55,6 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     @InjectRepository(RefreshTokenEntity)
-    private readonly refreshTokenRepository: Repository<RefreshTokenEntity>,
     private readonly jwtService: JwtService, // JwtService 주입
   ) {}
 
@@ -294,11 +295,9 @@ export class AuthController {
     description: '카카오 로그인 페이지로 리다이렉트',
   })
   @ResponseMsg('카카오 로그인 페이지 요청 성공')
-  @PrimitiveApiResponse({
+  @NullApiResponse({
     status: 200,
     description: '카카오 로그인페이지 요청에 성공했습니다.',
-    type: 'null',
-    example: null,
   })
   @Get('/kakao')
   @UseGuards(AuthGuard('kakao'))
@@ -346,35 +345,26 @@ export class AuthController {
     description: '로그 아웃 및 refreshToken 삭제',
   })
   @ResponseMsg('로그아웃 성공')
-  @PrimitiveApiResponse({
+  @NullApiResponse({
     status: 200,
     description: '로그아웃에 성공했습니다.',
-    type: 'null',
-    example: null,
   })
   @Post('/signout')
   @UseGuards(AuthGuard())
   async logout(@GetUser() member: MemberEntity) {
-    try {
-      await this.authService.revokeRefreshToken(member.signId);
-      return null;
-    } catch (error) {
-      return error.message;
-    }
+    await this.authService.revokeRefreshToken(member.signId);
   }
 
-  // 회원 탈퇴 엔드포인트
+  // 회원 탈퇴
   @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '회원 탈퇴',
     description: '회원 탈퇴 및 refreshToken 삭제',
   })
   @ResponseMsg('회원 탈퇴 성공')
-  @PrimitiveApiResponse({
+  @NullApiResponse({
     status: 200,
-    description: '회원 탈퇴에 성공했습니다.',
-    type: 'null',
-    example: null,
+    description: '회원 탈퇴에 성공했습니다',
   })
   @Post('/delete')
   @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
@@ -383,15 +373,11 @@ export class AuthController {
     @Body('password') password: string,
   ) {
     this.logger.verbose(`Request to delete user: ${member.signId}`);
-
-    await this.refreshTokenRepository.delete({ signId: member.signId });
-
+    await this.authService.revokeRefreshToken(member.signId);
     await this.authService.deleteUser(member.signId, password);
-
-    return null;
   }
 
-  // refresh
+  // 토큰 재발급
   @ApiOperation({
     summary: '토큰 재발급',
     description: 'accessToken 기간 만료 시 accessToken 및 refreshToken 재발급',
