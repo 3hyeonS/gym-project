@@ -306,12 +306,12 @@ export class AuthController {
     description: '카카오 로그인 콜백 및 accessToken, refreshToken 생성',
   })
   @GenericApiResponse({
-    status: 200,
+    status: 201,
     description: '카카오 로그인에 성공',
     model: tokenResponseDto,
   })
   @ResponseMsg('카카오 로그인 성공')
-  @Get('/kakao/callback')
+  @Post('/kakao/callback')
   async kakaoCallback(@Query('code') kakaoAuthResCode: string): Promise<{
     accessToken: string;
     refreshToken: string;
