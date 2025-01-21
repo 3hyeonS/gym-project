@@ -2,19 +2,21 @@ import { applyDecorators, Type } from '@nestjs/common';
 import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 import { ResponseDto } from 'src/response-dto';
 
-export interface GenericApiResponseOption<TModel extends Type<any>> {
-  model: TModel;
+type Primary = string | number | boolean | null;
+export interface PrimitiveApiResponseOption {
   status?: number;
   description?: string;
   isArray?: boolean;
+  type: 'string' | 'boolean' | 'number' | 'null';
+  example: Primary;
 }
 
-export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
+export const PrimitiveApiResponse = (option: PrimitiveApiResponseOption) => {
   const isArrray = option.isArray || false;
 
   if (isArrray) {
     return applyDecorators(
-      ApiExtraModels(ResponseDto, option.model),
+      ApiExtraModels(ResponseDto),
       ApiResponse({
         status: option.status || 777,
         description: option.description || '설명 없음',
@@ -26,7 +28,8 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
                 data: {
                   type: 'array',
                   items: {
-                    $ref: getSchemaPath(option.model),
+                    type: option.type,
+                    example: option.example,
                   },
                 },
               },
@@ -37,7 +40,7 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
     );
   } else {
     return applyDecorators(
-      ApiExtraModels(ResponseDto, option.model),
+      ApiExtraModels(ResponseDto),
       ApiResponse({
         status: option.status || 777,
         description: option.description || '설명 없음',
@@ -47,7 +50,8 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
             {
               properties: {
                 data: {
-                  $ref: getSchemaPath(option.model),
+                  type: option.type,
+                  example: option.example,
                 },
               },
             },

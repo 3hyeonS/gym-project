@@ -4,7 +4,6 @@ import {
   HttpStatus,
   Injectable,
   Logger,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,8 +21,6 @@ import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import { CenterResponseDto } from './dto/center-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -350,7 +347,7 @@ export class AuthService {
   async validateRefreshToken(
     signId: string,
     refreshToken: string,
-  ): Promise<MemberEntity> {
+  ): Promise<UserEntity | CenterEntity> {
     const tokenEntity = await this.refreshTokenRepository.findOne({
       where: { token: refreshToken, signId },
       relations: ['user', 'center'],
@@ -378,7 +375,11 @@ export class AuthService {
   async refreshAccessToken(
     signId: string,
     refreshToken: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    member: UserEntity | CenterEntity;
+  }> {
     const member = await this.validateRefreshToken(signId, refreshToken);
 
     // 새 Access Token 생성
@@ -387,7 +388,11 @@ export class AuthService {
     // 새 Refresh Token 생성
     const newRefreshToken = await this.generateRefreshToken(member);
 
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      member: member,
+    };
   }
 
   // 카카오 주소 검색
