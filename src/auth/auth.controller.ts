@@ -75,7 +75,9 @@ export class AuthController {
   // signId 중복 체크
   @ApiOperation({
     summary: '아이디 중복 검사',
-    description: `- true: 사용 가능한 아이디  \n- false: 사용 불가능한 아이디`,
+    description: `
+    true: 사용 가능한 아이디  \n
+    false: 사용 불가능한 아이디`,
   })
   @PrimitiveApiResponse({
     status: 201,
@@ -108,8 +110,9 @@ export class AuthController {
   // 일반 회원 가입 기능
   @ApiOperation({
     summary: '회원가입 (일반 유저, 관리자)',
-    description:
-      'role은 관리자일 경우만 ADMIN으로 입력  \n(일반 유저는 입력 안해도 무관)',
+    description: `
+    role은 관리자일 경우만 ADMIN으로 입력  \n
+    (일반 유저는 입력 안해도 무관)`,
   })
   @GenericApiResponse({
     status: 201,
@@ -152,7 +155,9 @@ export class AuthController {
   //사업자 등록 번호 유효성 검사
   @ApiOperation({
     summary: '사업자 등록 번호 유효성 검사',
-    description: `- true: 유효한 사업자 등록 번호  \n- false: 유효하지 않은 사업자 등록 번호`,
+    description: `
+    true: 유효한 사업자 등록 번호 \n
+    false: 유효하지 않은 사업자 등록 번호`,
   })
   @PrimitiveApiResponse({
     status: 201,
@@ -287,13 +292,9 @@ export class AuthController {
   // 카카오 로그인/회원가입 페이지 요청
   @ApiOperation({
     summary: '카카오 로그인/회원가입 페이지',
-    description: '카카오 로그인/회원가입 페이지로 리다이렉트',
+    description: `카카오 로그인/회원가입 페이지로 redirect  \n
+    Swagger에서 redirect 테스트 불가. 외부에서 해당 엔드포인트 호출`,
   })
-  @NullApiResponse({
-    status: 200,
-    description: '카카오 로그인/회원가입 페이지 요청 성공',
-  })
-  @ResponseMsg('카카오 로그인/회원가입 페이지 요청 성공')
   @Get('/kakao')
   @UseGuards(AuthGuard('kakao'))
   async kakaoLogin() {
