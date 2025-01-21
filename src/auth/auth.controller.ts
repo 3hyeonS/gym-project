@@ -360,7 +360,11 @@ export class AuthController {
   @Post('/signout')
   @UseGuards(AuthGuard())
   async logout(@GetUser() member: MemberEntity, @Res() res: Response) {
-    await this.authService.revokeRefreshToken(member.signId);
+    try {
+      await this.authService.revokeRefreshToken(member.signId);
+    } catch (error) {
+      return error.message;
+    }
   }
 
   // 회원 탈퇴 엔드포인트
