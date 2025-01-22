@@ -41,6 +41,7 @@ import { SignIdRequestDto } from './dto/signId-request-dto';
 import { AddressRequestDto } from './dto/address-request-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
 import { BusinessIdRequestDto } from './dto/businessId-request-dto';
+import { BusinessIdIsValidResponseDto } from './dto/businessId-isvalid-response-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -153,52 +154,25 @@ export class AuthController {
     true: 유효한 사업자 등록 번호 \n
     false: 유효하지 않은 사업자 등록 번호`,
   })
+  @GenericApiResponse({
+    status: 201,
+    description: '사업자 등록 번호 유효성 검사 완료',
+    model: BusinessIdIsValidResponseDto,
+    isArray: true,
+  })
   @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
   @Post('/signup/checkBusinessId')
-  async checkBusinessStatus(
+  async checkBusinessIsValid(
     @Body() businessIdRequestDto: BusinessIdRequestDto,
   ) {
     if (!businessIdRequestDto.businessId) {
       throw new BadRequestException('사업자등록번호를 입력하세요.');
     }
 
-    return this.authService.checkBusinessStatus(
+    return this.authService.checkBusinessIdValid(
       businessIdRequestDto.businessId,
     );
   }
-  // //사업자 등록 번호 유효성 검사
-  // @ApiOperation({
-  //   summary: '사업자 등록 번호 유효성 검사',
-  //   description: `
-  //   true: 유효한 사업자 등록 번호 \n
-  //   false: 유효하지 않은 사업자 등록 번호`,
-  // })
-  // @PrimitiveApiResponse({
-  //   status: 201,
-  //   description: '사업자 등록 번호 유효성 검사 완료',
-  //   type: 'boolean',
-  //   example: true,
-  // })
-  // @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
-  // @Post('/signup/checkBusinessId')
-  // async checkBusinessIdValid(
-  //   @Body() businessIdRequestDto: BusinessIdRequestDto,
-  // ): Promise<boolean> {
-  //   const isValid = await this.authService.checkBusinessIdValid(
-  //     businessIdRequestDto.businessId,
-  //   );
-  //   if (isValid) {
-  //     this.logger.verbose(
-  //       `businessId is valid: ${businessIdRequestDto.businessId}`,
-  //     );
-  //     return isValid;
-  //   } else {
-  //     this.logger.warn(
-  //       `businessId is not valid: ${businessIdRequestDto.businessId}`,
-  //     );
-  //     return isValid;
-  //   }
-  // }
 
   // 센터 회원 가입 기능
   @ApiOperation({

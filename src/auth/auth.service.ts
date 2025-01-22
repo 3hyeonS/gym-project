@@ -447,16 +447,6 @@ export class AuthService {
       throw new UnauthorizedException('User not found.');
     }
 
-    // // 비밀번호 확인
-    // const isPasswordValid = await bcrypt.compare(
-    //   password,
-    //   existingMember.password,
-    // );
-    // if (!isPasswordValid) {
-    //   this.logger.warn(`Invalid password for signId: ${password}`);
-    //   throw new UnauthorizedException('Invalid password.');
-    // }
-
     // 탈퇴 처리
     if (existingMember instanceof UserEntity) {
       await this.usersRepository.delete({ signId });
@@ -471,47 +461,7 @@ export class AuthService {
     this.logger.verbose(`User deleted successfully with signId: ${signId}`);
   }
 
-  //사업자 등록 번호 유효성 검사
-  checkBusinessIdValid(businessId: string): boolean {
-    this.logger.verbose(`Checking if businessId valid: ${businessId}`);
-    const cleanedBusinessId = businessId.replace(/-/g, '');
-    // 10자리 숫자인가?
-    if (!/^[0-9]{10}$/.test(cleanedBusinessId)) {
-      this.logger.warn(`businessId is not valid: ${businessId}`);
-      return false;
-    }
-
-    // 각 자리에 대한 가중치 값
-    const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
-
-    // 마지막 숫자는 체크디지트
-    const checkDigit = parseInt(cleanedBusinessId[9], 10);
-
-    // 가중치를 곱한 합계를 계산
-    let sum = 0;
-    for (let i = 0; i < weights.length; i++) {
-      const digit = parseInt(cleanedBusinessId[i], 10);
-      if (i === 8) {
-        // 8번째 자리 가중치 계산 시 추가로 10을 곱한 뒤 10으로 나눈 몫을 더함
-        sum += Math.floor((digit * weights[i]) / 10);
-      }
-      sum += digit * weights[i];
-    }
-
-    // 10으로 나눈 나머지를 계산하고, 이를 10에서 뺀 값이 체크디지트와 일치해야 유효함
-    const calculatedCheckDigit = (10 - (sum % 10)) % 10;
-    const isvalid = checkDigit === calculatedCheckDigit;
-
-    if (isvalid) {
-      this.logger.verbose(`businessId is valid: ${businessId}`);
-    } else {
-      this.logger.warn(`businessId is not valid: ${businessId}`);
-    }
-
-    return isvalid;
-  }
-
-  async checkBusinessStatus(businessId: string): Promise<any> {
+  async checkBusinessIdValid(businessId: string): Promise<any> {
     const apiKey = process.env.API_KEY; // 발급받은 API 키 입력
     const url = `http://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${apiKey}`; // API 엔드포인트
     const cleanedBusinessId = businessId.replace(/-/g, '');
@@ -522,10 +472,10 @@ export class AuthService {
     try {
       const response = await lastValueFrom(this.httpService.post(url, params));
       const filteredData = response.data.data.map((item) => ({
-        b_no: item.b_no, // 사업자등록번호
-        b_stt: item.b_stt || '상태 없음', // 사업자 상태 (없으면 기본값)
-        b_stt_cd: item.b_stt_cd || '상태 코드 없음', // 사업자 상태 코드
-        tax_type: item.tax_type, // 세금 유형
+        businessId: item.b_no.replace(/^(\d{3})(\d{2})(\d{5})$/, '$1-$2-$3'), // 사업자등록번호
+        businessStatus: item.b_stt || '상태 없음', // 사업자 상태 (없으면 기본값)
+        businessStatusCode: item.b_stt_cd || '상태 코드 없음', // 사업자 상태 코드
+        taxType: item.tax_type, // 세금 유형
         isValid: item.b_stt_cd === '01',
       }));
       return filteredData;
