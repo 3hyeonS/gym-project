@@ -6,5 +6,5 @@ export class SignIdRequestDto {
     description: '중복 검사할 signId',
     example: 'sampleid',
   })
-  sigId: string;
+  signId: string;
 }

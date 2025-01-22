@@ -90,15 +90,12 @@ export class AuthController {
   async checkSignIdExists(
     @Body() signIdRequestDto: SignIdRequestDto,
   ): Promise<boolean> {
-    this.logger.verbose(`Checking if signId exists: ${signIdRequestDto.sigId}`);
     try {
       // signId 중복 확인
-      await this.authService.checkSignIdExists(signIdRequestDto.sigId);
-      this.logger.verbose(`signId is available: ${signIdRequestDto.sigId}`);
+      await this.authService.checkSignIdExists(signIdRequestDto.signId);
       return true;
     } catch (error) {
       if (error instanceof ConflictException) {
-        this.logger.warn(`signId already exists: ${signIdRequestDto.sigId}`);
         return false;
       }
 
@@ -254,7 +251,7 @@ export class AuthController {
       };
     } catch (error) {
       this.logger.error(`Signin failed: ${error.message}`);
-      return error.message;
+      throw error;
     }
   }
 
@@ -427,7 +424,7 @@ export class AuthController {
       };
     } catch (error) {
       this.logger.error(`Failed to refresh token: ${error.message}`);
-      return error.message;
+      return error;
     }
   }
 }
