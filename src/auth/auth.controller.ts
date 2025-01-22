@@ -42,7 +42,6 @@ import { SignIdRequestDto } from './dto/signId-request-dto';
 import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 import { AddressRequestDto } from './dto/address-request-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
-import { PasswordRequestDto } from './dto/password-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)

@@ -459,8 +459,10 @@ export class AuthService {
     // 탈퇴 처리
     if (existingMember instanceof UserEntity) {
       await this.usersRepository.delete({ signId });
-    } else if (existingMember instanceof CenterEntity) {
+      console.log('userdeleted');
+    } else {
       await this.centersRepository.delete({ signId });
+      console.log('centerdeleted');
     }
     //refreshToken 삭제
     this.revokeRefreshToken(signId);
