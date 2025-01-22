@@ -140,6 +140,7 @@ export class AuthController {
     status: 200,
     description: '주소 검색 완료',
     model: addressResponseDto,
+    isArray: true,
   })
   @ResponseMsg('주소 검색 완료')
   @Get('/signup/address')
@@ -157,7 +158,6 @@ export class AuthController {
     status: 201,
     description: '사업자 등록 번호 유효성 검사 완료',
     model: BusinessIdIsValidResponseDto,
-    isArray: true,
   })
   @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
   @Post('/signup/checkBusinessId')
