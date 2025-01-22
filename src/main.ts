@@ -30,7 +30,6 @@ async function bootstrap() {
     // .setTermsOfService('사이트 주소')
     // .setContact('담당자', '사이트 주소', '이메일 주소')
     // .setLicense('라이센스명', '사이트 주소')
-    .addServer('http://localhost:3000/', 'develop')
     // .addServer('http://13.209.47.246:3000/', 'production')
     .build();
 
