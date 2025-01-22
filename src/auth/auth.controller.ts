@@ -361,16 +361,10 @@ export class AuthController {
   @ResponseMsg('회원 탈퇴 성공')
   @Post('/delete')
   @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
-  async deleteUser(
-    @GetUser() member: UserEntity | CenterEntity,
-    @Body() passwordRequestDto: PasswordRequestDto,
-  ) {
+  async deleteUser(@GetUser() member: UserEntity | CenterEntity) {
     this.logger.verbose(`Request to delete user: ${member.signId}`);
     await this.authService.revokeRefreshToken(member.signId);
-    await this.authService.deleteUser(
-      member.signId,
-      passwordRequestDto.password,
-    );
+    await this.authService.deleteUser(member.signId);
   }
 
   // 토큰 재발급

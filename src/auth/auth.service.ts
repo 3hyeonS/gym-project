@@ -325,7 +325,6 @@ export class AuthService {
   async generateRefreshToken(member: MemberEntity): Promise<string> {
     const payload = { signId: member.signId };
     const refreshToken = this.jwtService.sign(payload, {
-      secret: 'refresh_secret', // Refresh Token 비밀 키
       expiresIn: '7d', // 만료 시간 (7일)
     }); // Refresh Token 생성
     const expiresAt = new Date();
@@ -435,7 +434,7 @@ export class AuthService {
   }
 
   // 회원 탈퇴 기능
-  async deleteUser(signId: string, password: string): Promise<void> {
+  async deleteUser(signId: string): Promise<void> {
     this.logger.verbose(`Attempting to delete user with signId: ${signId}`);
 
     // 사용자 조회
@@ -447,15 +446,15 @@ export class AuthService {
       throw new UnauthorizedException('User not found.');
     }
 
-    // 비밀번호 확인
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      existingMember.password,
-    );
-    if (!isPasswordValid) {
-      this.logger.warn(`Invalid password for signId: ${password}`);
-      throw new UnauthorizedException('Invalid password.');
-    }
+    // // 비밀번호 확인
+    // const isPasswordValid = await bcrypt.compare(
+    //   password,
+    //   existingMember.password,
+    // );
+    // if (!isPasswordValid) {
+    //   this.logger.warn(`Invalid password for signId: ${password}`);
+    //   throw new UnauthorizedException('Invalid password.');
+    // }
 
     // 탈퇴 처리
     if (existingMember instanceof UserEntity) {
