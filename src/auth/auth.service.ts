@@ -21,7 +21,6 @@ import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
-import { env } from 'process';
 
 @Injectable()
 export class AuthService {
