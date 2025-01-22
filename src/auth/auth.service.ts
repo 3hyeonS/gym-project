@@ -464,20 +464,21 @@ export class AuthService {
   async checkBusinessIdValid(businessId: string): Promise<any> {
     const apiKey = process.env.API_KEY; // 발급받은 API 키 입력
     const url = `http://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${apiKey}`; // API 엔드포인트
-    const cleanedBusinessId = businessId.replace(/-/g, '');
+    const cleanedBusinessId = businessId.replace(/-/g, ''); //하이픈 제거
     const params = {
       b_no: [cleanedBusinessId], // 사업자등록번호
     };
 
     try {
       const response = await lastValueFrom(this.httpService.post(url, params));
-      const filteredData = response.data.data.map((item) => ({
+      const item = response.data.data[0];
+      const filteredData = {
         businessId: item.b_no.replace(/^(\d{3})(\d{2})(\d{5})$/, '$1-$2-$3'), // 사업자등록번호
         businessStatus: item.b_stt || '상태 없음', // 사업자 상태 (없으면 기본값)
         businessStatusCode: item.b_stt_cd || '상태 코드 없음', // 사업자 상태 코드
         taxType: item.tax_type, // 세금 유형
         isValid: item.b_stt_cd === '01',
-      }));
+      };
       return filteredData;
     } catch (error) {
       throw new HttpException(
