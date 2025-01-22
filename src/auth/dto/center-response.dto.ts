@@ -12,7 +12,7 @@ export class CenterResponseDto {
   @ApiProperty({ example: '홍길동' })
   ceoName: string;
 
-  @ApiProperty({ example: '02-0000-0000' })
+  @ApiProperty({ example: '010-0000-0000' })
   phone: string;
 
   @ApiProperty({ example: '서울특별시 00구 00로 00' })

@@ -14,13 +14,14 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { v4 as uuidv4 } from 'uuid';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
+import { env } from 'process';
 
 @Injectable()
 export class AuthService {
@@ -508,5 +509,31 @@ export class AuthService {
     }
 
     return isvalid;
+  }
+
+  async checkBusinessStatus(businessId: string): Promise<any> {
+    const apiKey = process.env.API_KEY; // 발급받은 API 키 입력
+    const url = `http://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${apiKey}`; // API 엔드포인트
+    const cleanedBusinessId = businessId.replace(/-/g, '');
+    const params = {
+      b_no: [cleanedBusinessId], // 사업자등록번호
+    };
+
+    try {
+      const response = await lastValueFrom(this.httpService.post(url, params));
+      const filteredData = response.data.data.map((item) => ({
+        b_no: item.b_no, // 사업자등록번호
+        b_stt: item.b_stt || '상태 없음', // 사업자 상태 (없으면 기본값)
+        b_stt_cd: item.b_stt_cd || '상태 코드 없음', // 사업자 상태 코드
+        tax_type: item.tax_type, // 세금 유형
+        isValid: item.b_stt_cd === '01',
+      }));
+      return filteredData;
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'API 요청 실패',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

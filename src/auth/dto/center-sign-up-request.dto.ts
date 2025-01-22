@@ -74,10 +74,13 @@ export class CenterSignUpRequestDto extends CenterEntity {
   @ApiProperty({
     type: String,
     description: '대표 전화번호',
-    example: '02-0000-0000',
+    example: '010-0000-0000',
   })
   @IsNotEmpty()
   @MaxLength(20)
+  @Matches(/^\d{3}-\d{4}-\d{4}$/, {
+    message: '전화번호 형식에 어긋납니다.',
+  })
   phone: string;
 
   @ApiProperty({
@@ -87,6 +90,9 @@ export class CenterSignUpRequestDto extends CenterEntity {
   })
   @IsNotEmpty()
   @MaxLength(20)
+  @Matches(/^\d{3}-\d{2}-\d{5}$/, {
+    message: '사업자 등록 번호 형식에 어긋납니다.',
+  })
   businessId: string;
 
   @ApiProperty({

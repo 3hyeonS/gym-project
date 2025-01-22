@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -22,8 +23,6 @@ import { CenterEntity } from './entity/center.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { MemberEntity } from './entity/member.entity';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import {
   ApiBearerAuth,
   ApiExtraModels,
@@ -39,9 +38,9 @@ import { tokenResponseDto } from './dto/token-response-dto';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
 import { SignIdRequestDto } from './dto/signId-request-dto';
-import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 import { AddressRequestDto } from './dto/address-request-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
+import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -148,39 +147,58 @@ export class AuthController {
     return this.authService.searchAddress(addressRequestDto.address);
   }
 
-  //사업자 등록 번호 유효성 검사
   @ApiOperation({
     summary: '사업자 등록 번호 유효성 검사',
     description: `
     true: 유효한 사업자 등록 번호 \n
     false: 유효하지 않은 사업자 등록 번호`,
   })
-  @PrimitiveApiResponse({
-    status: 201,
-    description: '사업자 등록 번호 유효성 검사 완료',
-    type: 'boolean',
-    example: true,
-  })
   @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
   @Post('/signup/checkBusinessId')
-  async checkBusinessIdValid(
+  async checkBusinessStatus(
     @Body() businessIdRequestDto: BusinessIdRequestDto,
-  ): Promise<boolean> {
-    const isValid = await this.authService.checkBusinessIdValid(
+  ) {
+    if (!businessIdRequestDto.businessId) {
+      throw new BadRequestException('사업자등록번호를 입력하세요.');
+    }
+
+    return this.authService.checkBusinessStatus(
       businessIdRequestDto.businessId,
     );
-    if (isValid) {
-      this.logger.verbose(
-        `businessId is valid: ${businessIdRequestDto.businessId}`,
-      );
-      return isValid;
-    } else {
-      this.logger.warn(
-        `businessId is not valid: ${businessIdRequestDto.businessId}`,
-      );
-      return isValid;
-    }
   }
+  // //사업자 등록 번호 유효성 검사
+  // @ApiOperation({
+  //   summary: '사업자 등록 번호 유효성 검사',
+  //   description: `
+  //   true: 유효한 사업자 등록 번호 \n
+  //   false: 유효하지 않은 사업자 등록 번호`,
+  // })
+  // @PrimitiveApiResponse({
+  //   status: 201,
+  //   description: '사업자 등록 번호 유효성 검사 완료',
+  //   type: 'boolean',
+  //   example: true,
+  // })
+  // @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
+  // @Post('/signup/checkBusinessId')
+  // async checkBusinessIdValid(
+  //   @Body() businessIdRequestDto: BusinessIdRequestDto,
+  // ): Promise<boolean> {
+  //   const isValid = await this.authService.checkBusinessIdValid(
+  //     businessIdRequestDto.businessId,
+  //   );
+  //   if (isValid) {
+  //     this.logger.verbose(
+  //       `businessId is valid: ${businessIdRequestDto.businessId}`,
+  //     );
+  //     return isValid;
+  //   } else {
+  //     this.logger.warn(
+  //       `businessId is not valid: ${businessIdRequestDto.businessId}`,
+  //     );
+  //     return isValid;
+  //   }
+  // }
 
   // 센터 회원 가입 기능
   @ApiOperation({
@@ -371,13 +389,13 @@ export class AuthController {
     summary: '토큰 재발급',
     description: 'accessToken 기간 만료 시 accessToken 및 refreshToken 재발급',
   })
-  @Post('/refresh')
-  @ResponseMsg('토큰 재발급 성공')
   @GenericApiResponse({
     status: 201,
     description: '토큰 재발급 성공',
     model: tokenResponseDto,
   })
+  @ResponseMsg('토큰 재발급 성공')
+  @Post('/refresh')
   async refresh(
     @Body() refreshTokenRequestDto: RefreshTokenRequestDto,
   ): Promise<{

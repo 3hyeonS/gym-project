@@ -14,7 +14,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UserSignUpRequestDto extends UserEntity {
   @ApiProperty({
     type: String,
-    description: '아이디(6~16자리)  \n영소문자 및 숫자만 허용',
+    description: 'signId(6~16자리)  \n영소문자 및 숫자만 허용',
     example: 'sampleid',
   })
   @IsNotEmpty()
