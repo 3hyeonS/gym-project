@@ -140,7 +140,6 @@ export class AuthController {
     status: 200,
     description: '주소 검색 완료',
     model: addressResponseDto,
-    isArray: true,
   })
   @ResponseMsg('주소 검색 완료')
   @Get('/signup/address')
