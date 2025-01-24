@@ -1,4 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsNumber,
+  IsObject,
+  IsOptional,
+} from 'class-validator';
 
 export class SelectedOptionsDto {
   @ApiProperty({
@@ -8,7 +16,23 @@ export class SelectedOptionsDto {
     example: [0, 1, 0, 1, 1, 0, 1, 1, 1],
     default: [1, 1, 1, 1, 1, 1, 1, 1, 1],
   })
-  flexibleOptions: number[];
+  @IsArray({
+    message: 'flexibleOptions는 배열 형태만 가능합니다.',
+  })
+  @ArrayMinSize(9, {
+    message: 'flexibleOptions가 9개 미만입니다.',
+  }) // 최소 크기 9
+  @ArrayMaxSize(9, {
+    message: 'flexibleOptions가 9개를 초과했습니다.',
+  }) // 최대 크기 9
+  @IsNumber(
+    {},
+    {
+      each: true,
+      message: 'flexibleOptions의 요소는 숫자만 가능합니다.',
+    },
+  ) // 배열 내 각 요소가 숫자인지 확인
+  flexibleOptions: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
   @ApiProperty({
     type: 'object',
@@ -24,68 +48,112 @@ export class SelectedOptionsDto {
       경기: ['성남시 분당구', '고양시 덕양구'],
     },
   })
-  selectedLocation: Record<string, string[]>;
+  @IsObject({
+    message: 'selectedLocation은 Object 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedLocation?: Record<string, string[]>;
 
   @ApiProperty({
     type: [String],
     description: '근무 형태',
     example: ['정규직', '계약직'],
   })
-  selectedWorkType: string[];
+  @IsArray({
+    message: 'selectedWorkType은 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedWorkType?: string[];
 
   @ApiProperty({
     type: [String],
     description: '근무 시간',
     example: ['오전', '오후'],
   })
-  selectedWorkTime: string[];
+  @IsArray({
+    message: 'selectedWorkTime은 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedWorkTime?: string[];
 
   @ApiProperty({
     type: [String],
     description: '근무일 수',
     example: ['주5일', '주3일'],
   })
-  selectedWorkDays: string[];
+  @IsArray({
+    message: 'selectedWorkDays는 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedWorkDays?: string[];
 
   @ApiProperty({
     type: [String],
     description: '주말 당직',
     example: ['있음', '없음'],
   })
-  selectedWeekendDuty: string[];
+  @IsArray({
+    message: 'selectedWeekendDuty는 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedWeekendDuty?: string[];
 
   @ApiProperty({
     type: [String],
     description: '급여 조건',
     example: ['기본급', '인센티브'],
   })
-  selectedSalary: string[];
+  @IsArray({
+    message: 'selectedSalary는 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedSalary?: string[];
 
   @ApiProperty({
     type: Number,
     description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
     example: 50,
   })
-  selectedMaxClassFee: number;
+  @IsNumber(
+    {},
+    {
+      each: true,
+      message: 'selectedMaxClassFee는 숫자만 가능합니다.',
+    },
+  )
+  @IsOptional()
+  selectedMaxClassFee?: number;
 
   @ApiProperty({
     type: [String],
     description: '성별',
     example: ['성별무관', '여성'],
   })
-  selectedGender: string[];
+  @IsArray({
+    message: 'selectedGender는 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedGender?: string[];
 
   @ApiProperty({
     type: [String],
     description: '지원자격',
     example: ['신입 지원 가능', '체육 관련 자격증'],
   })
-  selectedQualifications: string[];
+  @IsArray({
+    message: 'selectedQualifications는 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedQualifications?: string[];
 
   @ApiProperty({
     type: [String],
     description: '우대사항',
     example: ['생활체육지도사 자격증', '경력자'],
   })
-  selectedPreference: string[];
+  @IsArray({
+    message: 'selectedPreference는 배열 형태만 가능합니다.',
+  })
+  @IsOptional()
+  selectedPreference?: string[];
 }

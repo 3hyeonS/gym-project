@@ -37,7 +37,13 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  app.useGlobalPipes(new ValidationPipe()); // 글로벌 ValidationPipe 설정
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  ); // 글로벌 ValidationPipe 설정
 
   SwaggerModule.setup('api', app, documentFactory);
 

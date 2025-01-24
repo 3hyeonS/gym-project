@@ -1,7 +1,12 @@
 import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { GymsService } from './gyms.service';
-import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { SelectedOptionsDto } from './dto/selected-options-dto';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiExtraModels,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { allGymDto } from './dto/all-gym-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
@@ -9,6 +14,8 @@ import { ResponseTransformInterceptor } from 'src/interceptors/response-transfor
 import { ResponseDto } from '../response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
+import { SelectedOptionsDto } from './dto/selected-options-dto';
+import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -52,7 +59,7 @@ export class GymsController {
   }
 
   // 선택 조건에 맞는 헬스장 불러오기
-  @Post()
+  @Post('selected')
   @ApiOperation({
     summary: '조건에 맞는 헬스장 불러오기',
   })
@@ -61,6 +68,20 @@ export class GymsController {
     description: '해당 조건의 헬스장 불러오기 성공',
     model: SearchedGymDto,
     isArray: true,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'body 입력값의 필드 조건 및 json 형식 오류',
+    message_val: [
+      'selectedLocation은 Object 형태만 가능합니다.',
+      'selectedMaxClassFee는 숫자만 가능합니다.',
+    ],
+    error: 'Bad Request',
+  })
+  @ErrorApiResponse({
+    status: 500,
+    description: '서버 에러(백엔드에 문의)',
+    message_def: 'Internal server error',
   })
   @ResponseMsg('해당 조건의 헬스장 불러오기 성공')
   async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {

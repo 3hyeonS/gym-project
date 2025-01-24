@@ -33,7 +33,10 @@ export class GymsService {
       [];
 
     // location 조건 처리
-    if (Object.keys(selectedOptionsDto.selectedLocation).length > 0) {
+    if (
+      selectedOptionsDto.selectedLocation &&
+      Object.keys(selectedOptionsDto.selectedLocation)?.length
+    ) {
       const locConditions: string[] = [];
       const locParameters: Record<string, any> = {};
 
@@ -64,7 +67,7 @@ export class GymsService {
     }
 
     // workType 조건 처리
-    if (selectedOptionsDto.selectedWorkType.length > 0) {
+    if (selectedOptionsDto.selectedWorkType?.length) {
       if (selectedOptionsDto.flexibleOptions[0] == 1) {
         selectedOptionsDto.selectedWorkType.push('명시 안 됨');
         selectedOptionsDto.selectedWorkType.push('채용공고참고');
@@ -78,7 +81,7 @@ export class GymsService {
     }
 
     // workTime 조건 처리
-    if (selectedOptionsDto.selectedWorkTime.length > 0) {
+    if (selectedOptionsDto.selectedWorkTime?.length) {
       if (selectedOptionsDto.flexibleOptions[1] == 1) {
         selectedOptionsDto.selectedWorkTime.push('명시 안 됨');
         selectedOptionsDto.selectedWorkTime.push('채용공고참고');
@@ -92,7 +95,7 @@ export class GymsService {
     }
 
     // workDays 조건 처리
-    if (selectedOptionsDto.selectedWorkDays.length > 0) {
+    if (selectedOptionsDto.selectedWorkDays?.length) {
       if (selectedOptionsDto.flexibleOptions[2] == 1) {
         selectedOptionsDto.selectedWorkDays.push('명시 안 됨');
         selectedOptionsDto.selectedWorkDays.push('채용공고참고');
@@ -106,7 +109,7 @@ export class GymsService {
     }
 
     // weekendDuty 조건 처리
-    if (selectedOptionsDto.selectedWeekendDuty.length > 0) {
+    if (selectedOptionsDto.selectedWeekendDuty?.length) {
       if (selectedOptionsDto.flexibleOptions[3] == 1) {
         selectedOptionsDto.selectedWeekendDuty.push('명시 안 됨');
         selectedOptionsDto.selectedWeekendDuty.push('채용공고참고');
@@ -120,7 +123,7 @@ export class GymsService {
     }
 
     // salary 조건 처리
-    if (selectedOptionsDto.selectedSalary.length > 0) {
+    if (selectedOptionsDto.selectedSalary?.length) {
       let slyConditions = [`JSON_CONTAINS(gymsUpdate.salary, :sly) > 0`];
 
       if (selectedOptionsDto.flexibleOptions[4] == 1) {
@@ -137,21 +140,23 @@ export class GymsService {
     }
 
     // maxClassFee 조건 처리
-    if (selectedOptionsDto.flexibleOptions[5] == 1) {
-      conditions.push({
-        condition:
-          '(gymsUpdate.maxClassFee >= :mcf or gymsUpdate.maxClassFee <= -1)',
-        parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
-      });
-    } else {
-      conditions.push({
-        condition: 'gymsUpdate.maxClassFee >= :mcf',
-        parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
-      });
+    if (selectedOptionsDto.selectedMaxClassFee) {
+      if (selectedOptionsDto.flexibleOptions[5] == 1) {
+        conditions.push({
+          condition:
+            '(gymsUpdate.maxClassFee >= :mcf or gymsUpdate.maxClassFee <= -1)',
+          parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
+        });
+      } else {
+        conditions.push({
+          condition: 'gymsUpdate.maxClassFee >= :mcf',
+          parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
+        });
+      }
     }
 
     // gender 조건 처리
-    if (selectedOptionsDto.selectedGender.length > 0) {
+    if (selectedOptionsDto.selectedGender?.length) {
       if (selectedOptionsDto.flexibleOptions[6] == 1) {
         selectedOptionsDto.selectedGender.push('명시 안 됨');
         selectedOptionsDto.selectedGender.push('성별 무관');
@@ -163,7 +168,7 @@ export class GymsService {
     }
 
     // qualifications 조건 처리
-    if (selectedOptionsDto.selectedQualifications.length > 0) {
+    if (selectedOptionsDto.selectedQualifications?.length) {
       if (selectedOptionsDto.flexibleOptions[7] == 1) {
         selectedOptionsDto.selectedQualifications.push('명시 안 됨');
         selectedOptionsDto.selectedQualifications.push('채용공고참고');
@@ -177,7 +182,7 @@ export class GymsService {
     }
 
     // preference 조건 처리
-    if (selectedOptionsDto.selectedPreference.length > 0) {
+    if (selectedOptionsDto.selectedPreference?.length) {
       if (selectedOptionsDto.flexibleOptions[8] == 1) {
         selectedOptionsDto.selectedPreference.push('명시 안 됨');
         selectedOptionsDto.selectedPreference.push('채용공고참고');
@@ -198,7 +203,6 @@ export class GymsService {
         queryBuilder.andWhere(condition.condition, condition.parameters);
       }
     });
-
     const objectList = await queryBuilder.getMany();
     return objectList;
   }

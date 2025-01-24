@@ -1,5 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
-
 export class ResponseDto<TData> {
   message: string;
 

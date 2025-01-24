@@ -1,7 +1,6 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 import { ResponseDto } from 'src/response-dto';
-import { stringToBytes } from 'uuid/dist/cjs/v35';
 
 export interface GenericApiResponseOption<TModel extends Type<any>> {
   model: TModel;
