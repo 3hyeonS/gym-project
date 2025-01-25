@@ -16,10 +16,11 @@ dotenv.config(); // .env 파일 로드
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const config = new DocumentBuilder()
     .setTitle('GYMS API')
-    .setDescription('GYMS API 문서입니다.')
+    .setDescription(
+      'GYMS API 문서입니다.  \nstatusCode 500은 에러는 서버 에러 -> 에러 내용과 함께 백엔드와 공유',
+    )
     .setVersion('1.0')
     // .addTag('gyms')
     .addBearerAuth(

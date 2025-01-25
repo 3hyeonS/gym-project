@@ -74,13 +74,13 @@ export class GymsController {
       'selectedMaxClassFee must be a number conforming to the specified constraints',
     error: 'BadRequestException',
   })
-  @ErrorApiResponse({
-    status: 500,
-    description:
-      'Internal Server Error  \n500은 에러는 에러 내용과 함께 백엔드와 공유',
-    message: 'Cannot convert undefined or null to object',
-    error: 'TypeError',
-  })
+  // @ErrorApiResponse({
+  //   status: 500,
+  //   description:
+  //     'Internal Server Error  \n500은 에러는 에러 내용과 함께 백엔드와 공유',
+  //   message: 'Cannot convert undefined or null to object',
+  //   error: 'TypeError',
+  // })
   @ResponseMsg('Gyms with selected conditions returned successfully')
   async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
     const searchedGyms =
