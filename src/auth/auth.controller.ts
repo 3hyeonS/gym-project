@@ -431,7 +431,7 @@ export class AuthController {
   @ErrorApiResponse({
     status: 400,
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: '"refreshToken must be a jwt string"',
+    message: 'refreshToken must be a jwt string',
     error: 'BadRequestException',
   })
   @ResponseMsg('Token refreshed successfully')
