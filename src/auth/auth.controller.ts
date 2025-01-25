@@ -22,7 +22,6 @@ import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { CenterResponseDto } from './dto/center-response.dto';
 import { CenterEntity } from './entity/center.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
-import { MemberEntity } from './entity/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,

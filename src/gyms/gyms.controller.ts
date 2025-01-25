@@ -1,12 +1,6 @@
 import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { GymsService } from './gyms.service';
-import {
-  ApiBadRequestResponse,
-  ApiBody,
-  ApiExtraModels,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { allGymDto } from './dto/all-gym-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
