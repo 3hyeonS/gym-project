@@ -6,6 +6,7 @@ export interface GenericApiResponseOption<TModel extends Type<any>> {
   model: TModel;
   status?: number;
   description?: string;
+  message?: string;
   isArray?: boolean;
 }
 
@@ -25,7 +26,7 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
               properties: {
                 message: {
                   type: 'string',
-                  example: option.description,
+                  example: option.message,
                 },
                 statusCode: {
                   type: 'number',
@@ -56,7 +57,7 @@ export const GenericApiResponse = (option: GenericApiResponseOption<Type>) => {
               properties: {
                 message: {
                   type: 'string',
-                  example: option.description,
+                  example: option.message,
                 },
                 statusCode: {
                   type: 'number',

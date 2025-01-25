@@ -47,13 +47,9 @@ export class AuthService {
     userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<UserEntity> {
     const { signId, userName, email, password, role } = userSignUpRequestDto;
-    this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    // await this.checkSignIdExists(signId);
-
-    // 이메일 중복 확인
-    // await this.checkEmailExists(email);
+    await this.checkSignIdExists(signId);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -67,10 +63,6 @@ export class AuthService {
     });
 
     const savedUser = await this.usersRepository.save(newUser);
-
-    this.logger.verbose(`User signed up successfully with signId: ${signId}`);
-    this.logger.debug(`User details: ${JSON.stringify(savedUser)}`);
-
     return savedUser;
   }
 
@@ -88,13 +80,9 @@ export class AuthService {
       phone,
       address,
     } = centerSignUpRequestDto;
-    this.logger.verbose(`Attempting to sign up user with signId: ${signId}`);
 
     // signId 중복 확인
-    // await this.checkSignIdExists(signId);
-
-    // 이메일 중복 확인
-    // await this.checkEmailExists(email);
+    await this.checkSignIdExists(signId);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -111,9 +99,6 @@ export class AuthService {
     });
     const savedCenter = await this.centersRepository.save(newCenter);
 
-    this.logger.verbose(`User signed up successfully with signId: ${signId}`);
-    this.logger.debug(`User details: ${JSON.stringify(savedCenter)}`);
-
     return savedCenter;
   }
 
@@ -124,30 +109,24 @@ export class AuthService {
     member: UserEntity | CenterEntity;
   }> {
     const { signId, password } = signInRequestDto;
-    this.logger.verbose(`Attempting to sign in for with signId: ${signId}`);
 
-    try {
-      // [1] 회원 정보 조회
-      const existingMember = await this.findMemberBySignId(signId);
+    // [1] 회원 정보 조회
+    const existingMember = await this.findMemberBySignId(signId);
 
-      if (
-        !existingMember ||
-        !(await bcrypt.compare(password, existingMember.password))
-      ) {
-        this.logger.warn(`Failed login attempt for signId: ${signId}`);
-        throw new UnauthorizedException('Incorrect signId or password.');
-      }
-
-      // [2] 회원 유형 판별 및 토큰 생성
-      const accessToken = await this.generateJwtToken(existingMember);
-      const refreshToken = await this.generateRefreshToken(existingMember);
-
-      // [3] 사용자 정보 반환
-      return { accessToken, refreshToken, member: existingMember };
-    } catch (error) {
-      this.logger.error('Signin failed', error.stack);
-      throw error;
+    if (
+      !existingMember ||
+      !(await bcrypt.compare(password, existingMember.password))
+    ) {
+      this.logger.error('Signin failed: Incorrect signId or password');
+      throw new UnauthorizedException('Incorrect signId or password');
     }
+
+    // [2] 회원 유형 판별 및 토큰 생성
+    const accessToken = await this.generateJwtToken(existingMember);
+    const refreshToken = await this.generateRefreshToken(existingMember);
+
+    // [3] 사용자 정보 반환
+    return { accessToken, refreshToken, member: existingMember };
   }
 
   // signId 중복 확인 메서드
@@ -155,7 +134,6 @@ export class AuthService {
     this.logger.verbose(`Checking if signId exists: ${signId}`);
 
     const existingMember = await this.findMemberBySignId(signId);
-    console.log(existingMember);
     if (existingMember) {
       this.logger.warn(`signId already exists: ${signId}`);
       throw new ConflictException('signId already exists');
@@ -176,36 +154,6 @@ export class AuthService {
       : await this.centersRepository.findOne({
           where: { signId },
         });
-    console.log(user, center);
-    return user || center;
-  }
-
-  // 이메일 중복 확인 메서드
-  private async checkEmailExists(email: string): Promise<void> {
-    this.logger.verbose(`Checking if email exists: ${email}`);
-
-    const existingMember = await this.findMemberByEmail(email);
-    if (existingMember) {
-      this.logger.warn(`Email already exists: ${email}`);
-      throw new ConflictException('Email already exists');
-    }
-    this.logger.verbose(`Email is available: ${email}`);
-  }
-
-  // 이메일로 멤버 찾기 메서드
-  private async findMemberByEmail(
-    email: string,
-  ): Promise<UserEntity | CenterEntity | undefined> {
-    const user: UserEntity = await this.usersRepository.findOne({
-      where: { email },
-    });
-
-    const center: CenterEntity = user
-      ? null
-      : await this.centersRepository.findOne({
-          where: { email },
-        });
-
     return user || center;
   }
 
@@ -254,23 +202,27 @@ export class AuthService {
   async signInWithKakao(
     kakaoAuthResCode: string,
   ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
-    // Authorization Code로 Kakao API에 Access Token 요청
-    const kakaoAccessToken = await this.getKakaoAccessToken(kakaoAuthResCode);
+    try {
+      // Authorization Code로 Kakao API에 Access Token 요청
+      const kakaoAccessToken = await this.getKakaoAccessToken(kakaoAuthResCode);
 
-    // Access Token으로 Kakao 사용자 정보 요청
-    const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
+      // Access Token으로 Kakao 사용자 정보 요청
+      const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
 
-    // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
-    const user = await this.signUpWithKakao(
-      kakaoUserInfo.id.toString(),
-      kakaoUserInfo,
-    );
+      // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
+      const user = await this.signUpWithKakao(
+        kakaoUserInfo.id.toString(),
+        kakaoUserInfo,
+      );
 
-    // [1] JWT 토큰 생성 (Secret + Payload)
-    const accessToken = await this.generateJwtToken(user);
-    const refreshToken = await this.generateRefreshToken(user);
-    // [2] 사용자 정보 반환
-    return { accessToken, refreshToken, user };
+      // [1] JWT 토큰 생성 (Secret + Payload)
+      const accessToken = await this.generateJwtToken(user);
+      const refreshToken = await this.generateRefreshToken(user);
+      // [2] 사용자 정보 반환
+      return { accessToken, refreshToken, user };
+    } catch (error) {
+      throw new UnauthorizedException('Authorization code is Invalid');
+    }
   }
 
   // Kakao Authorization Code로 Kakao Access Token 요청
@@ -353,15 +305,33 @@ export class AuthService {
     });
 
     if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token.');
+      throw new UnauthorizedException('Invalid or expired refreshToken');
     }
 
     return tokenEntity.user || tokenEntity.center;
   }
 
-  // Refresh Token 삭제 (로그아웃 및 회원 탈퇴 시)
-  async revokeRefreshToken(signId: string): Promise<void> {
-    await this.refreshTokenRepository.delete({ signId });
+  // 해당 refresh Token 삭제 (로그아웃 시)
+  async revokeRefreshToken(refreshToken: string): Promise<void> {
+    const tokenEntity = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken },
+    });
+    if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refreshToken');
+    } else {
+      await this.refreshTokenRepository.delete({ token: refreshToken });
+    }
+  }
+
+  // 해당 아이디의 모든 refresh token 삭제 (회원 탈퇴 시)
+  async revokeRefreshTokenBySignId(signId: string): Promise<void> {
+    // const tokenEntities = await this.refreshTokenRepository.find({
+    //   where: { signId: signId },
+    // });
+    // if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
+    //   throw new UnauthorizedException('Invalid or expired refreshToken');
+    // } else {
+    await this.refreshTokenRepository.delete({ signId: signId });
   }
 
   // 만료된 refresh token 삭제
@@ -434,32 +404,25 @@ export class AuthService {
   }
 
   // 회원 탈퇴 기능
-  async deleteUser(signId: string): Promise<void> {
-    this.logger.verbose(`Attempting to delete user with signId: ${signId}`);
-
-    // 사용자 조회
-    const existingMember = await this.findMemberBySignId(signId);
-    console.log(existingMember);
-
-    if (!existingMember) {
-      this.logger.warn(`Member not found with signId: ${signId}`);
-      throw new UnauthorizedException('User not found.');
-    }
-
+  async deleteUser(
+    member: UserEntity | CenterEntity,
+    signId: string,
+  ): Promise<void> {
     // 탈퇴 처리
-    if (existingMember instanceof UserEntity) {
-      await this.usersRepository.delete({ signId });
-      console.log('userdeleted');
+    if (member instanceof UserEntity) {
+      await this.usersRepository.delete({ signId: signId });
+      console.log('user deleted');
     } else {
-      await this.centersRepository.delete({ signId });
-      console.log('centerdeleted');
+      await this.centersRepository.delete({ signId: signId });
+      console.log('center deleted');
     }
-    //refreshToken 삭제
-    this.revokeRefreshToken(signId);
+    //해당 signId의 모든 refreshToken 삭제
+    this.revokeRefreshTokenBySignId(signId);
 
     this.logger.verbose(`User deleted successfully with signId: ${signId}`);
   }
 
+  //사업자등록번호 유효성 검사
   async checkBusinessIdValid(businessId: string): Promise<any> {
     const apiKey = process.env.API_KEY; // 발급받은 API 키 입력
     const url = `http://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${apiKey}`; // API 엔드포인트
@@ -487,3 +450,32 @@ export class AuthService {
     }
   }
 }
+
+// // 이메일 중복 확인 메서드
+// private async checkEmailExists(email: string): Promise<void> {
+//   this.logger.verbose(`Checking if email exists: ${email}`);
+
+//   const existingMember = await this.findMemberByEmail(email);
+//   if (existingMember) {
+//     this.logger.warn(`Email already exists: ${email}`);
+//     throw new ConflictException('Email already exists');
+//   }
+//   this.logger.verbose(`Email is available: ${email}`);
+// }
+
+// // 이메일로 멤버 찾기 메서드
+// private async findMemberByEmail(
+//   email: string,
+// ): Promise<UserEntity | CenterEntity | undefined> {
+//   const user: UserEntity = await this.usersRepository.findOne({
+//     where: { email },
+//   });
+
+//   const center: CenterEntity = user
+//     ? null
+//     : await this.centersRepository.findOne({
+//         where: { email },
+//       });
+
+//   return user || center;
+// }

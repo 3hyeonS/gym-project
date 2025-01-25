@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsObject,
   IsOptional,
+  IsString,
 } from 'class-validator';
 
 export class SelectedOptionsDto {
@@ -16,22 +17,10 @@ export class SelectedOptionsDto {
     example: [0, 1, 0, 1, 1, 0, 1, 1, 1],
     default: [1, 1, 1, 1, 1, 1, 1, 1, 1],
   })
-  @IsArray({
-    message: 'flexibleOptions는 배열 형태만 가능합니다.',
-  })
-  @ArrayMinSize(9, {
-    message: 'flexibleOptions가 9개 미만입니다.',
-  }) // 최소 크기 9
-  @ArrayMaxSize(9, {
-    message: 'flexibleOptions가 9개를 초과했습니다.',
-  }) // 최대 크기 9
-  @IsNumber(
-    {},
-    {
-      each: true,
-      message: 'flexibleOptions의 요소는 숫자만 가능합니다.',
-    },
-  ) // 배열 내 각 요소가 숫자인지 확인
+  @IsArray()
+  @ArrayMinSize(9) // 최소 크기 9
+  @ArrayMaxSize(9) // 최대 크기 9
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
   flexibleOptions: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
   @ApiProperty({
@@ -48,9 +37,7 @@ export class SelectedOptionsDto {
       경기: ['성남시 분당구', '고양시 덕양구'],
     },
   })
-  @IsObject({
-    message: 'selectedLocation은 Object 형태만 가능합니다.',
-  })
+  @IsObject()
   @IsOptional()
   selectedLocation?: Record<string, string[]>;
 
@@ -59,9 +46,8 @@ export class SelectedOptionsDto {
     description: '근무 형태',
     example: ['정규직', '계약직'],
   })
-  @IsArray({
-    message: 'selectedWorkType은 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedWorkType?: string[];
 
@@ -70,9 +56,8 @@ export class SelectedOptionsDto {
     description: '근무 시간',
     example: ['오전', '오후'],
   })
-  @IsArray({
-    message: 'selectedWorkTime은 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedWorkTime?: string[];
 
@@ -81,9 +66,8 @@ export class SelectedOptionsDto {
     description: '근무일 수',
     example: ['주5일', '주3일'],
   })
-  @IsArray({
-    message: 'selectedWorkDays는 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedWorkDays?: string[];
 
@@ -92,9 +76,8 @@ export class SelectedOptionsDto {
     description: '주말 당직',
     example: ['있음', '없음'],
   })
-  @IsArray({
-    message: 'selectedWeekendDuty는 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedWeekendDuty?: string[];
 
@@ -103,9 +86,8 @@ export class SelectedOptionsDto {
     description: '급여 조건',
     example: ['기본급', '인센티브'],
   })
-  @IsArray({
-    message: 'selectedSalary는 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedSalary?: string[];
 
@@ -114,13 +96,7 @@ export class SelectedOptionsDto {
     description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
     example: 50,
   })
-  @IsNumber(
-    {},
-    {
-      each: true,
-      message: 'selectedMaxClassFee는 숫자만 가능합니다.',
-    },
-  )
+  @IsNumber()
   @IsOptional()
   selectedMaxClassFee?: number;
 
@@ -129,9 +105,8 @@ export class SelectedOptionsDto {
     description: '성별',
     example: ['성별무관', '여성'],
   })
-  @IsArray({
-    message: 'selectedGender는 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedGender?: string[];
 
@@ -140,9 +115,8 @@ export class SelectedOptionsDto {
     description: '지원자격',
     example: ['신입 지원 가능', '체육 관련 자격증'],
   })
-  @IsArray({
-    message: 'selectedQualifications는 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedQualifications?: string[];
 
@@ -151,9 +125,8 @@ export class SelectedOptionsDto {
     description: '우대사항',
     example: ['생활체육지도사 자격증', '경력자'],
   })
-  @IsArray({
-    message: 'selectedPreference는 배열 형태만 가능합니다.',
-  })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   selectedPreference?: string[];
 }

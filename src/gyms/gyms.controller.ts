@@ -32,10 +32,11 @@ export class GymsController {
   @PrimitiveApiResponse({
     status: 200,
     description: '문자 출력 성공',
+    message: 'String printed successfully',
     type: 'string',
     example: 'Welcome Gyms',
   })
-  @ResponseMsg('문자 출력에 성공')
+  @ResponseMsg('String printed successfully')
   getHello(): string {
     return this.gymsService.getHello();
   }
@@ -48,10 +49,11 @@ export class GymsController {
   @GenericApiResponse({
     status: 200,
     description: '모든 헬스장 불러오기 성공',
+    message: 'All gyms returned successfully',
     model: allGymDto,
     isArray: true,
   })
-  @ResponseMsg('모든 헬스장 불러오기 성공')
+  @ResponseMsg('All gyms returned successfully')
   async getAll() {
     const allGyms = await this.gymsService.getAll();
 
@@ -62,28 +64,30 @@ export class GymsController {
   @Post('selected')
   @ApiOperation({
     summary: '조건에 맞는 헬스장 불러오기',
+    description: 'body 조건 Schema 클릭해서 각 필드별로 확인',
   })
   @GenericApiResponse({
     status: 201,
     description: '해당 조건의 헬스장 불러오기 성공',
+    message: 'Gyms with selected conditions returned successfully',
     model: SearchedGymDto,
     isArray: true,
   })
   @ErrorApiResponse({
     status: 400,
-    description: 'body 입력값의 필드 조건 및 json 형식 오류',
-    message_val: [
-      'selectedLocation은 Object 형태만 가능합니다.',
-      'selectedMaxClassFee는 숫자만 가능합니다.',
-    ],
-    error: 'Bad Request',
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message:
+      'selectedMaxClassFee must be a number conforming to the specified constraints',
+    error: 'BadRequestException',
   })
   @ErrorApiResponse({
     status: 500,
-    description: '서버 에러(백엔드에 문의)',
-    message_def: 'Internal server error',
+    description:
+      'Internal Server Error  \n500은 에러는 에러 내용과 함께 백엔드와 공유',
+    message: 'Cannot convert undefined or null to object',
+    error: 'TypeError',
   })
-  @ResponseMsg('해당 조건의 헬스장 불러오기 성공')
+  @ResponseMsg('Gyms with selected conditions returned successfully')
   async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
     const searchedGyms =
       await this.gymsService.searchSelected(selectedOptionsDto);

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class SignIdRequestDto {
   @ApiProperty({
@@ -8,10 +14,11 @@ export class SignIdRequestDto {
     example: 'sampleid',
   })
   @IsNotEmpty()
+  @IsString()
   @MinLength(6)
   @MaxLength(16)
   @Matches(/^[a-z\d]+$/, {
-    message: '아이디는 영소문자, 숫자로만 이루어져야 합니다.',
+    message: 'signId must contain only alphanumeric characters(lower case)',
   })
   signId: string;
 }

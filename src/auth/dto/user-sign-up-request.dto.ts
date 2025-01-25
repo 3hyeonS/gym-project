@@ -2,26 +2,24 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsString,
+  Length,
   Matches,
-  MaxLength,
-  MinLength,
-  ValidateIf,
 } from 'class-validator';
-import { UserEntity } from '../entity/user.entity';
 import { MemberRole, TRole } from '../entity/member.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UserSignUpRequestDto extends UserEntity {
+export class UserSignUpRequestDto {
   @ApiProperty({
     type: String,
     description: 'signId(6~16자리)  \n영소문자 및 숫자만 허용',
     example: 'sampleid',
   })
   @IsNotEmpty()
-  @MinLength(6)
-  @MaxLength(16)
+  @IsString()
+  @Length(6, 16)
   @Matches(/^[a-z\d]+$/, {
-    message: '아이디는 영소문자, 숫자로만 이루어져야 합니다.',
+    message: 'signId must contain only alphanumeric characters(lower case)',
   })
   signId: string;
 
@@ -31,12 +29,12 @@ export class UserSignUpRequestDto extends UserEntity {
     example: 'sample@pw123',
   })
   @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(16)
+  @IsString()
+  @Length(8, 16)
   @Matches(
     /^(?=.*[a-zA-Z])(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*\d)[a-zA-Z\d!@#$%^&*(),.?":{}|<>]+$/,
     {
-      message: '비밀번호 보안 요건을 충족시키지 못했습니다.',
+      message: 'password must contain English, numbers, and special characters',
     },
   ) // 영문, 숫자, 특수문자 포함
   password: string;
@@ -47,10 +45,8 @@ export class UserSignUpRequestDto extends UserEntity {
     example: '홍길동',
   })
   @IsNotEmpty() // null 값 체크
-  @MinLength(1) // 최소 문자 수
-  @MaxLength(10) // 최대 문자 수
-  // // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
-  // @Matches(/^[가-힣]+$/, { message: 'userName 은 한글로 입력되어야 합니다.' })
+  @IsString()
+  @Length(1, 20) // 문자 수
   userName: string;
 
   @ApiProperty({
@@ -60,7 +56,7 @@ export class UserSignUpRequestDto extends UserEntity {
   })
   @IsNotEmpty()
   @IsEmail() // 이메일 형식
-  @MaxLength(100)
+  @Length(1, 100)
   email: string;
 
   @ApiProperty({
@@ -70,11 +66,10 @@ export class UserSignUpRequestDto extends UserEntity {
     default: 'USER',
     example: 'ADMIN',
   })
-  @ValidateIf((obj) => obj.role !== undefined) // role이 존재할 경우에만 검증
   @IsEnum(MemberRole, {
-    message: 'Role은 ADMIN 또는 USER만 가능합니다.',
+    message: 'role must be ADMIN or USER only',
   })
-  role: TRole;
+  role: TRole = 'USER';
 
   // @IsNotEmpty()
   // @Matches(/^\d{5}$/, { message: 'Postal code must be 5 digits' }) // 우편번호는 5자리 숫자

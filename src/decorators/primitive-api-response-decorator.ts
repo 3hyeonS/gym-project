@@ -8,7 +8,8 @@ export interface PrimitiveApiResponseOption {
   description?: string;
   isArray?: boolean;
   type: 'string' | 'boolean' | 'number' | 'null';
-  example: Primary;
+  example?: Primary;
+  message?: string;
 }
 
 export const PrimitiveApiResponse = (option: PrimitiveApiResponseOption) => {
@@ -27,7 +28,7 @@ export const PrimitiveApiResponse = (option: PrimitiveApiResponseOption) => {
               properties: {
                 message: {
                   type: 'string',
-                  example: option.description,
+                  example: option.message,
                 },
                 statusCode: {
                   type: 'number',
@@ -59,7 +60,7 @@ export const PrimitiveApiResponse = (option: PrimitiveApiResponseOption) => {
               properties: {
                 message: {
                   type: 'string',
-                  example: option.description,
+                  example: option.message,
                 },
                 statusCode: {
                   type: 'number',

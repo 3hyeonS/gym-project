@@ -1,9 +1,9 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsString,
+  Length,
   Matches,
-  MaxLength,
-  MinLength,
 } from 'class-validator';
 import { CenterEntity } from '../entity/center.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,10 +17,10 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: 'sampleid',
   })
   @IsNotEmpty()
-  @MinLength(6)
-  @MaxLength(16)
+  @IsString()
+  @Length(6, 16)
   @Matches(/^[a-z\d]+$/, {
-    message: '아이디는 영소문자, 숫자로만 이루어져야 합니다.',
+    message: 'signId must contain only alphanumeric characters(lower case)',
   })
   signId: string;
 
@@ -30,14 +30,14 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: 'sample@pw123',
   })
   @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(16)
+  @IsString()
+  @Length(8, 16)
   @Matches(
     /^(?=.*[a-zA-Z])(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*\d)[a-zA-Z\d!@#$%^&*(),.?":{}|<>]+$/,
     {
-      message: '비밀번호 보안 요건을 충족시키지 못했습니다.',
+      message: 'password must contain English, numbers, and special characters',
     },
-  ) // 소문자, 숫자, 특수문자 포함
+  ) // 영문, 숫자, 특수문자 포함
   password: string;
 
   @ApiProperty({
@@ -46,8 +46,8 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: '힘찬헬스장',
   })
   @IsNotEmpty() // null 값 체크
-  @MinLength(1) // 최소 문자 수
-  @MaxLength(100) // 최대 문자 수
+  @IsString()
+  @Length(1, 100) // 문자 수
   centerName: string;
 
   @ApiProperty({
@@ -56,8 +56,8 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: '홍길동',
   })
   @IsNotEmpty() // null 값 체크
-  @MinLength(1) // 최소 문자 수
-  @MaxLength(10) // 최대 문자 수
+  @IsString()
+  @Length(1, 20) // 문자 수
   // // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
   // @Matches(/^[가-힣]+$/, { message: 'ceoName 은 한글로 입력되어야 합니다.' })
   ceoName: string;
@@ -68,7 +68,8 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: '서울특별시 00구 00로 00',
   })
   @IsNotEmpty()
-  @MaxLength(100) // 주소는 최대 100자
+  @IsString()
+  @Length(1, 100) // 주소는 최대 100자
   address: string;
 
   @ApiProperty({
@@ -77,9 +78,9 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: '010-0000-0000',
   })
   @IsNotEmpty()
-  @MaxLength(20)
+  @IsString()
   @Matches(/^\d{3}-\d{4}-\d{4}$/, {
-    message: '전화번호 형식에 어긋납니다.',
+    message: 'phone format must be 000-0000-0000',
   })
   phone: string;
 
@@ -89,9 +90,9 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: '000-00-00000',
   })
   @IsNotEmpty()
-  @MaxLength(20)
+  @IsString()
   @Matches(/^\d{3}-\d{2}-\d{5}$/, {
-    message: '사업자 등록 번호 형식에 어긋납니다.',
+    message: 'businessId format must be 000-00-00000',
   })
   businessId: string;
 
@@ -101,7 +102,8 @@ export class CenterSignUpRequestDto extends CenterEntity {
     example: 'sample@email.com',
   })
   @IsNotEmpty()
+  @IsString()
   @IsEmail() // 이메일 형식
-  @MaxLength(100)
+  @Length(1, 100)
   email: string;
 }

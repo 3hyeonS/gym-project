@@ -1,5 +1,4 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,7 +6,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserEntity } from './entity/user.entity';
 import * as dotenv from 'dotenv';
 import { CenterEntity } from './entity/center.entity';
-import { JwtSecretRequestType } from '@nestjs/jwt';
 
 // .env 파일 로드
 dotenv.config();
@@ -20,10 +18,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(CenterEntity)
     private centersRepository: Repository<CenterEntity>,
   ) {
-    // [3] Cookie에 있는 JWT 토큰을 추출
     super({
       secretOrKey: process.env.JWT_SECRET || 'default-secret', // 검증하기 위한 Secret Key
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization 헤더에서 토큰 추
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization 헤더에서 토큰 추출
+      // // [3] Cookie에 있는 JWT 토큰을 추출
       // jwtFromRequest: ExtractJwt.fromExtractors([
       //   (req: Request) => {
       //     let token = null;
@@ -51,7 +49,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
 
     if (!user && !center) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid or expired accessToken');
     }
     console.log(user);
     return user || center;

@@ -16,10 +16,11 @@ export class AppController {
   @PrimitiveApiResponse({
     status: 200,
     description: '문자 출력 성공',
+    message: 'String printed successfully',
     type: 'string',
     example: 'Welcome',
   })
-  @ResponseMsg('문자 출력 성공')
+  @ResponseMsg('String printed successfully')
   @Get()
   getHello(): string {
     return this.appService.getHello();

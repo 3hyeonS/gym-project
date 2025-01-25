@@ -5,6 +5,7 @@ import { ResponseDto } from 'src/response-dto';
 export interface PrimitiveApiResponseOption {
   status?: number;
   description?: string;
+  message?: string;
 }
 
 export const NullApiResponse = (option: PrimitiveApiResponseOption) => {
@@ -20,7 +21,7 @@ export const NullApiResponse = (option: PrimitiveApiResponseOption) => {
             properties: {
               message: {
                 type: 'string',
-                example: option.description,
+                example: option.message,
               },
               statusCode: {
                 type: 'number',

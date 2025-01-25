@@ -28,6 +28,7 @@ export class GymsService {
   async searchSelected(
     selectedOptionsDto: SelectedOptionsDto,
   ): Promise<SearchedGymDto[]> {
+    console.log(selectedOptionsDto);
     const queryBuilder = this.gymRepository.createQueryBuilder('gymsUpdate');
     const conditions: { condition: string; parameters: Record<string, any> }[] =
       [];

@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UnauthorizedException,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -42,6 +43,8 @@ import { AddressRequestDto } from './dto/address-request-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
 import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 import { BusinessIdIsValidResponseDto } from './dto/businessId-isvalid-response-dto';
+import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
+import { CustomUnauthorizedExceptionFilter } from './custom-unauthorizedExcetption-filter';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -62,10 +65,11 @@ export class AuthController {
   @PrimitiveApiResponse({
     status: 200,
     description: '문자 출력 성공',
+    message: 'String printed successfully',
     type: 'string',
     example: 'Welcome Authorization',
   })
-  @ResponseMsg('문자 출력 성공')
+  @ResponseMsg('String printed successfully')
   @Get()
   getHello(): string {
     return this.authService.getHello();
@@ -81,10 +85,17 @@ export class AuthController {
   @PrimitiveApiResponse({
     status: 201,
     description: '아이디 중복 검사 완료',
+    message: 'signId duplicate checked successfully',
     type: 'boolean',
     example: true,
   })
-  @ResponseMsg('아이디 중복 검사 완료')
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'signId must contain only alphanumeric characters(lower case)',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('signId duplicate checked successfully')
   @Post('/signup/checkId')
   async checkSignIdExists(
     @Body() signIdRequestDto: SignIdRequestDto,
@@ -112,10 +123,23 @@ export class AuthController {
   })
   @GenericApiResponse({
     status: 201,
-    description: '회원가입 성공',
+    description: '일반 유저 회원가입 성공',
+    message: 'User signed up successfully',
     model: UserResponseDto,
   })
-  @ResponseMsg('회원가입 성공')
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'signId must contain only alphanumeric characters(lower case)',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '중복된 signId',
+    message: 'signId already exists',
+    error: 'ConflictException',
+  })
+  @ResponseMsg('User signed up successfully')
   @Post('/signup/user')
   async userSignUp(
     @Body() userSignUpRequestDto: UserSignUpRequestDto,
@@ -139,10 +163,11 @@ export class AuthController {
   @GenericApiResponse({
     status: 200,
     description: '주소 검색 완료',
+    message: 'Detailed address value returned successfully',
     model: addressResponseDto,
     isArray: true,
   })
-  @ResponseMsg('주소 검색 완료')
+  @ResponseMsg('Detailed address value returned successfully')
   @Get('/signup/address')
   async searchAddress(@Query() addressRequestDto: AddressRequestDto) {
     return this.authService.searchAddress(addressRequestDto.address);
@@ -151,15 +176,23 @@ export class AuthController {
   @ApiOperation({
     summary: '사업자 등록 번호 유효성 검사',
     description: `
+    유효성 여부: isValid  \n
     true: 유효한 사업자 등록 번호 \n
     false: 유효하지 않은 사업자 등록 번호`,
   })
   @GenericApiResponse({
     status: 201,
     description: '사업자 등록 번호 유효성 검사 완료',
+    message: 'businessId validated successfully',
     model: BusinessIdIsValidResponseDto,
   })
-  @ResponseMsg('사업자 등록 번호 유효성 검사 완료')
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: '"businessId format must be 000-00-00000"',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('businessId validated successfully')
   @Post('/signup/checkBusinessId')
   async checkBusinessIsValid(
     @Body() businessIdRequestDto: BusinessIdRequestDto,
@@ -179,10 +212,23 @@ export class AuthController {
   })
   @GenericApiResponse({
     status: 201,
-    description: '회원가입 성공',
+    description: '센터 회원가입 성공',
+    message: 'Center signed up successfully',
     model: CenterResponseDto,
   })
-  @ResponseMsg('회원가입 성공')
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'signId must contain only alphanumeric characters(lower case)',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '중복된 signId',
+    message: 'signId already exists',
+    error: 'ConflictException',
+  })
+  @ResponseMsg('Center signed up successfully')
   @Post('/signup/center')
   async centerSignUp(
     @Body() centerSignUpRequestDto: CenterSignUpRequestDto,
@@ -193,7 +239,7 @@ export class AuthController {
     const center = await this.authService.centerSignUp(centerSignUpRequestDto);
     const centerResponseDto = new CenterResponseDto(center);
     this.logger.verbose(
-      `User signed up successfully: ${JSON.stringify(centerResponseDto)}`,
+      `Center signed up successfully: ${JSON.stringify(centerResponseDto)}`,
     );
     return centerResponseDto;
   }
@@ -206,9 +252,22 @@ export class AuthController {
   @GenericApiResponse({
     status: 201,
     description: '로그인 성공',
+    message: 'Signed in successfully',
     model: tokenResponseDto,
   })
-  @ResponseMsg('로그인 성공')
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'password should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '잘못된 signId 혹은 password',
+    message: 'Incorrect signId or password',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Signed in successfully')
   @Post('/signin')
   async signIn(@Body() signInRequestDto: SignInRequestDto): Promise<{
     member: UserResponseDto | CenterResponseDto;
@@ -219,62 +278,26 @@ export class AuthController {
       `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
     );
 
-    try {
-      // [1] 로그인 처리
-      const { accessToken, refreshToken, member } =
-        await this.authService.signIn(signInRequestDto);
+    // [1] 로그인 처리
+    const { accessToken, refreshToken, member } =
+      await this.authService.signIn(signInRequestDto);
 
-      const responseDto =
-        member instanceof UserEntity
-          ? new UserResponseDto(member)
-          : new CenterResponseDto(member);
+    const responseDto =
+      member instanceof UserEntity
+        ? new UserResponseDto(member)
+        : new CenterResponseDto(member);
 
-      this.logger.verbose(
-        `${member.role} signed in successfully: ${JSON.stringify(responseDto)}`,
-      );
+    this.logger.verbose(
+      `${member.role} signed in successfully: ${JSON.stringify(responseDto)}`,
+    );
 
-      // [2] 응답 반환 JSON으로 토큰 전송
-      return {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        member,
-      };
-    } catch (error) {
-      this.logger.error(`Signin failed: ${error.message}`);
-      throw error;
-    }
+    // [2] 응답 반환 JSON으로 토큰 전송
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      member,
+    };
   }
-
-  // // 인증된 회원이 들어갈 수 있는 테스트 URL 경로
-  // @ApiOperation({
-  //   summary: '인증 회원 경로 테스트',
-  //   description: '인증된 회원만 접근 가능',
-  // })
-  // @ResponseMsg('인증됨')
-  // @ApiResponse({
-  //   status: 200,
-  //   description: '로그인에 성공했습니다.',
-  //   model: UserResponseDto|CenterResponseDto,
-  // })
-  // @Post('/signed')
-  // @UseGuards(AuthGuard()) // @UseGuards : 핸들러는 지정한 인증 가드가 적용됨 -> AuthGuard()의 'jwt'는 기본값으로 생략가능
-  // async testForAuth(
-  //   @GetUser() member: UserEntity | CenterEntity,
-  // ): Promise<UserResponseDto | CenterResponseDto> {
-  //   let responseDto: UserResponseDto | CenterResponseDto;
-  //   if (member instanceof UserEntity) {
-  //     responseDto = new UserResponseDto(member);
-  //     this.logger.verbose(
-  //       `Authenticated user accessing test route: ${member.signId}`,
-  //     );
-  //   } else {
-  //     responseDto = new CenterResponseDto(member);
-  //     this.logger.verbose(
-  //       `Authenticated center accessing test route: ${member.signId}`,
-  //     );
-  //   }
-  //   return responseDto;
-  // }
 
   // 카카오 로그인/회원가입 페이지 요청
   @ApiOperation({
@@ -296,9 +319,16 @@ export class AuthController {
   @GenericApiResponse({
     status: 201,
     description: '카카오 로그인에 성공',
+    message: 'Signed in successfully with KaKao Account',
     model: tokenResponseDto,
   })
-  @ResponseMsg('카카오 로그인 성공')
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않은 인가코드 입력(재사용 포함)',
+    message: 'Authorization code is invalid',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Signed in successfully with KaKao Account')
   @Post('/kakao/callback')
   async kakaoCallback(@Query('code') kakaoAuthResCode: string): Promise<{
     accessToken: string;
@@ -324,18 +354,34 @@ export class AuthController {
   // 로그아웃
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '로그 아웃',
-    description: '로그 아웃 및 refreshToken 삭제',
+    summary: '로그아웃',
+    description: '로그아웃 및 refreshToken 삭제',
   })
   @NullApiResponse({
     status: 201,
     description: '로그아웃 성공',
+    message: 'Signed out successfully',
   })
-  @ResponseMsg('로그아웃 성공')
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken 혹은 refreshToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'refreshToken must be a jwt string',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Signed out successfully')
+  @UseFilters(CustomUnauthorizedExceptionFilter)
   @Post('/signout')
   @UseGuards(AuthGuard())
-  async logout(@GetUser() member: MemberEntity) {
-    await this.authService.revokeRefreshToken(member.signId);
+  async logout(@Body() refreshTokenRequestDto: RefreshTokenRequestDto) {
+    await this.authService.revokeRefreshToken(
+      refreshTokenRequestDto.refreshToken,
+    );
   }
 
   // 회원 탈퇴
@@ -347,14 +393,23 @@ export class AuthController {
   @NullApiResponse({
     status: 201,
     description: '회원 탈퇴 성공',
+    message: 'Account deleted successfully',
   })
-  @ResponseMsg('회원 탈퇴 성공')
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Account deleted successfully')
   @Post('/delete')
   @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
+  @UseFilters(CustomUnauthorizedExceptionFilter)
   async deleteUser(@GetUser() member: UserEntity | CenterEntity) {
-    this.logger.verbose(`Request to delete user: ${member.signId}`);
-    await this.authService.revokeRefreshToken(member.signId);
-    await this.authService.deleteUser(member.signId);
+    this.logger.verbose(
+      `Attempting to delete user with signId: ${member.signId}`,
+    );
+    await this.authService.deleteUser(member, member.signId);
   }
 
   // 토큰 재발급
@@ -365,9 +420,22 @@ export class AuthController {
   @GenericApiResponse({
     status: 201,
     description: '토큰 재발급 성공',
+    message: 'Token refreshed successfully',
     model: tokenResponseDto,
   })
-  @ResponseMsg('토큰 재발급 성공')
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 refreshToken',
+    message: 'Invalid or expired refreshToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: '"refreshToken must be a jwt string"',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Token refreshed successfully')
   @Post('/refresh')
   async refresh(
     @Body() refreshTokenRequestDto: RefreshTokenRequestDto,
@@ -376,39 +444,61 @@ export class AuthController {
     refreshToken: string;
     member: UserResponseDto | CenterResponseDto;
   }> {
-    if (!refreshTokenRequestDto.refreshToken) {
-      throw new UnauthorizedException('보유한 refreshToken 없음');
+    // refresh token 에서 signId 추출
+    const decodedToken = this.jwtService.decode(
+      refreshTokenRequestDto.refreshToken,
+    ) as any;
+    const signId = decodedToken?.signId;
+    if (!signId) {
+      throw new UnauthorizedException('Invalid or expired refreshToken');
     }
-
-    try {
-      // refresh token 에서 signId 추출
-      const decodedToken = this.jwtService.decode(
-        refreshTokenRequestDto.refreshToken,
-      ) as any;
-      const signId = decodedToken?.signId;
-      if (!signId) {
-        throw new UnauthorizedException('유효하지 않은 refreshToken');
-      }
-      const {
-        accessToken,
-        refreshToken: newRefreshToken,
-        member,
-      } = await this.authService.refreshAccessToken(
-        signId,
-        refreshTokenRequestDto.refreshToken,
-      );
-      const responseDto =
-        member instanceof UserEntity
-          ? new UserResponseDto(member)
-          : new CenterResponseDto(member);
-      return {
-        accessToken: accessToken,
-        refreshToken: newRefreshToken,
-        member: responseDto,
-      };
-    } catch (error) {
-      this.logger.error(`Failed to refresh token: ${error.message}`);
-      return error;
-    }
+    const {
+      accessToken,
+      refreshToken: newRefreshToken,
+      member,
+    } = await this.authService.refreshAccessToken(
+      signId,
+      refreshTokenRequestDto.refreshToken,
+    );
+    const responseDto =
+      member instanceof UserEntity
+        ? new UserResponseDto(member)
+        : new CenterResponseDto(member);
+    return {
+      accessToken: accessToken,
+      refreshToken: newRefreshToken,
+      member: responseDto,
+    };
   }
 }
+
+// // 인증된 회원이 들어갈 수 있는 테스트 URL 경로
+// @ApiOperation({
+//   summary: '인증 회원 경로 테스트',
+//   description: '인증된 회원만 접근 가능',
+// })
+// @ResponseMsg('인증됨')
+// @ApiResponse({
+//   status: 200,
+//   description: '로그인에 성공했습니다.',
+//   model: UserResponseDto|CenterResponseDto,
+// })
+// @Post('/signed')
+// @UseGuards(AuthGuard()) // @UseGuards : 핸들러는 지정한 인증 가드가 적용됨 -> AuthGuard()의 'jwt'는 기본값으로 생략가능
+// async testForAuth(
+//   @GetUser() member: UserEntity | CenterEntity,
+// ): Promise<UserResponseDto | CenterResponseDto> {
+//   let responseDto: UserResponseDto | CenterResponseDto;
+//   if (member instanceof UserEntity) {
+//     responseDto = new UserResponseDto(member);
+//     this.logger.verbose(
+//       `Authenticated user accessing test route: ${member.signId}`,
+//     );
+//   } else {
+//     responseDto = new CenterResponseDto(member);
+//     this.logger.verbose(
+//       `Authenticated center accessing test route: ${member.signId}`,
+//     );
+//   }
+//   return responseDto;
+// }

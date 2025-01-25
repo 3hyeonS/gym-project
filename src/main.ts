@@ -1,10 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import {
+  SwaggerModule,
+  DocumentBuilder,
+  SwaggerCustomOptions,
+} from '@nestjs/swagger';
 import { LoggingInterceptor } from './interceptors/logging-interceptor';
 import { ValidationPipe } from '@nestjs/common';
 // import * as cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
+import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes';
+import { CustomHttpExceptionFilter } from './interceptors/custom-httpException-filter';
 
 dotenv.config(); // .env 파일 로드
 
@@ -34,18 +40,35 @@ async function bootstrap() {
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
+  const theme = new SwaggerTheme();
+  let themeColor;
+  if (process.env.IP == 'localhost') {
+    themeColor = SwaggerThemeNameEnum.DARK;
+  } else {
+    themeColor = SwaggerThemeNameEnum.CLASSIC;
+  }
+  const myCustom: SwaggerCustomOptions = {
+    customCss: theme.getBuffer(themeColor),
+    swaggerOptions: {
+      docExpansion: 'none',
+      apisSorter: 'alpha',
+    },
+  };
+
+  SwaggerModule.setup('api', app, documentFactory, myCustom);
 
   app.useGlobalInterceptors(new LoggingInterceptor());
+  //글로벌 HttpException 필터 등록
+  app.useGlobalFilters(new CustomHttpExceptionFilter());
 
+  // 글로벌 ValidationPipe 설정
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
     }),
-  ); // 글로벌 ValidationPipe 설정
-
-  SwaggerModule.setup('api', app, documentFactory);
+  );
 
   // // cookie parser 미들웨어 추가
   // app.use(cookieParser());

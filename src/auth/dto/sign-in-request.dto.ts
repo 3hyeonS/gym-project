@@ -1,5 +1,5 @@
-import { IsEnum, IsNotEmpty, MaxLength } from 'class-validator';
-import { MemberEntity, TRole } from '../entity/member.entity';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { MemberEntity } from '../entity/member.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SignInRequestDto extends MemberEntity {
@@ -9,7 +9,8 @@ export class SignInRequestDto extends MemberEntity {
     example: 'sampleid',
   })
   @IsNotEmpty()
-  @MaxLength(20)
+  @IsString()
+  @Length(1, 20)
   signId: string;
 
   @ApiProperty({
@@ -18,6 +19,7 @@ export class SignInRequestDto extends MemberEntity {
     example: 'sample@pw123',
   })
   @IsNotEmpty()
-  @MaxLength(20)
+  @IsString()
+  @Length(1, 20)
   password: string;
 }

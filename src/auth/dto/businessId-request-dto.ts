@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, Matches, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class BusinessIdRequestDto {
   @ApiProperty({
@@ -8,9 +8,9 @@ export class BusinessIdRequestDto {
     example: '000-00-00000',
   })
   @IsNotEmpty()
-  @MaxLength(20)
+  @IsString()
   @Matches(/^\d{3}-\d{2}-\d{5}$/, {
-    message: '사업자 등록 번호 형식에 어긋납니다.',
+    message: 'businessId format must be 000-00-00000',
   })
   businessId: string;
 }
