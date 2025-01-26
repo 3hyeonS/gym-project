@@ -5,7 +5,6 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
-  JoinColumn,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { CenterEntity } from './center.entity';
@@ -24,11 +23,15 @@ export class RefreshTokenEntity {
   @Column({ type: 'datetime', name: 'expiresAt' })
   expiresAt: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.refreshTokens, { nullable: true })
+  @ManyToOne(() => UserEntity, (user) => user.refreshTokens, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   user: UserEntity;
 
   @ManyToOne(() => CenterEntity, (center) => center.refreshTokens, {
     nullable: true,
+    onDelete: 'SET NULL',
   })
   center: CenterEntity;
 

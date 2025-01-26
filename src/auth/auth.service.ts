@@ -408,6 +408,9 @@ export class AuthService {
     member: UserEntity | CenterEntity,
     signId: string,
   ): Promise<void> {
+    //해당 signId의 모든 refreshToken 삭제
+    this.revokeRefreshTokenBySignId(signId);
+
     // 탈퇴 처리
     if (member instanceof UserEntity) {
       await this.usersRepository.delete({ signId: signId });
@@ -416,8 +419,6 @@ export class AuthService {
       await this.centersRepository.delete({ signId: signId });
       console.log('center deleted');
     }
-    //해당 signId의 모든 refreshToken 삭제
-    this.revokeRefreshTokenBySignId(signId);
 
     this.logger.verbose(`User deleted successfully with signId: ${signId}`);
   }
