@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({ name: 'gymsUpdate' })
+@Entity({ name: 'gymList' })
 export class GymEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
@@ -32,6 +32,24 @@ export class GymEntity {
   @Column({ type: 'json', name: 'salary' })
   salary: string[];
 
+  // @Column({ type: 'json', name: 'salaryDetail' })
+  // salaryDetail: Record<string, string>;
+
+  @Column({ type: 'json', name: 'basePay', nullable: true })
+  basePay: number[];
+
+  @Column({ type: 'json', name: 'classPay', nullable: true })
+  classPay: number[];
+
+  @Column({ type: 'json', name: 'classFee', nullable: true })
+  classFee: number[];
+
+  @Column({ type: 'json', name: 'hourly', nullable: true })
+  hourly: number[];
+
+  @Column({ type: 'json', name: 'monthly', nullable: true })
+  monthly: number[];
+
   @Column({ type: 'int', name: 'maxClassFee' })
   maxClassFee: number;
 
@@ -50,9 +68,9 @@ export class GymEntity {
   @Column({ type: 'date', name: 'date' })
   date: Date;
 
-  @Column({ type: 'text', name: 'description' })
+  @Column({ type: 'text', name: 'description', nullable: true })
   description: string;
 
-  @Column({ type: 'json', name: 'image' })
+  @Column({ type: 'json', name: 'image', nullable: true })
   image: string[];
 }

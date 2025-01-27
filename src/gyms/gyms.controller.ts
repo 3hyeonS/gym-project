@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { GymsService } from './gyms.service';
-import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { allGymDto } from './dto/all-gym-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
@@ -10,6 +22,13 @@ import { GenericApiResponse } from 'src/decorators/generic-api-response-decorato
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
+import { RegisterRequestDto } from './dto/gym-registration-dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/auth/custom-role.guard';
+import { Roles } from 'src/decorators/roles-decorator';
+import { MemberRole } from 'src/auth/entity/member.entity';
+import { GetUser } from 'src/decorators/get-user-decorator';
+import { CenterEntity } from 'src/auth/entity/center.entity';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -86,5 +105,40 @@ export class GymsController {
     const searchedGyms =
       await this.gymsService.searchSelected(selectedOptionsDto);
     return searchedGyms;
+  }
+
+  //체육관 등록하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '센터 공고 등록하기',
+    description: 'body 조건 Schema 클릭해서 각 필드별로 확인',
+  })
+  // @GenericApiResponse({
+  //   status: 201,
+  //   description: '해당 조건의 헬스장 불러오기 성공',
+  //   message: 'Gyms with selected conditions returned successfully',
+  //   model: SearchedGymDto,
+  //   isArray: true,
+  // })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message:
+      'selectedMaxClassFee must be a number conforming to the specified constraints',
+    error: 'BadRequestException',
+  })
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Post('register')
+  async register(
+    @GetUser() center: CenterEntity,
+    @Body() registerRequestDto: RegisterRequestDto,
+  ) {
+    console.log(center);
+    const registeredGym = await this.gymsService.register(
+      center,
+      registerRequestDto,
+    );
+    return registeredGym;
   }
 }

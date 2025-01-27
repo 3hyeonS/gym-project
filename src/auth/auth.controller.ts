@@ -44,6 +44,7 @@ import { BusinessIdRequestDto } from './dto/businessId-request-dto';
 import { BusinessIdIsValidResponseDto } from './dto/businessId-isvalid-response-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
 import { CustomUnauthorizedExceptionFilter } from './custom-unauthorizedExcetption-filter';
+import { RolesGuard } from './custom-role.guard';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)

@@ -8,8 +8,6 @@ import {
 import { CenterEntity } from '../entity/center.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-// 사업자 등록 번호 유효성 검사
-
 export class CenterSignUpRequestDto extends CenterEntity {
   @ApiProperty({
     type: String,

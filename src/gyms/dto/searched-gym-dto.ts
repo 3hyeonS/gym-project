@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GymEntity } from '../entity/gyms.entity';
 
-export class SearchedGymDto implements GymEntity {
+export class SearchedGymDto {
   @ApiProperty({
     type: Number,
     description: 'id',
@@ -71,6 +71,20 @@ export class SearchedGymDto implements GymEntity {
     example: ['기본급', '인센티브', '퇴직금', '4대 보험'],
   })
   salary: string[];
+
+  // @ApiProperty({
+  //   type: 'object',
+  //   additionalProperties: {
+  //     type: 'string',
+  //   },
+  //   description: '시/도 및 시/군/구',
+  //   example: {
+  //     기본급: '100만원',
+  //     단가: '3 ~ 8만원',
+  //     수업료: '40% ~ 50%',
+  //   },
+  // })
+  // salaryDetail: Record<string, string>;
 
   @ApiProperty({
     type: Number,

@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { GymEntity } from './entity/gyms.entity';
 import { allGymDto } from './dto/all-gym-dto';
+import { RegisterRequestDto } from './dto/gym-registration-dto';
+import { CenterEntity } from 'src/auth/entity/center.entity';
+import { addressResponseDto } from 'src/auth/dto/address-response.dto';
 
 @Injectable()
 export class GymsService {
@@ -206,5 +209,94 @@ export class GymsService {
     });
     const objectList = await queryBuilder.getMany();
     return objectList;
+  }
+
+  // method3: 헬스장 공고 등록하기
+  async register(
+    center: CenterEntity,
+    registerRequestDto: RegisterRequestDto,
+  ): Promise<GymEntity> {
+    const {
+      subway,
+      workType,
+      workTime,
+      workDays,
+      weekendDuty,
+      salary,
+      basePay,
+      classPay,
+      classFee,
+      hourly,
+      monthly,
+      maxClassFee,
+      gender,
+      qualifications,
+      preference,
+      description,
+    } = registerRequestDto;
+    console.log(center);
+    const centerName = center.centerName;
+    const address = this.extractLocation(center.address);
+
+    const newGym = this.gymRepository.create({
+      centerName: centerName,
+      city: (await address).city,
+      location: (await address).location,
+      subway,
+      workType,
+      workTime,
+      workDays,
+      weekendDuty,
+      salary,
+      basePay,
+      classPay,
+      classFee,
+      hourly,
+      monthly,
+      maxClassFee,
+      gender,
+      qualifications,
+      preference,
+      site: ['직접 등록'],
+      date: new Date(),
+      description,
+    });
+
+    const savedGym = await this.gymRepository.save(newGym);
+    return savedGym;
+  }
+
+  // 주소에서 시/도, 시/군/구 추출
+  async extractLocation(
+    address: string,
+  ): Promise<{ city: string; location: string[] }> {
+    // 시/도 추출 (서울특별시, 서울시, 경기도 등)
+    const cityMatch = address.match(/^([^ ]+?도|[^ ]+?시)/);
+    if (!cityMatch) {
+      throw new BadRequestException(
+        'Invalid address: 시/도 정보를 찾을 수 없습니다.',
+      );
+    }
+    let city = cityMatch[0];
+
+    // 시/도 정제 (특별시, 광역시, 도, 시 제거)
+    city = city.replace(/특별시|광역시|도|시$/, ''); // '서울특별시', '서울시' -> '서울', '경기도' -> '경기'
+
+    // 시/군/구 추출
+    const addressWithoutcity = cityMatch
+      ? address.replace(cityMatch[0], '').trim()
+      : address;
+    const locationMatch = addressWithoutcity.match(
+      /([가-힣]+(시|구|군)\s?[가-힣]*(구|군)?)/,
+    );
+
+    if (!locationMatch) {
+      throw new BadRequestException(
+        'Invalid address: 시/군/구 정보를 찾을 수 없습니다.',
+      );
+    }
+    const location = [locationMatch[0].trim()];
+
+    return { city, location };
   }
 }

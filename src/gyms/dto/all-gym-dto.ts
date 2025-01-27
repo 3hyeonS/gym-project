@@ -72,6 +72,55 @@ export class allGymDto implements GymEntity {
   })
   salary: string[];
 
+  // @ApiProperty({
+  //   type: 'object',
+  //   additionalProperties: {
+  //     type: 'string',
+  //   },
+  //   description: '시/도 및 시/군/구',
+  //   example: {
+  //     기본급: '100만원',
+  //     단가: '3 ~ 8만원',
+  //     수업료: '40% ~ 50%',
+  //   },
+  // })
+  // salaryDetail: Record<string, string>;
+
+  @ApiProperty({
+    type: [Number],
+    description: '기본급 (단위: 만 원)',
+    example: [80, 100],
+  })
+  basePay: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '수업 단가 (단위: 만 원)',
+    example: ['5, 6.5'],
+  })
+  classPay: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '수업료 분배(단위: %)',
+    example: ['40, 50'],
+  })
+  classFee: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '시급 (단위: 만 원)',
+    example: ['2, 3'],
+  })
+  hourly: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '월급 (단위: 만 원)',
+    example: ['200, 250'],
+  })
+  monthly: number[];
+
   @ApiProperty({
     type: Number,
     description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
