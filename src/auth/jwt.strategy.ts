@@ -51,7 +51,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user && !center) {
       throw new UnauthorizedException('Invalid or expired accessToken');
     }
-    console.log(user);
-    return user || center;
+
+    const member = user || center;
+    return member;
   }
 }

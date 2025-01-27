@@ -4,10 +4,9 @@ import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { GymEntity } from './entity/gyms.entity';
-import { allGymDto } from './dto/all-gym-dto';
+import { GymResponseDto } from './dto/gym-response-dto';
 import { RegisterRequestDto } from './dto/gym-registration-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import { addressResponseDto } from 'src/auth/dto/address-response.dto';
 
 @Injectable()
 export class GymsService {
@@ -22,7 +21,7 @@ export class GymsService {
   ) {}
 
   // method1 : 모든 헬스장 리스트 가져오기
-  async getAll(): Promise<allGymDto[]> {
+  async getAll(): Promise<GymResponseDto[]> {
     const gymList = await this.gymRepository.find();
     return gymList;
   }
@@ -212,10 +211,7 @@ export class GymsService {
   }
 
   // method3: 헬스장 공고 등록하기
-  async register(
-    center: CenterEntity,
-    registerRequestDto: RegisterRequestDto,
-  ): Promise<GymEntity> {
+  async register(center: CenterEntity, registerRequestDto: RegisterRequestDto) {
     const {
       subway,
       workType,

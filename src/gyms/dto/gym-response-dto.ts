@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GymEntity } from '../entity/gyms.entity';
 
-export class allGymDto implements GymEntity {
+export class GymResponseDto implements GymEntity {
   @ApiProperty({
     type: Number,
     description: 'id',
@@ -96,28 +96,28 @@ export class allGymDto implements GymEntity {
   @ApiProperty({
     type: [Number],
     description: '수업 단가 (단위: 만 원)',
-    example: ['5, 6.5'],
+    example: [5, 6.5],
   })
   classPay: number[];
 
   @ApiProperty({
     type: [Number],
     description: '수업료 분배(단위: %)',
-    example: ['40, 50'],
+    example: [40, 50],
   })
   classFee: number[];
 
   @ApiProperty({
     type: [Number],
     description: '시급 (단위: 만 원)',
-    example: ['2, 3'],
+    example: [2, 3],
   })
   hourly: number[];
 
   @ApiProperty({
     type: [Number],
     description: '월급 (단위: 만 원)',
-    example: ['200, 250'],
+    example: [200, 250],
   })
   monthly: number[];
 
@@ -177,4 +177,29 @@ export class allGymDto implements GymEntity {
     example: [],
   })
   image: string[];
+
+  constructor(gym: GymEntity) {
+    this.id = gym.id;
+    this.centerName = gym.centerName;
+    this.city = gym.city;
+    this.location = gym.location;
+    this.workType = gym.workType;
+    this.workTime = gym.workTime;
+    this.workDays = gym.workDays;
+    this.weekendDuty = gym.weekendDuty;
+    this.salary = gym.salary;
+    this.basePay = gym.basePay;
+    this.classPay = gym.classPay;
+    this.classFee = gym.classFee;
+    this.hourly = gym.hourly;
+    this.monthly = gym.monthly;
+    this.maxClassFee = gym.maxClassFee;
+    this.gender = gym.gender;
+    this.qualifications = gym.qualifications;
+    this.preference = gym.preference;
+    this.site = gym.site;
+    this.date = gym.date;
+    this.description = gym.description;
+    this.image = gym.image;
+  }
 }

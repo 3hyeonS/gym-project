@@ -13,7 +13,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { allGymDto } from './dto/all-gym-dto';
+import { GymResponseDto } from './dto/gym-response-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
@@ -63,7 +63,7 @@ export class GymsController {
     status: 200,
     description: '모든 헬스장 불러오기 성공',
     message: 'All gyms returned successfully',
-    model: allGymDto,
+    model: GymResponseDto,
     isArray: true,
   })
   @ResponseMsg('All gyms returned successfully')
@@ -113,32 +113,46 @@ export class GymsController {
     summary: '센터 공고 등록하기',
     description: 'body 조건 Schema 클릭해서 각 필드별로 확인',
   })
-  // @GenericApiResponse({
-  //   status: 201,
-  //   description: '해당 조건의 헬스장 불러오기 성공',
-  //   message: 'Gyms with selected conditions returned successfully',
-  //   model: SearchedGymDto,
-  //   isArray: true,
-  // })
+  @GenericApiResponse({
+    status: 201,
+    description: '센터 공고 등록 성공',
+    message: 'Gym recruitment registered successfully',
+    model: GymResponseDto,
+  })
   @ErrorApiResponse({
     status: 400,
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message:
-      'selectedMaxClassFee must be a number conforming to the specified constraints',
+      'maxClassFee must be a number conforming to the specified constraints',
     error: 'BadRequestException',
   })
-  @UseGuards(AuthGuard(), RolesGuard)
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 등록 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Gym recruitment registered successfully')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Post('register')
   async register(
-    @GetUser() center: CenterEntity,
+    @GetUser() member: CenterEntity,
     @Body() registerRequestDto: RegisterRequestDto,
-  ) {
-    console.log(center);
+  ): Promise<GymResponseDto> {
+    console.log(member);
+    console.log(member);
     const registeredGym = await this.gymsService.register(
-      center,
+      member,
       registerRequestDto,
     );
-    return registeredGym;
+    const gymResponsDto = new GymResponseDto(registeredGym);
+    return gymResponsDto;
   }
 }
