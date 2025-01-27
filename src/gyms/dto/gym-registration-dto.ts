@@ -105,7 +105,7 @@ export class RegisterRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '기본급 (단위: 만 원)',
+    description: '기본급 (단위: 만 원), [최저, 최대]',
     example: [80, 100],
   })
   @IsOptional()
@@ -117,7 +117,7 @@ export class RegisterRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '수업 단가 (단위: 만 원)',
+    description: '수업 단가 (단위: 만 원), [최저, 최대]',
     example: [5, 6.5],
   })
   @IsOptional()
@@ -129,7 +129,7 @@ export class RegisterRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '수업료 분배(단위: %)',
+    description: '수업료 분배(단위: %), [최저, 최대]',
     example: [40, 50],
   })
   @IsOptional()
@@ -141,7 +141,7 @@ export class RegisterRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '시급 (단위: 만 원)',
+    description: '시급 (단위: 만 원), [최저, 최대]',
     example: [2, 3],
   })
   @IsOptional()
@@ -153,7 +153,7 @@ export class RegisterRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '월급 (단위: 만 원)',
+    description: '월급 (단위: 만 원), [최저, 최대]',
     example: [200, 250],
   })
   @IsOptional()
