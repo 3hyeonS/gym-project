@@ -224,7 +224,6 @@ export class GymsService {
       classFee,
       hourly,
       monthly,
-      maxClassFee,
       gender,
       qualifications,
       preference,
@@ -233,6 +232,7 @@ export class GymsService {
     console.log(center);
     const centerName = center.centerName;
     const address = this.extractLocation(center.address);
+    const maxClassFee = classFee ? classFee[1] : -2;
 
     const newGym = this.gymRepository.create({
       centerName: centerName,
@@ -249,7 +249,7 @@ export class GymsService {
       classFee,
       hourly,
       monthly,
-      maxClassFee,
+      maxClassFee: maxClassFee,
       gender,
       qualifications,
       preference,

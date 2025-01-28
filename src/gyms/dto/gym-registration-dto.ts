@@ -163,13 +163,13 @@ export class RegisterRequestDto {
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
   monthly: number[];
 
-  @ApiProperty({
-    type: Number,
-    description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
-    example: 60,
-  })
-  @IsNumber()
-  maxClassFee: number;
+  // @ApiProperty({
+  //   type: Number,
+  //   description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
+  //   example: 60,
+  // })
+  // @IsNumber()
+  // maxClassFee: number;
 
   @ApiProperty({
     type: [String],
