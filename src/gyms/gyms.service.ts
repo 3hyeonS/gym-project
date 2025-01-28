@@ -267,7 +267,7 @@ export class GymsService {
     address: string,
   ): Promise<{ city: string; location: string[] }> {
     // 시/도 추출 (서울특별시, 서울시, 경기도 등)
-    const cityMatch = address.match(/^([^ ]+?도|[^ ]+?시)/);
+    const cityMatch = address.match(/^([가-힣]+)(?=\s)/);
     if (!cityMatch) {
       throw new BadRequestException(
         'Invalid address: 시/도 정보를 찾을 수 없습니다.',
@@ -275,13 +275,8 @@ export class GymsService {
     }
     let city = cityMatch[0];
 
-    // 시/도 정제 (특별시, 광역시, 도, 시 제거)
-    city = city.replace(/특별시|광역시|도|시$/, ''); // '서울특별시', '서울시' -> '서울', '경기도' -> '경기'
-
     // 시/군/구 추출
-    const addressWithoutcity = cityMatch
-      ? address.replace(cityMatch[0], '').trim()
-      : address;
+    const addressWithoutcity = address.replace(cityMatch[0], '').trim();
     const locationMatch = addressWithoutcity.match(
       /([가-힣]+(시|구|군)\s?[가-힣]*(구|군)?)/,
     );
