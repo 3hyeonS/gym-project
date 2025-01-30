@@ -31,7 +31,7 @@ export class CenterEntity extends MemberEntity {
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.center)
   refreshTokens: RefreshTokenEntity[];
 
-  @OneToOne(() => GymEntity, (gym) => gym.center, {
+  @OneToMany(() => GymEntity, (gym) => gym.center, {
     nullable: true,
   })
   gym: GymEntity;

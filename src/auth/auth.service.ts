@@ -21,6 +21,7 @@ import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
+import { GymEntity } from 'src/gyms/entity/gyms.entity';
 
 @Injectable()
 export class AuthService {
@@ -33,6 +34,8 @@ export class AuthService {
     private centersRepository: Repository<CenterEntity>,
     @InjectRepository(RefreshTokenEntity)
     private refreshTokenRepository: Repository<RefreshTokenEntity>,
+    @InjectRepository(GymEntity)
+    private gymRepository: Repository<GymEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
   ) {}
@@ -416,6 +419,7 @@ export class AuthService {
       await this.usersRepository.delete({ signId: signId });
       console.log('user deleted');
     } else {
+      await this.gymRepository.delete({ center: member });
       await this.centersRepository.delete({ signId: signId });
       console.log('center deleted');
     }

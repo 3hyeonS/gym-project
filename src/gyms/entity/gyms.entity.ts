@@ -1,5 +1,5 @@
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'gymList' })
 export class GymEntity {
@@ -75,8 +75,9 @@ export class GymEntity {
   @Column({ type: 'json', name: 'image', nullable: true })
   image: string[];
 
-  @OneToOne(() => CenterEntity, (center) => center.gym, {
+  @ManyToOne(() => CenterEntity, (center) => center.gym, {
     nullable: true,
+    onDelete: 'SET NULL',
   })
   center: CenterEntity;
 }

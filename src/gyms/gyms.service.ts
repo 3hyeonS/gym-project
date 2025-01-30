@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
@@ -290,5 +294,21 @@ export class GymsService {
     const location = [locationMatch[0].trim()];
 
     return { city, location };
+  }
+
+  // method4: 내 공고 불러오기
+  async getMyGym(center: CenterEntity): Promise<GymResponseDto[]> {
+    const myGym = await this.gymRepository.find({
+      where: { center },
+    });
+    return myGym;
+  }
+
+  // method5: 내 공고 수정하기
+  async modifyMyGym(id: number, registerRequestDto: RegisterRequestDto) {
+    await this.gymRepository.update(id, registerRequestDto);
+    const updatedGym = await this.gymRepository.findOne({ where: { id } });
+
+    return updatedGym;
   }
 }

@@ -11,13 +11,19 @@ import { KakaoStrategy } from './kakao.strategy';
 import { HttpModule } from '@nestjs/axios';
 import { CenterEntity } from './entity/center.entity';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
+import { GymEntity } from 'src/gyms/entity/gyms.entity';
 
 // .env 파일 로드
 dotenv.config();
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, CenterEntity, RefreshTokenEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      CenterEntity,
+      RefreshTokenEntity,
+      GymEntity,
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET,

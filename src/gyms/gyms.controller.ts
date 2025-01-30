@@ -29,6 +29,7 @@ import { Roles } from 'src/decorators/roles-decorator';
 import { MemberRole } from 'src/auth/entity/member.entity';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
+import { GymModifyRequestDto } from './dto/gym-id-request-dto';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -38,7 +39,6 @@ export class GymsController {
   constructor(private readonly gymsService: GymsService) {}
 
   //문자 출력
-  @Get()
   @ApiOperation({
     summary: 'Welcome Gyms 출력',
   })
@@ -50,12 +50,12 @@ export class GymsController {
     example: 'Welcome Gyms',
   })
   @ResponseMsg('String printed successfully')
+  @Get()
   getHello(): string {
     return this.gymsService.getHello();
   }
 
   // 모든 헬스장 불러오기
-  @Get('getAll')
   @ApiOperation({
     summary: '모든 헬스장 불러오기',
   })
@@ -67,6 +67,7 @@ export class GymsController {
     isArray: true,
   })
   @ResponseMsg('All gyms returned successfully')
+  @Get('getAll')
   async getAll() {
     const allGyms = await this.gymsService.getAll();
 
@@ -74,7 +75,6 @@ export class GymsController {
   }
 
   // 선택 조건에 맞는 헬스장 불러오기
-  @Post('selected')
   @ApiOperation({
     summary: '조건에 맞는 헬스장 불러오기',
     description: 'body 조건 Schema 클릭해서 각 필드별로 확인',
@@ -101,6 +101,7 @@ export class GymsController {
   //   error: 'TypeError',
   // })
   @ResponseMsg('Gyms with selected conditions returned successfully')
+  @Post('selected')
   async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
     const searchedGyms =
       await this.gymsService.searchSelected(selectedOptionsDto);
@@ -154,5 +155,74 @@ export class GymsController {
     );
     const gymResponsDto = new GymResponseDto(registeredGym);
     return gymResponsDto;
+  }
+
+  // 내 공고 불러오기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 공고 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '내 공고 불러오기 성공',
+    message: 'My gym recruitment returned successfully',
+    model: GymResponseDto,
+    isArray: true,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 불러오기 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('My gym recruitment returned successfully')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Get('getMyGym')
+  async getMyGym(@GetUser() member: CenterEntity) {
+    const myGym = await this.gymsService.getMyGym(member);
+    return myGym;
+  }
+
+  // 내 공고 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 공고 수정하기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '내 공고 수정하기 성공',
+    message: 'My gym recruitment modified successfully',
+    model: GymResponseDto,
+    isArray: true,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 수정하기 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('My gym recruitment modified successfully')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Post('modifyMyGym')
+  async modifyMyGym(@Body() gymModifyRequestDto: GymModifyRequestDto) {
+    const modifiedMyGym = await this.gymsService.modifyMyGym(
+      gymModifyRequestDto.id,
+      gymModifyRequestDto.modifyRequest,
+    );
+    return modifiedMyGym;
   }
 }
