@@ -256,6 +256,7 @@ export class GymsService {
       site: ['직접 등록'],
       date: new Date(),
       description,
+      center: center,
     });
 
     const savedGym = await this.gymRepository.save(newGym);
