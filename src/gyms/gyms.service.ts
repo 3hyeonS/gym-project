@@ -216,6 +216,7 @@ export class GymsService {
 
   // method3: 헬스장 공고 등록하기
   async register(center: CenterEntity, registerRequestDto: RegisterRequestDto) {
+    console.log(center);
     const {
       subway,
       workType,

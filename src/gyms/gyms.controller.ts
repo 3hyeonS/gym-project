@@ -140,7 +140,7 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('Gym recruitment registered successfully')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Post('register')
   async register(
@@ -182,7 +182,7 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('My gym recruitment returned successfully')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('getMyGym')
   async getMyGym(@GetUser() member: CenterEntity) {
