@@ -30,6 +30,7 @@ import { MemberRole } from 'src/auth/entity/member.entity';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { GymModifyRequestDto } from './dto/gym-id-request-dto';
+import { CenterResponseDto } from 'src/auth/dto/center-response.dto';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -186,6 +187,7 @@ export class GymsController {
   @Roles(MemberRole.CENTER)
   @Get('getMyGym')
   async getMyGym(@GetUser() member: CenterEntity) {
+    console.log(new CenterResponseDto(member));
     const myGym = await this.gymsService.getMyGym(member);
     return myGym;
   }
@@ -215,7 +217,7 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('My gym recruitment modified successfully')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Post('modifyMyGym')
   async modifyMyGym(@Body() gymModifyRequestDto: GymModifyRequestDto) {

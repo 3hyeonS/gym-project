@@ -265,7 +265,7 @@ export class AuthService {
   async generateJwtToken(member: MemberEntity): Promise<string> {
     // [1] JWT 토큰 생성 (Secret + Payload)
     const payload = {
-      singId: member.signId,
+      signId: member.signId,
       email: member.email,
       userId: member.id,
       role: member.role,
