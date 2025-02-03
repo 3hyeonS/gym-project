@@ -349,7 +349,7 @@ export class GymsService {
     }
 
     const uploadPromises = files.map(async (file) => {
-      const fileKey = `gyms/${uuidv4()}-${file.originalname}`;
+      const fileKey = `images/${uuidv4()}-${file.originalname}`;
 
       const params = {
         Bucket: this.bucketName,
