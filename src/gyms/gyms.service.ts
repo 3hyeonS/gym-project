@@ -356,7 +356,6 @@ export class GymsService {
         Key: fileKey,
         Body: file.buffer,
         ContentType: file.mimetype,
-        ACL: ObjectCannedACL.public_read, // 퍼블릭 읽기 권한
       };
 
       await this.s3.send(new PutObjectCommand(params));
