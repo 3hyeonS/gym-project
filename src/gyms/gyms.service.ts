@@ -257,7 +257,7 @@ export class GymsService {
     const maxClassFee = classFee ? classFee[1] : -2;
 
     // 이미지 업로드 후 URL 리스트 가져오기
-    const imageUrls = await this.uploadGymImages(files || []);
+    const imageUrls = await this.uploadGymImages(centerName, files || []);
 
     const newGym = this.gymRepository.create({
       centerName: centerName,
@@ -335,21 +335,36 @@ export class GymsService {
   }
 
   // method5: 내 공고 수정하기
-  async modifyMyGym(id: number, registerRequestDto: RegisterRequestDto) {
-    await this.gymRepository.update(id, registerRequestDto);
+  async modifyMyGym(
+    centerName: string,
+    id: number,
+    registerRequestDto: RegisterRequestDto,
+    existImageUrls: string[],
+    files?: Express.Multer.File[],
+  ) {
+    // 이미지 업로드 후 URL 리스트 가져오기
+    const newImageUrls = await this.uploadGymImages(centerName, files || []);
+    const updatedImageUrls = [...existImageUrls, ...newImageUrls];
+    await this.gymRepository.update(id, {
+      ...registerRequestDto,
+      image: updatedImageUrls, // 기존 + 새로운 이미지 반영
+    });
     const updatedGym = await this.gymRepository.findOne({ where: { id } });
 
     return updatedGym;
   }
 
   // 📌 다중 이미지 S3 업로드
-  async uploadGymImages(files: Express.Multer.File[]): Promise<string[]> {
+  async uploadGymImages(
+    centerName: string,
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
     if (!files || files.length === 0) {
-      return [];
+      return null;
     }
-
+    const folderName = `${centerName}${uuidv4()}`;
     const uploadPromises = files.map(async (file) => {
-      const fileKey = `images/${uuidv4()}-${file.originalname}`;
+      const fileKey = `images/${folderName}/${file.originalname}`;
 
       const params = {
         Bucket: this.bucketName,

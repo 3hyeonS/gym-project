@@ -255,11 +255,21 @@ export class GymsController {
   @ResponseMsg('My gym recruitment modified successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
+  @UseInterceptors(FilesInterceptor('images', 10))
   @Post('modifyMyGym')
-  async modifyMyGym(@Body() gymModifyRequestDto: GymModifyRequestDto) {
+  async modifyMyGym(
+    @GetUser() member: CenterEntity,
+    @Body('stringDto') stringDto: string,
+    @Body('existImageUrls') existImageUrls: string[],
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const gymModifyRequestDto: GymModifyRequestDto = JSON.parse(stringDto);
     const modifiedMyGym = await this.gymsService.modifyMyGym(
+      member.centerName,
       gymModifyRequestDto.id,
       gymModifyRequestDto.modifyRequest,
+      existImageUrls,
+      files,
     );
     return modifiedMyGym;
   }
