@@ -146,16 +146,33 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('Gym recruitment registered successfully')
-  // @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '헬스장 등록 정보 및 이미지 파일',
+    schema: {
+      type: 'object',
+      properties: {
+        registerRequestDto: {
+          type: 'string',
+          description: 'JSON 문자열로 변환된 DTO',
+        },
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' }, // ✅ 여러 개의 파일 처리
+        },
+      },
+    },
+  })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @UseInterceptors(FilesInterceptor('images', 10))
   @Post('register')
   async register(
     @GetUser() member: CenterEntity,
-    @Body() registerRequestDto: RegisterRequestDto,
+    @Body('stringDto') stringDto: string,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<GymResponseDto> {
+    const registerRequestDto: RegisterRequestDto = JSON.parse(stringDto);
     const registeredGym = await this.gymsService.register(
       member,
       registerRequestDto,
@@ -164,6 +181,18 @@ export class GymsController {
     const gymResponsDto = new GymResponseDto(registeredGym);
     return gymResponsDto;
   }
+
+  // // 공고 이미지 등록하기
+  // @UseGuards(AuthGuard(), RolesGuard)
+  // @Roles(MemberRole.CENTER)
+  // @UseInterceptors(FilesInterceptor('images', 10))
+  // @Post('register/images')
+  // async registerImages(
+  //   @GetUser() member: CenterEntity,
+  //   @UploadedFiles() files: Express.Multer.File[],
+  // ): Promise<GymResponseDto> {
+  //   const registeredGym = await this.gymsService.
+  // }
 
   // 내 공고 불러오기
   @ApiBearerAuth('accessToken')

@@ -289,6 +289,14 @@ export class GymsService {
     return savedGym;
   }
 
+  // // 공고 이미지 등록하기
+  // async registerImages(member: CenterEntity, ) {
+  //   await this.gymRepository.update(id, registerRequestDto);
+  //   const updatedGym = await this.gymRepository.findOne({ where: { id } });
+
+  //   return updatedGym;
+  // }
+
   // 주소에서 시/도, 시/군/구 추출
   async extractLocation(
     address: string,
