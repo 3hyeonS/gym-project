@@ -7,6 +7,12 @@ import { GymEntity } from './entity/gyms.entity';
 import { GymResponseDto } from './dto/gym-response-dto';
 import { RegisterRequestDto } from './dto/gym-registration-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
+import {
+  ObjectCannedACL,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class GymsService {
@@ -15,10 +21,23 @@ export class GymsService {
     return 'Welcome Gyms';
   }
 
+  private s3: S3Client;
+  private bucketName: string;
+
   constructor(
     @InjectRepository(GymEntity)
     private readonly gymRepository: Repository<GymEntity>,
-  ) {}
+  ) {
+    this.s3 = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    this.bucketName = process.env.S3_BUCKET_NAME;
+  }
 
   // method1 : 모든 헬스장 리스트 가져오기
   async getAll(): Promise<GymResponseDto[]> {
@@ -211,10 +230,12 @@ export class GymsService {
   }
 
   // method3: 헬스장 공고 등록하기
-  async register(center: CenterEntity, registerRequestDto: RegisterRequestDto) {
-    console.log(center);
+  async register(
+    center: CenterEntity,
+    registerRequestDto: RegisterRequestDto,
+    files?: Express.Multer.File[],
+  ) {
     const {
-      subway,
       workType,
       workTime,
       workDays,
@@ -230,16 +251,19 @@ export class GymsService {
       preference,
       description,
     } = registerRequestDto;
-    console.log(center);
+
     const centerName = center.centerName;
     const address = this.extractLocation(center.address);
     const maxClassFee = classFee ? classFee[1] : -2;
+
+    // 이미지 업로드 후 URL 리스트 가져오기
+    const imageUrls = await this.uploadGymImages(files || []);
 
     const newGym = this.gymRepository.create({
       centerName: centerName,
       city: (await address).city,
       location: (await address).location,
-      subway,
+      subway: null,
       workType,
       workTime,
       workDays,
@@ -258,6 +282,7 @@ export class GymsService {
       date: new Date(),
       description,
       center: center,
+      image: imageUrls, // 이미지 URL 저장
     });
 
     const savedGym = await this.gymRepository.save(newGym);
@@ -307,5 +332,29 @@ export class GymsService {
     const updatedGym = await this.gymRepository.findOne({ where: { id } });
 
     return updatedGym;
+  }
+
+  // 📌 다중 이미지 S3 업로드
+  async uploadGymImages(files: Express.Multer.File[]): Promise<string[]> {
+    if (!files || files.length === 0) {
+      return [];
+    }
+
+    const uploadPromises = files.map(async (file) => {
+      const fileKey = `gyms/${uuidv4()}-${file.originalname}`;
+
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ACL: ObjectCannedACL.public_read, // 퍼블릭 읽기 권한
+      };
+
+      await this.s3.send(new PutObjectCommand(params));
+      return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    });
+
+    return Promise.all(uploadPromises);
   }
 }

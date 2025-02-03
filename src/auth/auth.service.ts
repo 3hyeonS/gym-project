@@ -14,7 +14,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { v4 as uuidv4 } from 'uuid';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { MemberEntity } from './entity/member.entity';
@@ -437,7 +437,11 @@ export class AuthService {
     };
 
     try {
-      const response = await lastValueFrom(this.httpService.post(url, params));
+      const response = await lastValueFrom(
+        this.httpService
+          .post(url, params, { timeout: 5000 }) // 5초 제한
+          .pipe(retry(3)), // 최대 3번 재시도
+      );
       const item = response.data.data[0];
       const filteredData = {
         businessId: item.b_no.replace(/^(\d{3})(\d{2})(\d{5})$/, '$1-$2-$3'), // 사업자등록번호
@@ -448,6 +452,7 @@ export class AuthService {
       };
       return filteredData;
     } catch (error) {
+      console.log(error.response?.data);
       throw new HttpException(
         error.response?.data || 'API 요청 실패',
         HttpStatus.BAD_REQUEST,

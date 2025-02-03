@@ -3,15 +3,19 @@ import {
   Controller,
   Get,
   Post,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { GymsService } from './gyms.service';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiExtraModels,
   ApiOperation,
   ApiTags,
+  PartialType,
 } from '@nestjs/swagger';
 import { GymResponseDto } from './dto/gym-response-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
@@ -31,6 +35,7 @@ import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { GymModifyRequestDto } from './dto/gym-id-request-dto';
 import { CenterResponseDto } from 'src/auth/dto/center-response.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -109,7 +114,7 @@ export class GymsController {
     return searchedGyms;
   }
 
-  //체육관 등록하기
+  //센터 공고 등록하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '센터 공고 등록하기',
@@ -141,18 +146,20 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('Gym recruitment registered successfully')
+  // @ApiConsumes('multipart/form-data', 'application/json')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
+  @UseInterceptors(FilesInterceptor('images', 10))
   @Post('register')
   async register(
     @GetUser() member: CenterEntity,
     @Body() registerRequestDto: RegisterRequestDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<GymResponseDto> {
-    console.log(member);
-    console.log(member);
     const registeredGym = await this.gymsService.register(
       member,
       registerRequestDto,
+      files,
     );
     const gymResponsDto = new GymResponseDto(registeredGym);
     return gymResponsDto;

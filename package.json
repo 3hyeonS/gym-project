@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.740.0",
     "@nestjs/axios": "^3.1.3",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.3.0",
@@ -39,6 +40,8 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "multer": "^1.4.5-lts.1",
+    "multer-s3": "^3.0.1",
     "mysql2": "^3.12.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -55,6 +58,7 @@
     "@nestjs/testing": "^10.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.3.1",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",

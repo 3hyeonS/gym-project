@@ -9,39 +9,6 @@ import {
 } from 'class-validator';
 
 export class RegisterRequestDto {
-  // @ApiProperty({
-  //   type: String,
-  //   description: '센터명',
-  //   example: '등록센터예시1',
-  // })
-  // @IsString()
-  // centerName: string;
-
-  // @ApiProperty({
-  //   type: String,
-  //   description: '시/도',
-  //   example: '서울',
-  // })
-  // @IsString()
-  // city: string;
-
-  // @ApiProperty({
-  //   type: [String],
-  //   description: '시/군/구',
-  //   example: ['강동구'],
-  // })
-  // @IsString({ each: true })
-  // location: string[];
-
-  @ApiProperty({
-    type: [String],
-    description: '인근 지하철역',
-    example: ['강일역'],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  subway: string[];
-
   @ApiProperty({
     type: [String],
     description: '근무 형태',
@@ -86,21 +53,6 @@ export class RegisterRequestDto {
   @IsArray()
   @IsString({ each: true })
   salary: string[];
-
-  //   @ApiProperty({
-  //     type: 'object',
-  //     additionalProperties: {
-  //       type: 'string',
-  //     },
-  //     description: '상세 급여 조건',
-  //     example: {
-  //       기본급: '100만원',
-  //       단가: '3 ~ 8만원',
-  //       수업료: '40% ~ 50%',
-  //     },
-  //   })
-  //   @IsObject()
-  //   salaryDetail?: Record<string, string>;
 
   @ApiProperty({
     type: [Number],
@@ -162,14 +114,6 @@ export class RegisterRequestDto {
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
   monthly: number[];
 
-  // @ApiProperty({
-  //   type: Number,
-  //   description: '최대 수업료(%)  \n채용공고참고 : -1  \n명시 안 됨 : -2',
-  //   example: 60,
-  // })
-  // @IsNumber()
-  // maxClassFee: number;
-
   @ApiProperty({
     type: [String],
     description: '성별',
@@ -208,6 +152,14 @@ export class RegisterRequestDto {
   description: string;
 
   // @ApiProperty({
+  //   type: 'string',
+  //   format: 'binary', // ✅ Swagger에서 파일 업로드로 표시
+  //   description: '이미지 파일 (최대 10개)',
+  // })
+  // @IsOptional()
+  // image?: any; // 파일이므로 타입을 `any`로 지정
+
+  // @ApiProperty({
   //   type: [String],
   //   description: '이미지 파일',
   //   example: [
@@ -220,6 +172,7 @@ export class RegisterRequestDto {
   //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_007.png',
   //   ],
   // })
+  // @IsOptional()
   // @IsArray()
   // @IsString({ each: true })
   // image: string[];

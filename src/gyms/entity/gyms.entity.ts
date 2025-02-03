@@ -15,7 +15,7 @@ export class GymEntity {
   @Column({ type: 'json', name: 'location' })
   location: string[];
 
-  @Column({ type: 'json', name: 'subway' })
+  @Column({ type: 'json', name: 'subway', nullable: true })
   subway: string[];
 
   @Column({ type: 'json', name: 'workType' })

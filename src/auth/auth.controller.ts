@@ -189,7 +189,7 @@ export class AuthController {
   @ErrorApiResponse({
     status: 400,
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: '"businessId format must be 000-00-00000"',
+    message: 'businessId format must be 000-00-00000',
     error: 'BadRequestException',
   })
   @ResponseMsg('businessId validated successfully')
