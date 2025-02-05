@@ -407,7 +407,7 @@ export class GymsService {
   ) {
     // 이미지 업로드 후 URL 리스트 가져오기
     const newImageUrls = await this.uploadGymImages(centerName, files || []);
-    const updatedImageUrls = [...existImageUrls, ...newImageUrls];
+    const updatedImageUrls = [...(existImageUrls || []), ...newImageUrls];
     // 모두 비어 있으면 null 반환
     const finalImageUrls =
       updatedImageUrls.length > 0 ? updatedImageUrls : null;
