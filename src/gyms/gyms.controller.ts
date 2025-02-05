@@ -257,15 +257,18 @@ export class GymsController {
   async modifyMyGym(
     @GetUser() member: CenterEntity,
     @Body('stringDto') stringDto: string,
-    @Body('existImageUrls') existImageUrls?: string[],
+    @Body('existImageUrls') existImageUrls?: string | string[],
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const gymModifyRequestDto: GymModifyRequestDto = JSON.parse(stringDto);
+    const parsedExistImageUrls = Array.isArray(existImageUrls)
+      ? existImageUrls
+      : [existImageUrls];
     const modifiedMyGym = await this.gymsService.modifyMyGym(
       member.centerName,
       gymModifyRequestDto.id,
       gymModifyRequestDto.modifyRequest,
-      existImageUrls,
+      parsedExistImageUrls,
       files,
     );
     return modifiedMyGym;
