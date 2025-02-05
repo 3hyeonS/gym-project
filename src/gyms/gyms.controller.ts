@@ -261,9 +261,14 @@ export class GymsController {
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const gymModifyRequestDto: GymModifyRequestDto = JSON.parse(stringDto);
-    const parsedExistImageUrls = Array.isArray(existImageUrls)
-      ? existImageUrls
-      : [existImageUrls];
+    let parsedExistImageUrls;
+    if (existImageUrls) {
+      parsedExistImageUrls = Array.isArray(existImageUrls)
+        ? existImageUrls
+        : [existImageUrls];
+    } else {
+      parsedExistImageUrls = null;
+    }
     const modifiedMyGym = await this.gymsService.modifyMyGym(
       member.centerName,
       gymModifyRequestDto.id,
