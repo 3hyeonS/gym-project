@@ -182,18 +182,6 @@ export class GymsController {
     return gymResponsDto;
   }
 
-  // // 공고 이미지 등록하기
-  // @UseGuards(AuthGuard(), RolesGuard)
-  // @Roles(MemberRole.CENTER)
-  // @UseInterceptors(FilesInterceptor('images', 10))
-  // @Post('register/images')
-  // async registerImages(
-  //   @GetUser() member: CenterEntity,
-  //   @UploadedFiles() files: Express.Multer.File[],
-  // ): Promise<GymResponseDto> {
-  //   const registeredGym = await this.gymsService.
-  // }
-
   // 내 공고 불러오기
   @ApiBearerAuth('accessToken')
   @ApiOperation({

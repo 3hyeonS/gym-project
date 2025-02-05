@@ -335,6 +335,11 @@ export class GymsService {
     return myGym;
   }
 
+  // 내 공고 삭제하기
+  async deleteMyGym(id: number) {
+    const myGym = await this.gymRepository.delete({ id });
+  }
+
   // method5: 내 공고 수정하기
   async modifyMyGym(
     centerName: string,
