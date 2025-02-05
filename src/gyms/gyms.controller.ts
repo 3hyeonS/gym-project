@@ -158,7 +158,7 @@ export class GymsController {
         },
         images: {
           type: 'array',
-          items: { type: 'string', format: 'binary' }, // ✅ 여러 개의 파일 처리
+          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
         },
       },
     },

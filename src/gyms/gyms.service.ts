@@ -258,6 +258,7 @@ export class GymsService {
 
     // 이미지 업로드 후 URL 리스트 가져오기
     const imageUrls = await this.uploadGymImages(centerName, files || []);
+    const finalImageUrls = imageUrls.length > 0 ? imageUrls : null; // 빈 배열이면 null 설정
 
     const newGym = this.gymRepository.create({
       centerName: centerName,
@@ -282,7 +283,7 @@ export class GymsService {
       date: new Date(),
       description,
       center: center,
-      image: imageUrls, // 이미지 URL 저장
+      image: finalImageUrls, // 이미지 URL 저장
     });
 
     const savedGym = await this.gymRepository.save(newGym);
@@ -345,22 +346,25 @@ export class GymsService {
     // 이미지 업로드 후 URL 리스트 가져오기
     const newImageUrls = await this.uploadGymImages(centerName, files || []);
     const updatedImageUrls = [...existImageUrls, ...newImageUrls];
+    // 모두 비어 있으면 null 반환
+    const finalImageUrls =
+      updatedImageUrls.length > 0 ? updatedImageUrls : null;
     await this.gymRepository.update(id, {
       ...registerRequestDto,
-      image: updatedImageUrls, // 기존 + 새로운 이미지 반영
+      image: finalImageUrls, // 기존 + 새로운 이미지 반영
     });
     const updatedGym = await this.gymRepository.findOne({ where: { id } });
 
     return updatedGym;
   }
 
-  // 📌 다중 이미지 S3 업로드
+  // 다중 이미지 S3 업로드
   async uploadGymImages(
     centerName: string,
     files: Express.Multer.File[],
   ): Promise<string[]> {
     if (!files || files.length === 0) {
-      return null;
+      return [];
     }
     const folderName = `${centerName}${uuidv4()}`;
     const uploadPromises = files.map(async (file) => {
