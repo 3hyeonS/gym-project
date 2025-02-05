@@ -178,6 +178,13 @@ export class GymResponseDto {
   })
   image: string[];
 
+  @ApiProperty({
+    type: Boolean,
+    description: '채용 여부',
+    example: true,
+  })
+  isHiring: boolean;
+
   constructor(gym: GymEntity) {
     this.id = gym.id;
     this.centerName = gym.centerName;
@@ -201,5 +208,6 @@ export class GymResponseDto {
     this.date = gym.date;
     this.description = gym.description;
     this.image = gym.image;
+    this.isHiring = gym.isHiring;
   }
 }

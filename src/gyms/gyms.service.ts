@@ -36,19 +36,63 @@ export class GymsService {
   }
 
   // method1 : 모든 헬스장 리스트 가져오기
-  async getAll(): Promise<GymResponseDto[]> {
-    const gymList = await this.gymRepository.find();
-    return gymList;
+  async getAll(
+    page: number,
+    limit: number,
+  ): Promise<{
+    gymList: GymResponseDto[];
+    totalGyms: number;
+    totalPages: number;
+    page: number;
+  }> {
+    const [gymList, totalCount] = await this.gymRepository.findAndCount({
+      where: { isHiring: true }, // 채용중인 헬스장만
+      order: { date: 'DESC' }, // 최신순 정렬
+      take: limit, // 한 페이지에 보여줄 개수
+      skip: (page - 1) * limit, // 페이지 계산
+    });
+    return {
+      gymList: gymList,
+      page,
+      totalGyms: totalCount, // 전체 헬스장 수
+      totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+    };
   }
 
   // method2 : 조건에 맞는 헬스장 리스트 가져오기
   async searchSelected(
     selectedOptionsDto: SelectedOptionsDto,
-  ): Promise<SearchedGymDto[]> {
+    page: number,
+    limit: number,
+  ): Promise<{
+    gymList: SearchedGymDto[];
+    totalGyms: number;
+    totalPages: number;
+    page: number;
+  }> {
     console.log(selectedOptionsDto);
-    const queryBuilder = this.gymRepository.createQueryBuilder('gymsUpdate');
+    const queryBuilder = this.gymRepository.createQueryBuilder('gymList');
     const conditions: { condition: string; parameters: Record<string, any> }[] =
       [];
+
+    // isHiring이 true인 데이터만 필터링
+    conditions.push({
+      condition: 'gymList.isHiring = :isHiring',
+      parameters: { isHiring: true },
+    });
+
+    // centerName 조건 처리
+    if (
+      selectedOptionsDto.selectedName &&
+      selectedOptionsDto.selectedName.trim() !== ''
+    ) {
+      conditions.push({
+        condition: 'gymList.centerName LIKE :name',
+        parameters: {
+          name: `%${selectedOptionsDto.selectedName}%`, // 부분 검색 (포함 여부 확인)
+        },
+      });
+    }
 
     // location 조건 처리
     if (
@@ -65,12 +109,12 @@ export class GymsService {
         const cityKey = `city_${index}`;
 
         if (districts.includes('전체')) {
-          locConditions.push(`gymsUpdate.city = :${cityKey}`);
+          locConditions.push(`gymList.city = :${cityKey}`);
           locParameters[cityKey] = city;
         } else {
           const locKey = `loc_${index}`;
           locConditions.push(
-            `(gymsUpdate.city = :${cityKey} AND JSON_OVERLAPS(gymsUpdate.location, :${locKey}))`,
+            `(gymList.city = :${cityKey} AND JSON_OVERLAPS(gymList.location, :${locKey}))`,
           );
           locParameters[cityKey] = city;
           locParameters[locKey] = JSON.stringify(districts);
@@ -91,7 +135,7 @@ export class GymsService {
         selectedOptionsDto.selectedWorkType.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.workType, :wty) > 0',
+        condition: 'JSON_OVERLAPS(gymList.workType, :wty) > 0',
         parameters: {
           wty: JSON.stringify(selectedOptionsDto.selectedWorkType),
         },
@@ -105,7 +149,7 @@ export class GymsService {
         selectedOptionsDto.selectedWorkTime.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.workTime, :wti) > 0',
+        condition: 'JSON_OVERLAPS(gymList.workTime, :wti) > 0',
         parameters: {
           wti: JSON.stringify(selectedOptionsDto.selectedWorkTime),
         },
@@ -119,7 +163,7 @@ export class GymsService {
         selectedOptionsDto.selectedWorkDays.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.workDays, :wkd) > 0',
+        condition: 'JSON_OVERLAPS(gymList.workDays, :wkd) > 0',
         parameters: {
           wkd: JSON.stringify(selectedOptionsDto.selectedWorkDays),
         },
@@ -133,7 +177,7 @@ export class GymsService {
         selectedOptionsDto.selectedWeekendDuty.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.weekendDuty, :wd) > 0',
+        condition: 'JSON_OVERLAPS(gymList.weekendDuty, :wd) > 0',
         parameters: {
           wd: JSON.stringify(selectedOptionsDto.selectedWeekendDuty),
         },
@@ -142,12 +186,12 @@ export class GymsService {
 
     // salary 조건 처리
     if (selectedOptionsDto.selectedSalary?.length) {
-      let slyConditions = [`JSON_CONTAINS(gymsUpdate.salary, :sly) > 0`];
+      let slyConditions = [`JSON_CONTAINS(gymList.salary, :sly) > 0`];
 
       if (selectedOptionsDto.flexibleOptions[4] == 1) {
         slyConditions.push(
-          `JSON_CONTAINS(gymsUpdate.salary, '["명시 안 됨"]') > 0`,
-          `JSON_CONTAINS(gymsUpdate.salary, '["채용공고참고"]') > 0`,
+          `JSON_CONTAINS(gymList.salary, '["명시 안 됨"]') > 0`,
+          `JSON_CONTAINS(gymList.salary, '["채용공고참고"]') > 0`,
         );
       }
 
@@ -162,12 +206,12 @@ export class GymsService {
       if (selectedOptionsDto.flexibleOptions[5] == 1) {
         conditions.push({
           condition:
-            '(gymsUpdate.maxClassFee >= :mcf or gymsUpdate.maxClassFee <= -1)',
+            '(gymList.maxClassFee >= :mcf or gymList.maxClassFee <= -1)',
           parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
         });
       } else {
         conditions.push({
-          condition: 'gymsUpdate.maxClassFee >= :mcf',
+          condition: 'gymList.maxClassFee >= :mcf',
           parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
         });
       }
@@ -180,7 +224,7 @@ export class GymsService {
         selectedOptionsDto.selectedGender.push('성별 무관');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.gender, :gen) > 0',
+        condition: 'JSON_OVERLAPS(gymList.gender, :gen) > 0',
         parameters: { gen: JSON.stringify(selectedOptionsDto.selectedGender) },
       });
     }
@@ -192,7 +236,7 @@ export class GymsService {
         selectedOptionsDto.selectedQualifications.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.qualifications, :qfc) > 0',
+        condition: 'JSON_OVERLAPS(gymList.qualifications, :qfc) > 0',
         parameters: {
           qfc: JSON.stringify(selectedOptionsDto.selectedQualifications),
         },
@@ -206,7 +250,7 @@ export class GymsService {
         selectedOptionsDto.selectedPreference.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymsUpdate.preference, :pre) > 0',
+        condition: 'JSON_OVERLAPS(gymList.preference, :pre) > 0',
         parameters: {
           pre: JSON.stringify(selectedOptionsDto.selectedPreference),
         },
@@ -221,8 +265,25 @@ export class GymsService {
         queryBuilder.andWhere(condition.condition, condition.parameters);
       }
     });
+
+    // date 내림차순 정렬 추가
+    queryBuilder.orderBy('gymList.date', 'DESC');
+
+    // 총 개수 가져오기
+    const totalCount = await queryBuilder.getCount();
+
+    // 페이징 처리
+    queryBuilder.take(limit).skip((page - 1) * limit);
+
+    // 최종 데이터 가져오기
     const objectList = await queryBuilder.getMany();
-    return objectList;
+
+    return {
+      gymList: objectList,
+      page,
+      totalGyms: totalCount, // 전체 헬스장 수
+      totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+    };
   }
 
   // method3: 헬스장 공고 등록하기
@@ -341,7 +402,7 @@ export class GymsService {
     centerName: string,
     id: number,
     registerRequestDto: RegisterRequestDto,
-    existImageUrls: string[],
+    existImageUrls?: string[],
     files?: Express.Multer.File[],
   ) {
     // 이미지 업로드 후 URL 리스트 가져오기

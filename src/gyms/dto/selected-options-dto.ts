@@ -24,6 +24,15 @@ export class SelectedOptionsDto {
   flexibleOptions: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
   @ApiProperty({
+    type: String,
+    description: '센터명',
+    example: '트렌디우먼 휘트니스',
+  })
+  @IsString()
+  @IsOptional()
+  selectedName?: string;
+
+  @ApiProperty({
     type: 'object',
     additionalProperties: {
       type: 'array',

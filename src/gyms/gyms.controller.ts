@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -73,9 +74,11 @@ export class GymsController {
   })
   @ResponseMsg('All gyms returned successfully')
   @Get('getAll')
-  async getAll() {
-    const allGyms = await this.gymsService.getAll();
-
+  async getAll(
+    @Query('page') page: number = 1, // 기본값 1
+    @Query('limit') limit: number = 20, // 기본값 20
+  ) {
+    const allGyms = await this.gymsService.getAll(page, limit);
     return allGyms;
   }
 
@@ -107,9 +110,16 @@ export class GymsController {
   // })
   @ResponseMsg('Gyms with selected conditions returned successfully')
   @Post('selected')
-  async searchSelected(@Body() selectedOptionsDto: SelectedOptionsDto) {
-    const searchedGyms =
-      await this.gymsService.searchSelected(selectedOptionsDto);
+  async searchSelected(
+    @Body() selectedOptionsDto: SelectedOptionsDto,
+    @Query('page') page: number = 1, // 기본값 1
+    @Query('limit') limit: number = 20, // 기본값 20
+  ) {
+    const searchedGyms = await this.gymsService.searchSelected(
+      selectedOptionsDto,
+      page,
+      limit,
+    );
     return searchedGyms;
   }
 
@@ -247,8 +257,8 @@ export class GymsController {
   async modifyMyGym(
     @GetUser() member: CenterEntity,
     @Body('stringDto') stringDto: string,
-    @Body('existImageUrls') existImageUrls: string[],
-    @UploadedFiles() files: Express.Multer.File[],
+    @Body('existImageUrls') existImageUrls?: string[],
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const gymModifyRequestDto: GymModifyRequestDto = JSON.parse(stringDto);
     const modifiedMyGym = await this.gymsService.modifyMyGym(

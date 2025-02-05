@@ -80,4 +80,7 @@ export class GymEntity {
     onDelete: 'SET NULL',
   })
   center: CenterEntity;
+
+  @Column({ type: 'boolean', name: 'isHiring', nullable: false })
+  isHiring: boolean = true;
 }
