@@ -7,11 +7,7 @@ import { GymEntity } from './entity/gyms.entity';
 import { GymResponseDto } from './dto/gym-response-dto';
 import { RegisterRequestDto } from './dto/gym-registration-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import {
-  ObjectCannedACL,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

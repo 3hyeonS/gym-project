@@ -351,39 +351,6 @@ export class AuthController {
     };
   }
 
-  // 로그아웃
-  @ApiBearerAuth('accessToken')
-  @ApiOperation({
-    summary: '로그아웃',
-    description: '로그아웃 및 refreshToken 삭제',
-  })
-  @NullApiResponse({
-    status: 201,
-    description: '로그아웃 성공',
-    message: 'Signed out successfully',
-  })
-  @ErrorApiResponse({
-    status: 401,
-    description: '유효하지 않거나 기간이 만료된 acccessToken 혹은 refreshToken',
-    message: 'Invalid or expired accessToken',
-    error: 'UnauthorizedException',
-  })
-  @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: 'refreshToken must be a jwt string',
-    error: 'BadRequestException',
-  })
-  @ResponseMsg('Signed out successfully')
-  @UseFilters(CustomUnauthorizedExceptionFilter)
-  @Post('/signout')
-  @UseGuards(AuthGuard())
-  async logout(@Body() refreshTokenRequestDto: RefreshTokenRequestDto) {
-    await this.authService.revokeRefreshToken(
-      refreshTokenRequestDto.refreshToken,
-    );
-  }
-
   // 회원 탈퇴
   @ApiBearerAuth('accessToken')
   @ApiOperation({
@@ -471,34 +438,3 @@ export class AuthController {
     };
   }
 }
-
-// // 인증된 회원이 들어갈 수 있는 테스트 URL 경로
-// @ApiOperation({
-//   summary: '인증 회원 경로 테스트',
-//   description: '인증된 회원만 접근 가능',
-// })
-// @ResponseMsg('인증됨')
-// @ApiResponse({
-//   status: 200,
-//   description: '로그인에 성공했습니다.',
-//   model: UserResponseDto|CenterResponseDto,
-// })
-// @Post('/signed')
-// @UseGuards(AuthGuard()) // @UseGuards : 핸들러는 지정한 인증 가드가 적용됨 -> AuthGuard()의 'jwt'는 기본값으로 생략가능
-// async testForAuth(
-//   @GetUser() member: UserEntity | CenterEntity,
-// ): Promise<UserResponseDto | CenterResponseDto> {
-//   let responseDto: UserResponseDto | CenterResponseDto;
-//   if (member instanceof UserEntity) {
-//     responseDto = new UserResponseDto(member);
-//     this.logger.verbose(
-//       `Authenticated user accessing test route: ${member.signId}`,
-//     );
-//   } else {
-//     responseDto = new CenterResponseDto(member);
-//     this.logger.verbose(
-//       `Authenticated center accessing test route: ${member.signId}`,
-//     );
-//   }
-//   return responseDto;
-// }

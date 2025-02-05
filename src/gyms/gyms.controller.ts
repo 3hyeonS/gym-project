@@ -15,7 +15,6 @@ import {
   ApiExtraModels,
   ApiOperation,
   ApiTags,
-  PartialType,
 } from '@nestjs/swagger';
 import { GymResponseDto } from './dto/gym-response-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';

@@ -278,7 +278,7 @@ export class AuthService {
 
   // Refresh Token 생성 및 저장
   async generateRefreshToken(member: MemberEntity): Promise<string> {
-    const payload = { signId: member.signId };
+    const payload = { signId: member.signId, iat: Date.now() };
     const refreshToken = this.jwtService.sign(payload, {
       expiresIn: '7d', // 만료 시간 (7일)
     }); // Refresh Token 생성
@@ -460,32 +460,3 @@ export class AuthService {
     }
   }
 }
-
-// // 이메일 중복 확인 메서드
-// private async checkEmailExists(email: string): Promise<void> {
-//   this.logger.verbose(`Checking if email exists: ${email}`);
-
-//   const existingMember = await this.findMemberByEmail(email);
-//   if (existingMember) {
-//     this.logger.warn(`Email already exists: ${email}`);
-//     throw new ConflictException('Email already exists');
-//   }
-//   this.logger.verbose(`Email is available: ${email}`);
-// }
-
-// // 이메일로 멤버 찾기 메서드
-// private async findMemberByEmail(
-//   email: string,
-// ): Promise<UserEntity | CenterEntity | undefined> {
-//   const user: UserEntity = await this.usersRepository.findOne({
-//     where: { email },
-//   });
-
-//   const center: CenterEntity = user
-//     ? null
-//     : await this.centersRepository.findOne({
-//         where: { email },
-//       });
-
-//   return user || center;
-// }
