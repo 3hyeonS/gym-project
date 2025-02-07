@@ -150,11 +150,4 @@ export class SearchedGymDto {
     ],
   })
   image: string[];
-
-  @ApiProperty({
-    type: Boolean,
-    description: '채용 여부',
-    example: true,
-  })
-  isHiring: boolean;
 }

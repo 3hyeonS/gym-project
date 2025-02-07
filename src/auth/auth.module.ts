@@ -12,6 +12,9 @@ import { HttpModule } from '@nestjs/axios';
 import { CenterEntity } from './entity/center.entity';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { GymEntity } from 'src/gyms/entity/gyms.entity';
+import { EmailService } from './email.service';
+import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
+import { EmailCodeEntity } from './entity/emailCode.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -23,6 +26,8 @@ dotenv.config();
       CenterEntity,
       RefreshTokenEntity,
       GymEntity,
+      ExpiredGymEntity,
+      EmailCodeEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
@@ -34,7 +39,7 @@ dotenv.config();
     HttpModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, KakaoStrategy],
+  providers: [AuthService, JwtStrategy, KakaoStrategy, EmailService],
   exports: [AuthService, AuthModule, JwtModule, PassportModule],
 })
 export class AuthModule {}

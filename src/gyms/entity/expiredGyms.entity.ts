@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity({ name: 'gymList' })
+@Entity({ name: 'expiredGymList' })
 export class ExpiredGymEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
@@ -82,9 +82,5 @@ export class ExpiredGymEntity {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn() // GymEntity 테이블에 FK가 생성됨
   center: CenterEntity;
-
-  @Column({ type: 'tinyint', name: 'isHiring', nullable: false })
-  isHiring: boolean = false;
 }

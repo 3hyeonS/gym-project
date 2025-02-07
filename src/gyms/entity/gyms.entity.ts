@@ -84,7 +84,4 @@ export class GymEntity {
   })
   @JoinColumn() // GymEntity 테이블에 FK가 생성됨
   center: CenterEntity;
-
-  @Column({ type: 'tinyint', name: 'isHiring', nullable: false })
-  isHiring: boolean = true;
 }

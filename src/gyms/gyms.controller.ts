@@ -267,7 +267,7 @@ export class GymsController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @UseInterceptors(FilesInterceptor('images', 10))
-  @Post('modifyMyGym')
+  @Post('modify')
   async modifyMyGym(
     @GetUser() center: CenterEntity,
     @Body('stringDto') stringDto: string,
@@ -291,5 +291,32 @@ export class GymsController {
       files,
     );
     return modifiedMyGym;
+  }
+
+  // 내 채용 중 공고 만료시키기
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Get('expire')
+  async expireMyGym(@GetUser() center: CenterEntity) {
+    await this.gymsService.expireMyGym(center);
+  }
+
+  // 내 채용 중 공고 삭제하기
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Get('delete')
+  async deleteMyGym(@GetUser() center: CenterEntity) {
+    await this.gymsService.deleteMyGym(center);
+  }
+
+  // 내 채용 중 공고 끌어올리기
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Get('refresh')
+  async refreshMyGym(@GetUser() center: CenterEntity) {
+    await this.gymsService.refreshMyGym(center);
   }
 }

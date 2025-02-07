@@ -45,6 +45,10 @@ import { BusinessIdIsValidResponseDto } from './dto/businessId-isvalid-response-
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
 import { CustomUnauthorizedExceptionFilter } from './custom-unauthorizedExcetption-filter';
 import { RolesGuard } from './custom-role.guard';
+import { Roles } from 'src/decorators/roles-decorator';
+import { MemberRole } from './entity/member.entity';
+import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
+import { EmailCodeRequestDto } from './dto/email-code-request.dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -113,6 +117,45 @@ export class AuthController {
       throw error; // 다른 예외는 그대로 throw
     }
   }
+
+  // 이메일 인증코드 전송
+  @Post('/sendCode')
+  async sendCode(
+    @Body() emailCodeRequestDto: EmailCodeRequestDto,
+  ): Promise<void> {
+    return await this.authService.sendVerificationCode(
+      emailCodeRequestDto.email,
+    );
+  }
+
+  // 이메일 인증코드 입력
+  @Post('/confirmCode')
+  async confirmCode(
+    @Body() emailCodeConfirmRequestDto: EmailCodeConfirmRequestDto,
+  ): Promise<boolean> {
+    return await this.authService.confirmVerificationCode(
+      emailCodeConfirmRequestDto.code,
+    );
+  }
+
+  // 회원정보 수정을 위한 비밀번호 확인
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER, MemberRole.USER, MemberRole.ADMIN)
+  @Post('isPasswordValid')
+  async isPasswordValid(
+    @GetUser() member: UserEntity | CenterEntity,
+    @Body('password') password: string,
+  ): Promise<boolean> {
+    return await this.authService.isPasswordValid(member, password);
+  }
+
+  // 센터 회원정보 수정
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Post('modifyCenter')
+  async modifyCenter() {}
 
   // 일반 회원 가입 기능
   @ApiOperation({

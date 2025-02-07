@@ -53,7 +53,6 @@ export class GymsService {
     page: number;
   }> {
     const [gymList, totalCount] = await this.gymRepository.findAndCount({
-      where: { isHiring: true }, // 채용중인 헬스장만
       order: { date: 'DESC' }, // 최신순 정렬
       take: limit, // 한 페이지에 보여줄 개수
       skip: (page - 1) * limit, // 페이지 계산
@@ -81,12 +80,6 @@ export class GymsService {
     const queryBuilder = this.gymRepository.createQueryBuilder('gymList');
     const conditions: { condition: string; parameters: Record<string, any> }[] =
       [];
-
-    // isHiring이 true인 데이터만 필터링
-    conditions.push({
-      condition: 'gymList.isHiring = :isHiring',
-      parameters: { isHiring: true },
-    });
 
     // centerName 조건 처리
     if (
@@ -383,7 +376,7 @@ export class GymsService {
     return { city, location };
   }
 
-  // 내 채용중 공고 불러오기
+  // 내 채용 중 공고 불러오기
   async getMyGym(center: CenterEntity): Promise<GymResponseDto> {
     const myGym = await this.gymRepository.findOneBy({ center });
     return myGym;
@@ -397,12 +390,36 @@ export class GymsService {
     return myExpiredGyms;
   }
 
-  // 내 공고 삭제하기
+  // 내 채용 중 공고 끌어올리기
+  async refreshMyGym(center: CenterEntity): Promise<GymResponseDto> {
+    await this.gymRepository.update(center, {
+      date: new Date(),
+    });
+    const myRefreshedGym = await this.gymRepository.findOneBy({ center });
+    return myRefreshedGym;
+  }
+
+  // 내 채용 중 공고 만료시키기
+  async expireMyGym(center: CenterEntity) {
+    const myGym = await this.gymRepository.findOneBy({ center });
+    const expiredGym = this.expiredGymRepository.create({
+      ...myGym, // 기존 데이터 복사
+    });
+    await this.expiredGymRepository.save(expiredGym);
+    await this.deleteMyGym(center);
+  }
+
+  // 내 채용 중 공고 삭제하기
   async deleteMyGym(center: CenterEntity) {
     const myGym = await this.gymRepository.delete({ center });
   }
 
-  // method5: 내 공고 수정하기
+  // 내 만료된 공고 삭제하기
+  async deleteMyExpiredGym(center: CenterEntity) {
+    const myGym = await this.expiredGymRepository.delete({ center });
+  }
+
+  // method5: 내 채용 중 공고 수정하기
   async modifyMyGym(
     centerName: string,
     id: number,

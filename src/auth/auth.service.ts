@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
@@ -23,6 +24,8 @@ import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
 import { GymEntity } from 'src/gyms/entity/gyms.entity';
 import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
+import { EmailService } from './email.service';
+import { EmailCodeEntity } from './entity/emailCode.entity';
 
 @Injectable()
 export class AuthService {
@@ -39,13 +42,45 @@ export class AuthService {
     private gymRepository: Repository<GymEntity>,
     @InjectRepository(ExpiredGymEntity)
     private expiredGymRepository: Repository<ExpiredGymEntity>,
+    @InjectRepository(EmailCodeEntity)
+    private emailCodeRepository: Repository<EmailCodeEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
+    private emailService: EmailService,
   ) {}
 
   // 문자 출력
   getHello(): string {
     return 'Welcome Autorization';
+  }
+
+  // 이메일 인증 코드 전송
+  async sendVerificationCode(email): Promise<void> {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await this.emailService.sendVerificationToEmail(email, code);
+    const createdCode = await this.emailCodeRepository.create({ code });
+    await this.emailCodeRepository.save(createdCode);
+  }
+
+  // 인증 코드 확인
+  async confirmVerificationCode(code: string) {
+    const savedCode = await this.emailCodeRepository.findOneBy({ code });
+    if (!savedCode) {
+      return false;
+    }
+    await this.emailCodeRepository.delete({ code });
+    return true;
+  }
+
+  // 회원정보 수정을 위한 비밀번호 확인
+  async isPasswordValid(
+    member: UserEntity | CenterEntity,
+    password: string,
+  ): Promise<boolean> {
+    if (member.password == password) {
+      return true;
+    }
+    return false;
   }
 
   // 일반 회원 가입
@@ -56,6 +91,9 @@ export class AuthService {
 
     // signId 중복 확인
     await this.checkSignIdExists(signId);
+
+    // email 중복 확인
+    await this.checkEmailExists(email);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -89,6 +127,9 @@ export class AuthService {
 
     // signId 중복 확인
     await this.checkSignIdExists(signId);
+
+    // email 중복 확인
+    await this.checkEmailExists(email);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -160,6 +201,31 @@ export class AuthService {
       : await this.centersRepository.findOne({
           where: { signId },
         });
+    return user || center;
+  }
+
+  // 이메일 중복 확인 메서드
+  private async checkEmailExists(email: string): Promise<void> {
+    const existingMember = await this.findMemberByEmail(email);
+    if (existingMember) {
+      throw new ConflictException('Email already exists');
+    }
+  }
+
+  // 이메일로 멤버 찾기 메서드
+  private async findMemberByEmail(
+    email: string,
+  ): Promise<UserEntity | CenterEntity | undefined> {
+    const user: UserEntity = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    const center: CenterEntity = user
+      ? null
+      : await this.centersRepository.findOne({
+          where: { email },
+        });
+
     return user || center;
   }
 

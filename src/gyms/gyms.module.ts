@@ -12,6 +12,8 @@ import { HttpModule } from '@nestjs/axios';
 import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { KakaoStrategy } from 'src/auth/kakao.strategy';
 import { AuthModule } from 'src/auth/auth.module';
+import { ExpiredGymEntity } from './entity/expiredGyms.entity';
+import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { AuthModule } from 'src/auth/auth.module';
       CenterEntity,
       UserEntity,
       RefreshTokenEntity,
+      ExpiredGymEntity,
+      EmailCodeEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
