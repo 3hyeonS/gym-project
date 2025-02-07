@@ -1,14 +1,7 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  Length,
-  Matches,
-} from 'class-validator';
-import { CenterEntity } from '../entity/center.entity';
+import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CenterModifyRequestDto extends CenterEntity {
+export class CenterModifyRequestDto {
   @ApiProperty({
     type: String,
     description: '비밀번호(8~16자리)  \n영문, 숫자, 특수문자를 1개 이상씩 포함',
@@ -68,27 +61,4 @@ export class CenterModifyRequestDto extends CenterEntity {
     message: 'phone format must be 000-0000-0000',
   })
   phone: string;
-
-  @ApiProperty({
-    type: String,
-    description: '사업자 등록 번호(10자리)',
-    example: '000-00-00000',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @Matches(/^\d{3}-\d{2}-\d{5}$/, {
-    message: 'businessId format must be 000-00-00000',
-  })
-  businessId: string;
-
-  @ApiProperty({
-    type: String,
-    description: '이메일(이메일 형식만 허용)',
-    example: 'sample@email.com',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @IsEmail() // 이메일 형식
-  @Length(1, 100)
-  email: string;
 }

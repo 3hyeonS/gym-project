@@ -49,6 +49,10 @@ import { Roles } from 'src/decorators/roles-decorator';
 import { MemberRole } from './entity/member.entity';
 import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
 import { EmailCodeRequestDto } from './dto/email-code-request.dto';
+import { PasswordRequestDto } from './dto/password-request-dto';
+import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
+import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
+import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request.dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -145,9 +149,12 @@ export class AuthController {
   @Post('isPasswordValid')
   async isPasswordValid(
     @GetUser() member: UserEntity | CenterEntity,
-    @Body('password') password: string,
+    @Body() PasswordRequestDto: PasswordRequestDto,
   ): Promise<boolean> {
-    return await this.authService.isPasswordValid(member, password);
+    return await this.authService.isPasswordValid(
+      member,
+      PasswordRequestDto.password,
+    );
   }
 
   // 센터 회원정보 수정
@@ -155,7 +162,47 @@ export class AuthController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Post('modifyCenter')
-  async modifyCenter() {}
+  async modifyCenter(
+    @GetUser() center: CenterEntity,
+    @Body() centerModifyRequestDto: CenterModifyRequestDto,
+  ): Promise<CenterResponseDto> {
+    const modifiedCenter = await this.authService.modifyCenter(
+      center,
+      centerModifyRequestDto,
+    );
+    const centerResponseDto = new CenterResponseDto(modifiedCenter);
+    return centerResponseDto;
+  }
+
+  // 센터 아이디 찾기
+  @Post('findCenterSignId')
+  async findCenterSignId(
+    @Body() findSignIdRequestDto: FindCenterSignIdRequestDto,
+  ) {
+    const signId = await this.authService.findCenterSignId(
+      findSignIdRequestDto.ceoName,
+      findSignIdRequestDto.businessId,
+    );
+    return signId;
+  }
+
+  // 센터 비밀번호 찾기 이메일 인증코드 전송
+  @Post('findCenterPassword')
+  async findCenterPassword(@Body() signIdRequestDto: SignIdRequestDto) {
+    return await this.authService.findCenterPassword(signIdRequestDto.signId);
+  }
+
+  // 센터 비밀번호 찾기 이메일 인증코드 입력
+  @Post('/newCenterPassword')
+  async newCenterPassword(
+    @Body()
+    passwordEmailCodeConfirmRequestDto: PasswordEmailCodeConfirmRequestDto,
+  ): Promise<string> {
+    return await this.authService.newCenterPassword(
+      passwordEmailCodeConfirmRequestDto.signId,
+      passwordEmailCodeConfirmRequestDto.code,
+    );
+  }
 
   // 일반 회원 가입 기능
   @ApiOperation({

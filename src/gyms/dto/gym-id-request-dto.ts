@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
-import { RegisterRequestDto } from './gym-registration-dto';
+import { GymRegisterRequestDto } from './gym-registration-dto';
 
 export class GymModifyRequestDto {
   @ApiProperty({
@@ -15,9 +15,9 @@ export class GymModifyRequestDto {
 
   @ValidateNested()
   @ApiProperty({
-    type: RegisterRequestDto,
+    type: GymRegisterRequestDto,
     description: '수정 정보 입력',
   })
-  @Type(() => RegisterRequestDto)
-  modifyRequest: RegisterRequestDto;
+  @Type(() => GymRegisterRequestDto)
+  modifyRequest: GymRegisterRequestDto;
 }

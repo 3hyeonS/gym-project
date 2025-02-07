@@ -26,6 +26,10 @@ import { GymEntity } from 'src/gyms/entity/gyms.entity';
 import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
+import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
+import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
+import { SignIdRequestDto } from './dto/signId-request-dto';
+import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -72,6 +76,60 @@ export class AuthService {
     return true;
   }
 
+  // 센터 아이디 찾기
+  async findCenterSignId(ceoName: string, businessId: string): Promise<string> {
+    const center = await this.centersRepository.findOneBy({
+      ceoName,
+      businessId,
+    });
+    if (center) {
+      return center.signId;
+    }
+    throw new BadRequestException(
+      "There's no center entity with requested ceoName and businessId",
+    );
+  }
+
+  // 센터 비밀번호 찾기 이메일 인증코드 전송
+  async findCenterPassword(signId: string): Promise<void> {
+    const center = await this.centersRepository.findOneBy({
+      signId,
+    });
+    if (!center) {
+      throw new BadRequestException(
+        "There's no center entity with requested signId",
+      );
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await this.emailService.sendVerificationToEmail(center.email, code);
+
+    const createdCode = await this.emailCodeRepository.create({ code });
+    await this.emailCodeRepository.save(createdCode);
+  }
+
+  // 센터 비밀번호 찾기 이메일 인증코드 입력
+  async newCenterPassword(signId: string, code: string): Promise<string> {
+    const center = await this.centersRepository.findOneBy({
+      signId,
+    });
+    if (!center) {
+      throw new BadRequestException(
+        "There's no center entity with requested signId",
+      );
+    }
+
+    const savedCode = await this.emailCodeRepository.findOneBy({ code });
+    if (savedCode) {
+      const newPassword = `snpw@${code}te`;
+      await this.centersRepository.update(center.id, {
+        password: newPassword,
+      });
+      return newPassword;
+    }
+    throw new BadRequestException('Invalid code entered');
+  }
+
   // 회원정보 수정을 위한 비밀번호 확인
   async isPasswordValid(
     member: UserEntity | CenterEntity,
@@ -81,6 +139,21 @@ export class AuthService {
       return true;
     }
     return false;
+  }
+
+  // 센터 회원정보 수정
+  async modifyCenter(
+    center: CenterEntity,
+    centerModifyRequestDto: CenterModifyRequestDto,
+  ): Promise<CenterEntity> {
+    const id = center.id;
+    await this.centersRepository.update(id, {
+      ...centerModifyRequestDto,
+    });
+    const modifiedCenter = await this.centersRepository.findOne({
+      where: { id },
+    });
+    return modifiedCenter;
   }
 
   // 일반 회원 가입

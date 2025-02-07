@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class RegisterRequestDto {
+export class GymRegisterRequestDto {
   @ApiProperty({
     type: [String],
     description: '근무 형태',
@@ -150,30 +150,4 @@ export class RegisterRequestDto {
   @IsOptional()
   @IsString()
   description: string;
-
-  // @ApiProperty({
-  //   type: 'string',
-  //   format: 'binary', // ✅ Swagger에서 파일 업로드로 표시
-  //   description: '이미지 파일 (최대 10개)',
-  // })
-  // @IsOptional()
-  // image?: any; // 파일이므로 타입을 `any`로 지정
-
-  // @ApiProperty({
-  //   type: [String],
-  //   description: '이미지 파일',
-  //   example: [
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_001.png',
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_002.png',
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_003.png',
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_004.png',
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_005.png',
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_006.png',
-  //     'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_007.png',
-  //   ],
-  // })
-  // @IsOptional()
-  // @IsArray()
-  // @IsString({ each: true })
-  // image: string[];
 }

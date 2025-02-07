@@ -27,14 +27,13 @@ import { GenericApiResponse } from 'src/decorators/generic-api-response-decorato
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
-import { RegisterRequestDto } from './dto/gym-registration-dto';
+import { GymRegisterRequestDto } from './dto/gym-registration-dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
 import { MemberRole } from 'src/auth/entity/member.entity';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import { GymModifyRequestDto } from './dto/gym-id-request-dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('GymsList')
@@ -196,7 +195,7 @@ export class GymsController {
     if (center.gym) {
       throw new UnauthorizedException('Recruitment already exists');
     }
-    const registerRequestDto: RegisterRequestDto = JSON.parse(stringDto);
+    const registerRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
     const registeredGym = await this.gymsService.register(
       center,
       registerRequestDto,
@@ -274,7 +273,7 @@ export class GymsController {
     @Body('existImageUrls') existImageUrls?: string | string[],
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    const gymModifyRequestDto: GymModifyRequestDto = JSON.parse(stringDto);
+    const gymRegisterRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
     let parsedExistImageUrls;
     if (existImageUrls) {
       parsedExistImageUrls = Array.isArray(existImageUrls)
@@ -284,9 +283,8 @@ export class GymsController {
       parsedExistImageUrls = null;
     }
     const modifiedMyGym = await this.gymsService.modifyMyGym(
-      center.centerName,
-      gymModifyRequestDto.id,
-      gymModifyRequestDto.modifyRequest,
+      center,
+      gymRegisterRequestDto,
       parsedExistImageUrls,
       files,
     );

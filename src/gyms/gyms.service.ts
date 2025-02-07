@@ -1,15 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { SearchedGymDto } from './dto/searched-gym-dto';
 import { GymEntity } from './entity/gyms.entity';
 import { GymResponseDto } from './dto/gym-response-dto';
-import { RegisterRequestDto } from './dto/gym-registration-dto';
+import { GymRegisterRequestDto } from './dto/gym-registration-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
@@ -289,9 +285,9 @@ export class GymsService {
   // method3: 헬스장 공고 등록하기
   async register(
     center: CenterEntity,
-    registerRequestDto: RegisterRequestDto,
+    registerRequestDto: GymRegisterRequestDto,
     files?: Express.Multer.File[],
-  ) {
+  ): Promise<GymEntity> {
     const {
       workType,
       workTime,
@@ -421,18 +417,21 @@ export class GymsService {
 
   // method5: 내 채용 중 공고 수정하기
   async modifyMyGym(
-    centerName: string,
-    id: number,
-    registerRequestDto: RegisterRequestDto,
+    center: CenterEntity,
+    registerRequestDto: GymRegisterRequestDto,
     existImageUrls?: string[],
     files?: Express.Multer.File[],
   ) {
     // 이미지 업로드 후 URL 리스트 가져오기
-    const newImageUrls = await this.uploadGymImages(centerName, files || []);
+    const newImageUrls = await this.uploadGymImages(
+      center.centerName,
+      files || [],
+    );
     const updatedImageUrls = [...(existImageUrls || []), ...newImageUrls];
     // 모두 비어 있으면 null 반환
     const finalImageUrls =
       updatedImageUrls.length > 0 ? updatedImageUrls : null;
+    const id = center.gym.id;
     await this.gymRepository.update(id, {
       ...registerRequestDto,
       image: finalImageUrls, // 기존 + 새로운 이미지 반영
@@ -450,9 +449,8 @@ export class GymsService {
     if (!files || files.length === 0) {
       return [];
     }
-    const folderName = `${centerName}${uuidv4()}`;
     const uploadPromises = files.map(async (file) => {
-      const fileKey = `images/${folderName}/${file.originalname}`;
+      const fileKey = `images/${centerName}-register/${file.originalname}`;
 
       const params = {
         Bucket: this.bucketName,
