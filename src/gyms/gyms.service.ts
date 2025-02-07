@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
@@ -9,6 +13,7 @@ import { RegisterRequestDto } from './dto/gym-registration-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { ExpiredGymEntity } from './entity/expiredGyms.entity';
 
 @Injectable()
 export class GymsService {
@@ -23,6 +28,8 @@ export class GymsService {
   constructor(
     @InjectRepository(GymEntity)
     private readonly gymRepository: Repository<GymEntity>,
+    @InjectRepository(ExpiredGymEntity)
+    private expiredGymRepository: Repository<ExpiredGymEntity>,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -347,14 +354,6 @@ export class GymsService {
     return savedGym;
   }
 
-  // // 공고 이미지 등록하기
-  // async registerImages(member: CenterEntity, ) {
-  //   await this.gymRepository.update(id, registerRequestDto);
-  //   const updatedGym = await this.gymRepository.findOne({ where: { id } });
-
-  //   return updatedGym;
-  // }
-
   // 주소에서 시/도, 시/군/구 추출
   async extractLocation(
     address: string,
@@ -384,17 +383,23 @@ export class GymsService {
     return { city, location };
   }
 
-  // method4: 내 공고 불러오기
-  async getMyGym(center: CenterEntity): Promise<GymResponseDto[]> {
-    const myGym = await this.gymRepository.find({
-      where: { center },
-    });
+  // 내 채용중 공고 불러오기
+  async getMyGym(center: CenterEntity): Promise<GymResponseDto> {
+    const myGym = await this.gymRepository.findOneBy({ center });
     return myGym;
   }
 
+  // 내 만료된 공고 불러오기
+  async getMyExpiredGyms(center: CenterEntity): Promise<GymResponseDto[]> {
+    const myExpiredGyms = await this.expiredGymRepository.find({
+      where: { center },
+    });
+    return myExpiredGyms;
+  }
+
   // 내 공고 삭제하기
-  async deleteMyGym(id: number) {
-    const myGym = await this.gymRepository.delete({ id });
+  async deleteMyGym(center: CenterEntity) {
+    const myGym = await this.gymRepository.delete({ center });
   }
 
   // method5: 내 공고 수정하기

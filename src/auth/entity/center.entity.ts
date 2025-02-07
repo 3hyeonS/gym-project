@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 import { MemberEntity, MemberRole, TRole } from './member.entity';
 import { RefreshTokenEntity } from './refreshToken.entity';
 import { GymEntity } from 'src/gyms/entity/gyms.entity';
+import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 
 @Entity({ name: 'center' })
 export class CenterEntity extends MemberEntity {
@@ -28,11 +29,16 @@ export class CenterEntity extends MemberEntity {
   })
   role: TRole;
 
-  @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.center)
+  @OneToMany(() => RefreshTokenEntity, (refreshTokens) => refreshTokens.center)
   refreshTokens: RefreshTokenEntity[];
 
-  @OneToMany(() => GymEntity, (gym) => gym.center, {
+  @OneToOne(() => GymEntity, (gym) => gym.center, {
     nullable: true,
   })
   gym: GymEntity;
+
+  @OneToMany(() => ExpiredGymEntity, (expiredGyms) => expiredGyms.center, {
+    nullable: true,
+  })
+  expiredGyms: ExpiredGymEntity[];
 }

@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Query,
+  UnauthorizedException,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -34,7 +35,6 @@ import { MemberRole } from 'src/auth/entity/member.entity';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { GymModifyRequestDto } from './dto/gym-id-request-dto';
-import { CenterResponseDto } from 'src/auth/dto/center-response.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('GymsList')
@@ -123,6 +123,18 @@ export class GymsController {
     return searchedGyms;
   }
 
+  // 현재 채용중인 공고가 등록되어 있는지 여부
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Post('canRegister')
+  async canRegister(@GetUser() center: CenterEntity): Promise<boolean> {
+    if (center.gym) {
+      return true;
+    }
+    return false;
+  }
+
   //센터 공고 등록하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
@@ -177,13 +189,16 @@ export class GymsController {
   @UseInterceptors(FilesInterceptor('images', 10))
   @Post('register')
   async register(
-    @GetUser() member: CenterEntity,
+    @GetUser() center: CenterEntity,
     @Body('stringDto') stringDto: string,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() files?: Express.Multer.File[],
   ): Promise<GymResponseDto> {
+    if (center.gym) {
+      throw new UnauthorizedException('Recruitment already exists');
+    }
     const registerRequestDto: RegisterRequestDto = JSON.parse(stringDto);
     const registeredGym = await this.gymsService.register(
-      member,
+      center,
       registerRequestDto,
       files,
     );
@@ -201,7 +216,6 @@ export class GymsController {
     description: '내 공고 불러오기 성공',
     message: 'My gym recruitment returned successfully',
     model: GymResponseDto,
-    isArray: true,
   })
   @ErrorApiResponse({
     status: 401,
@@ -219,10 +233,10 @@ export class GymsController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('getMyGym')
-  async getMyGym(@GetUser() member: CenterEntity) {
-    console.log(new CenterResponseDto(member));
-    const myGym = await this.gymsService.getMyGym(member);
-    return myGym;
+  async getMyGym(@GetUser() center: CenterEntity) {
+    const myGym = await this.gymsService.getMyGym(center);
+    const myExpiredGyms = await this.gymsService.getMyExpiredGyms(center);
+    return { HiringGym: myGym, ExpiredGym: myExpiredGyms };
   }
 
   // 내 공고 수정하기
@@ -255,7 +269,7 @@ export class GymsController {
   @UseInterceptors(FilesInterceptor('images', 10))
   @Post('modifyMyGym')
   async modifyMyGym(
-    @GetUser() member: CenterEntity,
+    @GetUser() center: CenterEntity,
     @Body('stringDto') stringDto: string,
     @Body('existImageUrls') existImageUrls?: string | string[],
     @UploadedFiles() files?: Express.Multer.File[],
@@ -270,7 +284,7 @@ export class GymsController {
       parsedExistImageUrls = null;
     }
     const modifiedMyGym = await this.gymsService.modifyMyGym(
-      member.centerName,
+      center.centerName,
       gymModifyRequestDto.id,
       gymModifyRequestDto.modifyRequest,
       parsedExistImageUrls,

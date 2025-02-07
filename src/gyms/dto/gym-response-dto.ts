@@ -72,20 +72,6 @@ export class GymResponseDto {
   })
   salary: string[];
 
-  // @ApiProperty({
-  //   type: 'object',
-  //   additionalProperties: {
-  //     type: 'string',
-  //   },
-  //   description: '시/도 및 시/군/구',
-  //   example: {
-  //     기본급: '100만원',
-  //     단가: '3 ~ 8만원',
-  //     수업료: '40% ~ 50%',
-  //   },
-  // })
-  // salaryDetail: Record<string, string>;
-
   @ApiProperty({
     type: [Number],
     description: '기본급 (단위: 만 원)',

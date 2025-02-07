@@ -3,12 +3,12 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity({ name: 'gymList' })
-export class GymEntity {
+export class ExpiredGymEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
@@ -78,7 +78,7 @@ export class GymEntity {
   @Column({ type: 'json', name: 'image', nullable: true })
   image: string[];
 
-  @OneToOne(() => CenterEntity, (center) => center.gym, {
+  @ManyToOne(() => CenterEntity, (center) => center.gym, {
     nullable: true,
     onDelete: 'SET NULL',
   })
@@ -86,5 +86,5 @@ export class GymEntity {
   center: CenterEntity;
 
   @Column({ type: 'tinyint', name: 'isHiring', nullable: false })
-  isHiring: boolean = true;
+  isHiring: boolean = false;
 }
