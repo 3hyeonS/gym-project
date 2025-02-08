@@ -150,4 +150,11 @@ export class GymRegisterRequestDto {
   @IsOptional()
   @IsString()
   description: string;
+
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
+    description: '업로드할 이미지 파일들 (최대 10개)',
+  })
+  images: Express.Multer.File[];
 }

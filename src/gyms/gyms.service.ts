@@ -372,8 +372,11 @@ export class GymsService {
   }
 
   // method5: 내 채용 중 공고 불러오기
-  async getMyGym(center: CenterEntity): Promise<GymResponseDto> {
+  async getMyGym(center: CenterEntity): Promise<GymResponseDto | null> {
     const myGym = await this.gymRepository.findOneBy({ center });
+    if (!myGym) {
+      return null;
+    }
     return new GymResponseDto(myGym);
   }
 

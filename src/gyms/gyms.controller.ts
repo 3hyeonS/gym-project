@@ -35,6 +35,7 @@ import { MemberRole } from 'src/auth/entity/member.entity';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { GymPageResponseDto } from './dto/gym-page-response-dto';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -68,8 +69,7 @@ export class GymsController {
     status: 200,
     description: '모든 헬스장 불러오기 성공',
     message: 'All gyms returned successfully',
-    model: GymResponseDto,
-    isArray: true,
+    model: GymPageResponseDto,
   })
   @ResponseMsg('All gyms returned successfully')
   @Get('getAll')
@@ -95,7 +95,7 @@ export class GymsController {
     status: 201,
     description: '해당 조건의 헬스장 불러오기 성공',
     message: 'Gyms with selected conditions returned successfully',
-    model: SearchedGymDto,
+    model: GymPageResponseDto,
     isArray: true,
   })
   @ErrorApiResponse({
@@ -183,22 +183,22 @@ export class GymsController {
   })
   @ResponseMsg('Gym recruitment registered successfully')
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: '헬스장 등록 정보 및 이미지 파일',
-    schema: {
-      type: 'object',
-      properties: {
-        registerRequestDto: {
-          type: 'string',
-          description: 'JSON 문자열로 변환된 DTO',
-        },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
-        },
-      },
-    },
-  })
+  // @ApiBody({
+  //   description: '헬스장 등록 정보 및 이미지 파일',
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       stringDto: {
+  //         type: 'string',
+  //         description: 'JSON 문자열로 변환된 DTO',
+  //       },
+  //       images: {
+  //         type: 'array',
+  //         items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
+  //       },
+  //     },
+  //   },
+  // })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @UseInterceptors(FilesInterceptor('images', 10))
@@ -248,7 +248,7 @@ export class GymsController {
   @Roles(MemberRole.CENTER)
   @Get('getMyGym')
   async getMyGym(@GetUser() center: CenterEntity): Promise<{
-    HiringGym: GymResponseDto;
+    HiringGym: GymResponseDto | null;
     ExpiredGym: GymResponseDto[];
   }> {
     const myGym = await this.gymsService.getMyGym(center);
