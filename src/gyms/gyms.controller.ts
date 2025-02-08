@@ -146,7 +146,7 @@ export class GymsController {
   @Roles(MemberRole.CENTER)
   @Post('canRegister')
   async canRegister(@GetUser() center: CenterEntity): Promise<boolean> {
-    return await this.gymsService.canRegister(center.id);
+    return await this.gymsService.canRegister(center);
   }
 
   // 센터 공고 이미지 등록하기

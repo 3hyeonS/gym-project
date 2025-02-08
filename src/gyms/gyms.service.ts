@@ -288,12 +288,9 @@ export class GymsService {
   }
 
   // 채용 공고 등록 가능 여부 확인
-  async canRegister(id: number): Promise<boolean> {
-    const center = await this.centerRepository.findOne({
-      where: { id },
-      relations: ['gym'],
-    });
-    if (center.gym) {
+  async canRegister(center: CenterEntity): Promise<boolean> {
+    const myGym = await this.gymRepository.findOneBy({ center });
+    if (myGym) {
       return false;
     }
     return true;
