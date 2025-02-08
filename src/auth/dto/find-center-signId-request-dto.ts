@@ -10,8 +10,6 @@ export class FindCenterSignIdRequestDto {
   @IsNotEmpty() // null 값 체크
   @IsString()
   @Length(1, 20) // 문자 수
-  // // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
-  // @Matches(/^[가-힣]+$/, { message: 'ceoName 은 한글로 입력되어야 합니다.' })
   ceoName: string;
 
   @ApiProperty({

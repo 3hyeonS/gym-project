@@ -6,13 +6,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
-import { SearchedGymDto } from './dto/searched-gym-dto';
 import { GymEntity } from './entity/gyms.entity';
 import { GymResponseDto } from './dto/gym-response-dto';
 import { GymRegisterRequestDto } from './dto/gym-registration-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
 import { ExpiredGymEntity } from './entity/expiredGyms.entity';
 
 @Injectable()
@@ -291,6 +289,7 @@ export class GymsService {
   async canRegister(center: CenterEntity): Promise<boolean> {
     const myGym = await this.gymRepository.findOneBy({ center });
     if (myGym) {
+      console.log(myGym);
       return false;
     }
     return true;
@@ -401,9 +400,12 @@ export class GymsService {
 
   // method7: 내 채용 중 공고 끌어올리기
   async refreshMyGym(center: CenterEntity): Promise<GymResponseDto> {
-    await this.gymRepository.update(center, {
-      date: new Date(),
-    });
+    await this.gymRepository.update(
+      { center },
+      {
+        date: new Date(),
+      },
+    );
     const myRefreshedGym = await this.gymRepository.findOneBy({ center });
     return new GymResponseDto(myRefreshedGym);
   }
@@ -437,24 +439,14 @@ export class GymsService {
   async modifyMyGym(
     center: CenterEntity,
     registerRequestDto: GymRegisterRequestDto,
-    existImageUrls?: string[],
-    files?: Express.Multer.File[],
   ): Promise<GymResponseDto> {
-    // 이미지 업로드 후 URL 리스트 가져오기
-    const newImageUrls = await this.uploadImages(
-      center.centerName,
-      files || [],
-    );
-    const updatedImageUrls = [...(existImageUrls || []), ...newImageUrls];
-    // 모두 비어 있으면 null 반환
-    const finalImageUrls =
-      updatedImageUrls.length > 0 ? updatedImageUrls : null;
-    const id = center.gym.id;
-    await this.gymRepository.update(id, {
+    const myGym = await this.gymRepository.findOneBy({ center });
+    await this.gymRepository.update(myGym.id, {
       ...registerRequestDto,
-      image: finalImageUrls, // 기존 + 새로운 이미지 반영
     });
-    const updatedGym = await this.gymRepository.findOne({ where: { id } });
+    const updatedGym = await this.gymRepository.findOne({
+      where: { id: myGym.id },
+    });
 
     return new GymResponseDto(updatedGym);
   }

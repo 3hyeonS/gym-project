@@ -1,6 +1,6 @@
 import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
 import { ResponseTransformInterceptor } from './interceptors/response-transform-interceptor';
 import { ResponseMsg } from './decorators/response-message-decorator';
 import { PrimitiveApiResponse } from './decorators/primitive-api-response-decorator';

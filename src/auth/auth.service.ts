@@ -27,9 +27,6 @@ import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
-import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
-import { SignIdRequestDto } from './dto/signId-request-dto';
-import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -67,7 +64,7 @@ export class AuthService {
   }
 
   // 인증 코드 확인
-  async confirmVerificationCode(code: string) {
+  async confirmVerificationCode(code: string): Promise<boolean> {
     const savedCode = await this.emailCodeRepository.findOneBy({ code });
     if (!savedCode) {
       return false;
@@ -244,14 +241,11 @@ export class AuthService {
 
   // signId 중복 확인 메서드
   async checkSignIdExists(signId: string): Promise<void> {
-    this.logger.verbose(`Checking if signId exists: ${signId}`);
-
     const existingMember = await this.findMemberBySignId(signId);
     if (existingMember) {
       this.logger.warn(`signId already exists: ${signId}`);
       throw new ConflictException('signId already exists');
     }
-    this.logger.verbose(`signId is available: ${signId}`);
   }
 
   // signId로 멤버 찾기 메서드
@@ -297,8 +291,6 @@ export class AuthService {
 
   // 비밀번호 해싱 암호화 메서드
   private async hashPassword(password: string): Promise<string> {
-    this.logger.verbose(`Hashing password`);
-
     const salt = await bcrypt.genSalt(); // 솔트 생성
     return await bcrypt.hash(password, salt); // 비밀번호 해싱
   }
@@ -560,8 +552,6 @@ export class AuthService {
       await this.centerRepository.delete({ signId: signId });
       console.log('center deleted');
     }
-
-    this.logger.verbose(`User deleted successfully with signId: ${signId}`);
   }
 
   //사업자등록번호 유효성 검사

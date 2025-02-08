@@ -1,11 +1,9 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
   Post,
   Query,
-  UnauthorizedException,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -38,6 +36,8 @@ import { CenterEntity } from 'src/auth/entity/center.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { GymPageResponseDto } from './dto/gym-page-response-dto';
 import { validate } from 'class-validator';
+import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
+import { GetMyGymResponseDto } from './dto/get-my-gym-respose-dto';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -238,12 +238,13 @@ export class GymsController {
   @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '내 공고 불러오기',
+    description: 'hiring: 채용 중 공고  \nexpired: 만료된 공고',
   })
   @GenericApiResponse({
     status: 200,
     description: '내 공고 불러오기 성공',
     message: 'My gym recruitment returned successfully',
-    model: GymResponseDto,
+    model: GetMyGymResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -261,13 +262,12 @@ export class GymsController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('getMyGym')
-  async getMyGym(@GetUser() center: CenterEntity): Promise<{
-    HiringGym: GymResponseDto | null;
-    ExpiredGym: GymResponseDto[];
-  }> {
+  async getMyGym(
+    @GetUser() center: CenterEntity,
+  ): Promise<GetMyGymResponseDto> {
     const myGym = await this.gymsService.getMyGym(center);
     const myExpiredGyms = await this.gymsService.getMyExpiredGyms(center);
-    return { HiringGym: myGym, ExpiredGym: myExpiredGyms };
+    return new GetMyGymResponseDto(myGym, myExpiredGyms);
   }
 
   // 내 공고 수정하기
@@ -276,7 +276,7 @@ export class GymsController {
     summary: '내 공고 수정하기',
   })
   @GenericApiResponse({
-    status: 200,
+    status: 201,
     description: '내 공고 수정하기 성공',
     message: 'My gym recruitment modified successfully',
     model: GymResponseDto,
@@ -301,85 +301,43 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('My gym recruitment modified successfully')
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: '헬스장 등록 정보 및 이미지 파일',
-    schema: {
-      type: 'object',
-      properties: {
-        stringDto: {
-          type: 'string',
-          description: 'JSON 문자열로 변환된 DTO',
-          example: JSON.stringify({
-            workType: ['정규직'],
-            workTime: ['오전', '오후'],
-            workDays: ['주5일'],
-            weekendDuty: ['있음'],
-            salary: ['기본급', '인센티브'],
-            basePay: [80, 100],
-            classPay: [5, 6.5],
-            classFee: [40, 50],
-            hourly: [2, 3],
-            monthly: [200, 250],
-            maxClassFee: -1,
-            gender: ['명시 안 됨'],
-            qualifications: ['명시 안 됨'],
-            preference: ['경력자', '생활체육지도사 자격증'],
-            site: ['잡코리아'],
-            date: '2025-01-09',
-            description: 'https://www.jobkorea.co.kr/Recruit/GI_Read/46253705',
-          }),
-        },
-        existImageUrls: {
-          type: 'array',
-          items: {
-            type: 'string',
-          },
-          description: '기존 이미지 중 계속 사용하는 이미지들의 url',
-          example: [
-            'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_001.png',
-            'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_002.png',
-          ],
-        },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
-          description: '이미지 파일 등록',
-        },
-      },
-      required: ['stringDto'],
-    },
-  })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
-  @UseInterceptors(FilesInterceptor('images', 10))
   @Post('modify')
   async modifyMyGym(
     @GetUser() center: CenterEntity,
-    @Body('stringDto') stringDto: string,
-    @Body('existImageUrls') existImageUrls?: string | string[],
-    @UploadedFiles() files?: Express.Multer.File[],
+    @Body() gymRegisterRequestDto: GymRegisterRequestDto,
   ): Promise<GymResponseDto> {
-    const gymRegisterRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
-    let parsedExistImageUrls;
-    if (existImageUrls) {
-      parsedExistImageUrls = Array.isArray(existImageUrls)
-        ? existImageUrls
-        : [existImageUrls];
-    } else {
-      parsedExistImageUrls = null;
-    }
     const modifiedMyGym = await this.gymsService.modifyMyGym(
       center,
       gymRegisterRequestDto,
-      parsedExistImageUrls,
-      files,
     );
     return modifiedMyGym;
   }
 
   // 내 채용 중 공고 끌어올리기
   @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 채용 중 공고 끌어올리기',
+  })
+  @NullApiResponse({
+    status: 200,
+    description: '공고 끌어올리기 성공',
+    message: 'My gym recruitment refreshed successfully',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 끌어올리기 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('My gym recruitment refreshed successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('refresh')
@@ -389,6 +347,27 @@ export class GymsController {
 
   // 내 채용 중 공고 만료시키기
   @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 채용 중 공고 만료시키기',
+  })
+  @NullApiResponse({
+    status: 200,
+    description: '공고 만료시키기 성공',
+    message: 'My gym recruitment expired successfully',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 만료시키기 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('My gym recruitment expired successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('expire')
@@ -398,6 +377,27 @@ export class GymsController {
 
   // 내 채용 중 공고 삭제하기
   @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 채용 중 공고 삭제하기',
+  })
+  @NullApiResponse({
+    status: 200,
+    description: '공고 삭제 성공',
+    message: 'My gym recruitment deleted successfully',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 삭제하기 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('My gym recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('delete')

@@ -116,13 +116,27 @@ export class AuthController {
       if (error instanceof ConflictException) {
         return false;
       }
-
-      this.logger.error(`Error checking signId: ${error.message}`);
+      // this.logger.error(`Error checking signId: ${error.message}`);
       throw error; // 다른 예외는 그대로 throw
     }
   }
 
   // 이메일 인증코드 전송
+  @ApiOperation({
+    summary: '회원가입 이메일 인증코드 전송',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '이메일 인증코드 전송 성공',
+    message: 'Verification code was sent to your email successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'email must be an email',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Verification code was sent to your email successfully')
   @Post('/sendCode')
   async sendCode(
     @Body() emailCodeRequestDto: EmailCodeRequestDto,
@@ -133,74 +147,29 @@ export class AuthController {
   }
 
   // 이메일 인증코드 입력
+  @ApiOperation({
+    summary: '이메일 인증코드 입력',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '이메일 인증코드 유효성 검사 성공',
+    message: 'Verification code validated successfully',
+    type: 'boolean',
+    example: true,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'code must be a string',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Verification code validated successfully')
   @Post('/confirmCode')
   async confirmCode(
     @Body() emailCodeConfirmRequestDto: EmailCodeConfirmRequestDto,
   ): Promise<boolean> {
     return await this.authService.confirmVerificationCode(
       emailCodeConfirmRequestDto.code,
-    );
-  }
-
-  // 회원정보 수정을 위한 비밀번호 확인
-  @ApiBearerAuth('accessToken')
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER, MemberRole.USER, MemberRole.ADMIN)
-  @Post('isPasswordValid')
-  async isPasswordValid(
-    @GetUser() member: UserEntity | CenterEntity,
-    @Body() PasswordRequestDto: PasswordRequestDto,
-  ): Promise<boolean> {
-    return await this.authService.isPasswordValid(
-      member,
-      PasswordRequestDto.password,
-    );
-  }
-
-  // 센터 회원정보 수정
-  @ApiBearerAuth('accessToken')
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
-  @Post('modifyCenter')
-  async modifyCenter(
-    @GetUser() center: CenterEntity,
-    @Body() centerModifyRequestDto: CenterModifyRequestDto,
-  ): Promise<CenterResponseDto> {
-    const modifiedCenter = await this.authService.modifyCenter(
-      center,
-      centerModifyRequestDto,
-    );
-    const centerResponseDto = new CenterResponseDto(modifiedCenter);
-    return centerResponseDto;
-  }
-
-  // 센터 아이디 찾기
-  @Post('findCenterSignId')
-  async findCenterSignId(
-    @Body() findSignIdRequestDto: FindCenterSignIdRequestDto,
-  ) {
-    const signId = await this.authService.findCenterSignId(
-      findSignIdRequestDto.ceoName,
-      findSignIdRequestDto.businessId,
-    );
-    return signId;
-  }
-
-  // 센터 비밀번호 찾기 이메일 인증코드 전송
-  @Post('findCenterPassword')
-  async findCenterPassword(@Body() signIdRequestDto: SignIdRequestDto) {
-    return await this.authService.findCenterPassword(signIdRequestDto.signId);
-  }
-
-  // 센터 비밀번호 찾기 이메일 인증코드 입력
-  @Post('/newCenterPassword')
-  async newCenterPassword(
-    @Body()
-    passwordEmailCodeConfirmRequestDto: PasswordEmailCodeConfirmRequestDto,
-  ) {
-    return await this.authService.newCenterPassword(
-      passwordEmailCodeConfirmRequestDto.signId,
-      passwordEmailCodeConfirmRequestDto.newPassword,
     );
   }
 
@@ -234,14 +203,8 @@ export class AuthController {
   async userSignUp(
     @Body() userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<UserResponseDto> {
-    this.logger.verbose(
-      `Attempting to sign up user with signId: ${userSignUpRequestDto.signId}`,
-    );
     const user = await this.authService.userSignUp(userSignUpRequestDto);
     const userResponseDto = new UserResponseDto(user);
-    this.logger.verbose(
-      `User signed up successfully: ${JSON.stringify(userResponseDto)}`,
-    );
     return userResponseDto;
   }
 
@@ -259,7 +222,9 @@ export class AuthController {
   })
   @ResponseMsg('Detailed address value returned successfully')
   @Get('/signup/address')
-  async searchAddress(@Query() addressRequestDto: AddressRequestDto) {
+  async searchAddress(
+    @Query() addressRequestDto: AddressRequestDto,
+  ): Promise<addressResponseDto> {
     return this.authService.searchAddress(addressRequestDto.address);
   }
 
@@ -323,14 +288,175 @@ export class AuthController {
   async centerSignUp(
     @Body() centerSignUpRequestDto: CenterSignUpRequestDto,
   ): Promise<CenterResponseDto> {
-    this.logger.verbose(
-      `Attempting to sign up user with signId: ${centerSignUpRequestDto.signId}`,
-    );
     const center = await this.authService.centerSignUp(centerSignUpRequestDto);
     const centerResponseDto = new CenterResponseDto(center);
-    this.logger.verbose(
-      `Center signed up successfully: ${JSON.stringify(centerResponseDto)}`,
+    return centerResponseDto;
+  }
+
+  // 센터 아이디 찾기
+  @ApiOperation({
+    summary: '센터 아이디 찾기',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '센터 아이디 찾기 성공',
+    message: 'Your signId was found successfully',
+    type: 'string',
+    example: 'sampleid',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'businessId format must be 000-00-00000',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Your signId was found successfully')
+  @Post('findCenterSignId')
+  async findCenterSignId(
+    @Body() findSignIdRequestDto: FindCenterSignIdRequestDto,
+  ): Promise<string> {
+    const signId = await this.authService.findCenterSignId(
+      findSignIdRequestDto.ceoName,
+      findSignIdRequestDto.businessId,
     );
+    return signId;
+  }
+
+  // 센터 비밀번호 찾기 이메일 인증코드 전송
+  @ApiOperation({
+    summary: '센터 비밀번호 찾기 - 이메일 인증코드 전송',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '이메일 인증코드 전송 성공',
+    message: 'Verification code was sent to your email successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'signId must be a string',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Verification code was sent to your email successfully')
+  @Post('findCenterPassword')
+  async findCenterPassword(
+    @Body() signIdRequestDto: SignIdRequestDto,
+  ): Promise<void> {
+    return await this.authService.findCenterPassword(signIdRequestDto.signId);
+  }
+
+  // 센터 비밀번호 찾기 - 새로운 비밀번호 설정
+  @ApiOperation({
+    summary: '센터 비밀번호 찾기 - 새 비밀번호 설정',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '새 비밀번호 설정 성공',
+    message: 'New password set successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'password must contain English, numbers, and special characters',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \n잘 못된 signId 입력 오류',
+    message: 'There is no center entity with requested signId',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('New password set successfully')
+  @Post('/newCenterPassword')
+  async newCenterPassword(
+    @Body()
+    passwordEmailCodeConfirmRequestDto: PasswordEmailCodeConfirmRequestDto,
+  ): Promise<void> {
+    return await this.authService.newCenterPassword(
+      passwordEmailCodeConfirmRequestDto.signId,
+      passwordEmailCodeConfirmRequestDto.newPassword,
+    );
+  }
+
+  // 회원정보 수정을 위한 비밀번호 확인
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '회원정보 수정을 위한 비밀번호 확인',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '비밀번호 확인 성공',
+    message: 'Your password validated successfully',
+    type: 'boolean',
+    example: true,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'password must be a string',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Your password validated successfully')
+  @UseGuards(AuthGuard())
+  @Post('isPasswordValid')
+  async isPasswordValid(
+    @GetUser() member: UserEntity | CenterEntity,
+    @Body() PasswordRequestDto: PasswordRequestDto,
+  ): Promise<boolean> {
+    return await this.authService.isPasswordValid(
+      member,
+      PasswordRequestDto.password,
+    );
+  }
+
+  // 센터 회원 정보 수정
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '센터 회원 정보 수정',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '회원 정보 수정 성공',
+    message: 'Your information modified successfully',
+    model: CenterResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'password must contain English, numbers, and special characters',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 정보 수정 가능)',
+    message: 'Forbidden resource',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Your information modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Post('modifyCenter')
+  async modifyCenter(
+    @GetUser() center: CenterEntity,
+    @Body() centerModifyRequestDto: CenterModifyRequestDto,
+  ): Promise<CenterResponseDto> {
+    const modifiedCenter = await this.authService.modifyCenter(
+      center,
+      centerModifyRequestDto,
+    );
+    const centerResponseDto = new CenterResponseDto(modifiedCenter);
     return centerResponseDto;
   }
 
@@ -364,10 +490,6 @@ export class AuthController {
     accessToken: string;
     refreshToken: string;
   }> {
-    this.logger.verbose(
-      `Attempting to sign in user with signId: ${signInRequestDto.signId}`,
-    );
-
     // [1] 로그인 처리
     const { accessToken, refreshToken, member } =
       await this.authService.signIn(signInRequestDto);
@@ -376,10 +498,6 @@ export class AuthController {
       member instanceof UserEntity
         ? new UserResponseDto(member)
         : new CenterResponseDto(member);
-
-    this.logger.verbose(
-      `${member.role} signed in successfully: ${JSON.stringify(responseDto)}`,
-    );
 
     // [2] 응답 반환 JSON으로 토큰 전송
     return {
@@ -430,10 +548,6 @@ export class AuthController {
       await this.authService.signInWithKakao(kakaoAuthResCode);
 
     const userResponseDto = new UserResponseDto(user);
-
-    this.logger.verbose(
-      `User signed in successfully: ${JSON.stringify(userResponseDto)}`,
-    );
     return {
       accessToken: accessToken, // 헤더로 사용할 Access Token
       refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
@@ -463,9 +577,6 @@ export class AuthController {
   @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
   @UseFilters(CustomUnauthorizedExceptionFilter)
   async deleteUser(@GetUser() member: UserEntity | CenterEntity) {
-    this.logger.verbose(
-      `Attempting to delete user with signId: ${member.signId}`,
-    );
     await this.authService.deleteUser(member, member.signId);
   }
 

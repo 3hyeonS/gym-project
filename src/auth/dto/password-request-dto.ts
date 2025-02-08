@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
 
 export class PasswordRequestDto {
   @ApiProperty({
@@ -6,5 +7,6 @@ export class PasswordRequestDto {
     description: 'password',
     example: 'sample@pw123',
   })
+  @IsNotEmpty()
   password: string;
 }
