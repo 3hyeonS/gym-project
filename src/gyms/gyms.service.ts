@@ -54,7 +54,7 @@ export class GymsService {
       skip: (page - 1) * limit, // 페이지 계산
     });
     return {
-      gymList: gymList,
+      gymList: gymList.map((gym) => new GymResponseDto(gym)),
       page,
       totalGyms: totalCount, // 전체 헬스장 수
       totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
@@ -67,12 +67,11 @@ export class GymsService {
     page: number,
     limit: number,
   ): Promise<{
-    gymList: SearchedGymDto[];
+    gymList: GymResponseDto[];
     totalGyms: number;
     totalPages: number;
     page: number;
   }> {
-    console.log(selectedOptionsDto);
     const queryBuilder = this.gymRepository.createQueryBuilder('gymList');
     const conditions: { condition: string; parameters: Record<string, any> }[] =
       [];
@@ -287,7 +286,7 @@ export class GymsService {
     center: CenterEntity,
     registerRequestDto: GymRegisterRequestDto,
     files?: Express.Multer.File[],
-  ): Promise<GymEntity> {
+  ): Promise<GymResponseDto> {
     const {
       workType,
       workTime,
@@ -340,10 +339,10 @@ export class GymsService {
     });
 
     const savedGym = await this.gymRepository.save(newGym);
-    return savedGym;
+    return new GymResponseDto(savedGym);
   }
 
-  // 주소에서 시/도, 시/군/구 추출
+  // method4: 주소에서 시/도, 시/군/구 추출
   async extractLocation(
     address: string,
   ): Promise<{ city: string; location: string[] }> {
@@ -372,31 +371,31 @@ export class GymsService {
     return { city, location };
   }
 
-  // 내 채용 중 공고 불러오기
+  // method5: 내 채용 중 공고 불러오기
   async getMyGym(center: CenterEntity): Promise<GymResponseDto> {
     const myGym = await this.gymRepository.findOneBy({ center });
-    return myGym;
+    return new GymResponseDto(myGym);
   }
 
-  // 내 만료된 공고 불러오기
+  // method6: 내 만료된 공고 불러오기
   async getMyExpiredGyms(center: CenterEntity): Promise<GymResponseDto[]> {
     const myExpiredGyms = await this.expiredGymRepository.find({
       where: { center },
     });
-    return myExpiredGyms;
+    return myExpiredGyms.map((gym) => new GymResponseDto(gym));
   }
 
-  // 내 채용 중 공고 끌어올리기
+  // method7: 내 채용 중 공고 끌어올리기
   async refreshMyGym(center: CenterEntity): Promise<GymResponseDto> {
     await this.gymRepository.update(center, {
       date: new Date(),
     });
     const myRefreshedGym = await this.gymRepository.findOneBy({ center });
-    return myRefreshedGym;
+    return new GymResponseDto(myRefreshedGym);
   }
 
-  // 내 채용 중 공고 만료시키기
-  async expireMyGym(center: CenterEntity) {
+  // method8: 내 채용 중 공고 만료시키기
+  async expireMyGym(center: CenterEntity): Promise<void> {
     const myGym = await this.gymRepository.findOneBy({ center });
     const expiredGym = this.expiredGymRepository.create({
       ...myGym, // 기존 데이터 복사
@@ -405,23 +404,23 @@ export class GymsService {
     await this.deleteMyGym(center);
   }
 
-  // 내 채용 중 공고 삭제하기
-  async deleteMyGym(center: CenterEntity) {
+  // method9: 내 채용 중 공고 삭제하기
+  async deleteMyGym(center: CenterEntity): Promise<void> {
     const myGym = await this.gymRepository.delete({ center });
   }
 
-  // 내 만료된 공고 삭제하기
-  async deleteMyExpiredGym(center: CenterEntity) {
+  // method10: 내 만료된 공고 삭제하기
+  async deleteMyExpiredGym(center: CenterEntity): Promise<void> {
     const myGym = await this.expiredGymRepository.delete({ center });
   }
 
-  // method5: 내 채용 중 공고 수정하기
+  // method11: 내 채용 중 공고 수정하기
   async modifyMyGym(
     center: CenterEntity,
     registerRequestDto: GymRegisterRequestDto,
     existImageUrls?: string[],
     files?: Express.Multer.File[],
-  ) {
+  ): Promise<GymResponseDto> {
     // 이미지 업로드 후 URL 리스트 가져오기
     const newImageUrls = await this.uploadGymImages(
       center.centerName,
@@ -438,10 +437,10 @@ export class GymsService {
     });
     const updatedGym = await this.gymRepository.findOne({ where: { id } });
 
-    return updatedGym;
+    return new GymResponseDto(updatedGym);
   }
 
-  // 다중 이미지 S3 업로드
+  // method12: 다중 이미지 S3 업로드
   async uploadGymImages(
     centerName: string,
     files: Express.Multer.File[],

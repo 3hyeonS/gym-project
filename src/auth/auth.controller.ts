@@ -197,10 +197,10 @@ export class AuthController {
   async newCenterPassword(
     @Body()
     passwordEmailCodeConfirmRequestDto: PasswordEmailCodeConfirmRequestDto,
-  ): Promise<string> {
+  ) {
     return await this.authService.newCenterPassword(
       passwordEmailCodeConfirmRequestDto.signId,
-      passwordEmailCodeConfirmRequestDto.code,
+      passwordEmailCodeConfirmRequestDto.newPassword,
     );
   }
 

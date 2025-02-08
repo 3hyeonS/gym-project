@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GymEntity } from '../entity/gyms.entity';
+import { ExpiredGymEntity } from '../entity/expiredGyms.entity';
 
 export class GymResponseDto {
   @ApiProperty({
@@ -164,11 +165,12 @@ export class GymResponseDto {
   })
   image: string[];
 
-  constructor(gym: GymEntity) {
+  constructor(gym: GymEntity | ExpiredGymEntity) {
     this.id = gym.id;
     this.centerName = gym.centerName;
     this.city = gym.city;
     this.location = gym.location;
+    this.subway = gym.subway;
     this.workType = gym.workType;
     this.workTime = gym.workTime;
     this.workDays = gym.workDays;

@@ -37,9 +37,9 @@ export class AuthService {
 
   constructor(
     @InjectRepository(UserEntity)
-    private usersRepository: Repository<UserEntity>,
+    private userRepository: Repository<UserEntity>,
     @InjectRepository(CenterEntity)
-    private centersRepository: Repository<CenterEntity>,
+    private centerRepository: Repository<CenterEntity>,
     @InjectRepository(RefreshTokenEntity)
     private refreshTokenRepository: Repository<RefreshTokenEntity>,
     @InjectRepository(GymEntity)
@@ -78,7 +78,7 @@ export class AuthService {
 
   // 센터 아이디 찾기
   async findCenterSignId(ceoName: string, businessId: string): Promise<string> {
-    const center = await this.centersRepository.findOneBy({
+    const center = await this.centerRepository.findOneBy({
       ceoName,
       businessId,
     });
@@ -92,7 +92,7 @@ export class AuthService {
 
   // 센터 비밀번호 찾기 이메일 인증코드 전송
   async findCenterPassword(signId: string): Promise<void> {
-    const center = await this.centersRepository.findOneBy({
+    const center = await this.centerRepository.findOneBy({
       signId,
     });
     if (!center) {
@@ -108,9 +108,9 @@ export class AuthService {
     await this.emailCodeRepository.save(createdCode);
   }
 
-  // 센터 비밀번호 찾기 이메일 인증코드 입력
-  async newCenterPassword(signId: string, code: string): Promise<string> {
-    const center = await this.centersRepository.findOneBy({
+  // 센터 새로운 비밀번호 입력
+  async newCenterPassword(signId: string, newPassword: string): Promise<void> {
+    const center = await this.centerRepository.findOneBy({
       signId,
     });
     if (!center) {
@@ -118,16 +118,9 @@ export class AuthService {
         "There's no center entity with requested signId",
       );
     }
-
-    const savedCode = await this.emailCodeRepository.findOneBy({ code });
-    if (savedCode) {
-      const newPassword = `snpw@${code}te`;
-      await this.centersRepository.update(center.id, {
-        password: newPassword,
-      });
-      return newPassword;
-    }
-    throw new BadRequestException('Invalid code entered');
+    await this.centerRepository.update(center.id, {
+      password: newPassword,
+    });
   }
 
   // 회원정보 수정을 위한 비밀번호 확인
@@ -147,10 +140,10 @@ export class AuthService {
     centerModifyRequestDto: CenterModifyRequestDto,
   ): Promise<CenterEntity> {
     const id = center.id;
-    await this.centersRepository.update(id, {
+    await this.centerRepository.update(id, {
       ...centerModifyRequestDto,
     });
-    const modifiedCenter = await this.centersRepository.findOne({
+    const modifiedCenter = await this.centerRepository.findOne({
       where: { id },
     });
     return modifiedCenter;
@@ -171,7 +164,7 @@ export class AuthService {
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
 
-    const newUser = this.usersRepository.create({
+    const newUser = this.userRepository.create({
       signId,
       userName,
       password: hashedPassword, // 해싱된 비밀번호 사용
@@ -179,7 +172,7 @@ export class AuthService {
       role,
     });
 
-    const savedUser = await this.usersRepository.save(newUser);
+    const savedUser = await this.userRepository.save(newUser);
     return savedUser;
   }
 
@@ -207,7 +200,7 @@ export class AuthService {
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
 
-    const newCenter = this.centersRepository.create({
+    const newCenter = this.centerRepository.create({
       signId,
       centerName,
       ceoName,
@@ -217,7 +210,7 @@ export class AuthService {
       phone,
       address,
     });
-    const savedCenter = await this.centersRepository.save(newCenter);
+    const savedCenter = await this.centerRepository.save(newCenter);
 
     return savedCenter;
   }
@@ -265,13 +258,13 @@ export class AuthService {
   async findMemberBySignId(
     signId: string,
   ): Promise<UserEntity | CenterEntity | undefined> {
-    const user: UserEntity = await this.usersRepository.findOne({
+    const user: UserEntity = await this.userRepository.findOne({
       where: { signId },
     });
 
     const center: CenterEntity = user
       ? null
-      : await this.centersRepository.findOne({
+      : await this.centerRepository.findOne({
           where: { signId },
         });
     return user || center;
@@ -289,13 +282,13 @@ export class AuthService {
   private async findMemberByEmail(
     email: string,
   ): Promise<UserEntity | CenterEntity | undefined> {
-    const user: UserEntity = await this.usersRepository.findOne({
+    const user: UserEntity = await this.userRepository.findOne({
       where: { email },
     });
 
     const center: CenterEntity = user
       ? null
-      : await this.centersRepository.findOne({
+      : await this.centerRepository.findOne({
           where: { email },
         });
 
@@ -318,7 +311,7 @@ export class AuthService {
     const kakaoEmail = kakaoAccount.email;
 
     // 카카오 프로필 데이터를 기반으로 사용자 찾기 또는 생성 로직을 구현
-    const existingUser = await this.usersRepository.findOne({
+    const existingUser = await this.userRepository.findOne({
       where: { email: kakaoEmail },
     });
     if (existingUser) {
@@ -331,7 +324,7 @@ export class AuthService {
     const hashedPassword = await this.hashPassword(temporaryPassword);
 
     // 새 사용자 생성 로직
-    const newUser = this.usersRepository.create({
+    const newUser = this.userRepository.create({
       signId: temporaryId,
       userName: kakaoUsername,
       email: kakaoEmail,
@@ -340,7 +333,7 @@ export class AuthService {
       // 기타 필요한 필드 설정
       role: 'USER',
     });
-    return this.usersRepository.save(newUser);
+    return this.userRepository.save(newUser);
   }
 
   // 카카오 로그인
@@ -422,7 +415,7 @@ export class AuthService {
   async generateRefreshToken(member: MemberEntity): Promise<string> {
     const payload = { signId: member.signId, iat: Date.now() };
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d', // 만료 시간 (7일)
+      expiresIn: '3m', // 만료 시간 (7일)
     }); // Refresh Token 생성
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
@@ -558,12 +551,12 @@ export class AuthService {
 
     // 탈퇴 처리
     if (member instanceof UserEntity) {
-      await this.usersRepository.delete({ signId: signId });
+      await this.userRepository.delete({ signId: signId });
       console.log('user deleted');
     } else {
       await this.gymRepository.delete({ center: member });
       await this.expiredGymRepository.delete({ center: member });
-      await this.centersRepository.delete({ signId: signId });
+      await this.centerRepository.delete({ signId: signId });
       console.log('center deleted');
     }
 

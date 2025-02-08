@@ -76,7 +76,12 @@ export class GymsController {
   async getAll(
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
-  ) {
+  ): Promise<{
+    gymList: GymResponseDto[];
+    totalGyms: number;
+    totalPages: number;
+    page: number;
+  }> {
     const allGyms = await this.gymsService.getAll(page, limit);
     return allGyms;
   }
@@ -100,20 +105,18 @@ export class GymsController {
       'selectedMaxClassFee must be a number conforming to the specified constraints',
     error: 'BadRequestException',
   })
-  // @ErrorApiResponse({
-  //   status: 500,
-  //   description:
-  //     'Internal Server Error  \n500은 에러는 에러 내용과 함께 백엔드와 공유',
-  //   message: 'Cannot convert undefined or null to object',
-  //   error: 'TypeError',
-  // })
   @ResponseMsg('Gyms with selected conditions returned successfully')
   @Post('selected')
   async searchSelected(
     @Body() selectedOptionsDto: SelectedOptionsDto,
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
-  ) {
+  ): Promise<{
+    gymList: GymResponseDto[];
+    totalGyms: number;
+    totalPages: number;
+    page: number;
+  }> {
     const searchedGyms = await this.gymsService.searchSelected(
       selectedOptionsDto,
       page,
@@ -122,16 +125,29 @@ export class GymsController {
     return searchedGyms;
   }
 
-  // 현재 채용중인 공고가 등록되어 있는지 여부
+  // 채용 공고 등록 가능 여부 확인
   @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '채용 공고 등록 가능 여부 확인',
+    description:
+      'true: 등록 가능  \nfalse: 등록 불가능(이미 채용 중인 공고가 등록되어 있음)',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '채용 공고 등록 가능 여부 확인 성공',
+    message: 'Recruitment register availability confirmed successfully',
+    type: 'boolean',
+    example: true,
+  })
+  @ResponseMsg('Recruitment register availability confirmed successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Post('canRegister')
   async canRegister(@GetUser() center: CenterEntity): Promise<boolean> {
     if (center.gym) {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   //센터 공고 등록하기
@@ -201,8 +217,7 @@ export class GymsController {
       registerRequestDto,
       files,
     );
-    const gymResponsDto = new GymResponseDto(registeredGym);
-    return gymResponsDto;
+    return registeredGym;
   }
 
   // 내 공고 불러오기
@@ -232,7 +247,10 @@ export class GymsController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('getMyGym')
-  async getMyGym(@GetUser() center: CenterEntity) {
+  async getMyGym(@GetUser() center: CenterEntity): Promise<{
+    HiringGym: GymResponseDto;
+    ExpiredGym: GymResponseDto[];
+  }> {
     const myGym = await this.gymsService.getMyGym(center);
     const myExpiredGyms = await this.gymsService.getMyExpiredGyms(center);
     return { HiringGym: myGym, ExpiredGym: myExpiredGyms };
@@ -248,7 +266,6 @@ export class GymsController {
     description: '내 공고 수정하기 성공',
     message: 'My gym recruitment modified successfully',
     model: GymResponseDto,
-    isArray: true,
   })
   @ErrorApiResponse({
     status: 401,
@@ -272,7 +289,7 @@ export class GymsController {
     @Body('stringDto') stringDto: string,
     @Body('existImageUrls') existImageUrls?: string | string[],
     @UploadedFiles() files?: Express.Multer.File[],
-  ) {
+  ): Promise<GymResponseDto> {
     const gymRegisterRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
     let parsedExistImageUrls;
     if (existImageUrls) {
@@ -291,12 +308,21 @@ export class GymsController {
     return modifiedMyGym;
   }
 
+  // 내 채용 중 공고 끌어올리기
+  @ApiBearerAuth('accessToken')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @Get('refresh')
+  async refreshMyGym(@GetUser() center: CenterEntity): Promise<void> {
+    await this.gymsService.refreshMyGym(center);
+  }
+
   // 내 채용 중 공고 만료시키기
   @ApiBearerAuth('accessToken')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('expire')
-  async expireMyGym(@GetUser() center: CenterEntity) {
+  async expireMyGym(@GetUser() center: CenterEntity): Promise<void> {
     await this.gymsService.expireMyGym(center);
   }
 
@@ -305,16 +331,7 @@ export class GymsController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @Get('delete')
-  async deleteMyGym(@GetUser() center: CenterEntity) {
+  async deleteMyGym(@GetUser() center: CenterEntity): Promise<void> {
     await this.gymsService.deleteMyGym(center);
-  }
-
-  // 내 채용 중 공고 끌어올리기
-  @ApiBearerAuth('accessToken')
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
-  @Get('refresh')
-  async refreshMyGym(@GetUser() center: CenterEntity) {
-    await this.gymsService.refreshMyGym(center);
   }
 }

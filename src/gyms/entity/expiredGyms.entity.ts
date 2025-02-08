@@ -1,11 +1,5 @@
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'expiredGymList' })
 export class ExpiredGymEntity {
