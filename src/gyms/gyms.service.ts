@@ -23,9 +23,11 @@ export class GymsService {
 
   constructor(
     @InjectRepository(GymEntity)
-    private readonly gymRepository: Repository<GymEntity>,
+    private gymRepository: Repository<GymEntity>,
     @InjectRepository(ExpiredGymEntity)
     private expiredGymRepository: Repository<ExpiredGymEntity>,
+    @InjectRepository(CenterEntity)
+    private centerRepository: Repository<CenterEntity>,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -279,6 +281,18 @@ export class GymsService {
       totalGyms: totalCount, // 전체 헬스장 수
       totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
     };
+  }
+
+  // 채용 공고 등록 가능 여부 확인
+  async canRegister(id: number): Promise<boolean> {
+    const center = await this.centerRepository.findOne({
+      where: { id },
+      relations: ['gym'],
+    });
+    if (center.gym) {
+      return false;
+    }
+    return true;
   }
 
   // method3: 헬스장 공고 등록하기

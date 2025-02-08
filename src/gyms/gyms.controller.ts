@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -36,6 +37,7 @@ import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { GymPageResponseDto } from './dto/gym-page-response-dto';
+import { validate } from 'class-validator';
 
 @ApiTags('GymsList')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -144,10 +146,7 @@ export class GymsController {
   @Roles(MemberRole.CENTER)
   @Post('canRegister')
   async canRegister(@GetUser() center: CenterEntity): Promise<boolean> {
-    if (center.gym) {
-      return false;
-    }
-    return true;
+    return await this.gymsService.canRegister(center.id);
   }
 
   //센터 공고 등록하기
@@ -163,11 +162,11 @@ export class GymsController {
     model: GymResponseDto,
   })
   @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    status: 500,
+    description: 'stringDto 입력값의 필드 조건 및 JSON 형식 오류',
     message:
       'maxClassFee must be a number conforming to the specified constraints',
-    error: 'BadRequestException',
+    error: 'SyntaxError',
   })
   @ErrorApiResponse({
     status: 401,
@@ -183,22 +182,43 @@ export class GymsController {
   })
   @ResponseMsg('Gym recruitment registered successfully')
   @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   description: '헬스장 등록 정보 및 이미지 파일',
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       stringDto: {
-  //         type: 'string',
-  //         description: 'JSON 문자열로 변환된 DTO',
-  //       },
-  //       images: {
-  //         type: 'array',
-  //         items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
-  //       },
-  //     },
-  //   },
-  // })
+  @ApiBody({
+    description: '헬스장 등록 정보 및 이미지 파일',
+    schema: {
+      type: 'object',
+      properties: {
+        stringDto: {
+          type: 'string',
+          description: 'JSON 문자열로 변환된 DTO',
+          example: JSON.stringify({
+            workType: ['정규직'],
+            workTime: ['오전', '오후'],
+            workDays: ['주5일'],
+            weekendDuty: ['있음'],
+            salary: ['기본급', '인센티브'],
+            basePay: [80, 100],
+            classPay: [5, 6.5],
+            classFee: [40, 50],
+            hourly: [2, 3],
+            monthly: [200, 250],
+            maxClassFee: -1,
+            gender: ['명시 안 됨'],
+            qualifications: ['명시 안 됨'],
+            preference: ['경력자', '생활체육지도사 자격증'],
+            site: ['잡코리아'],
+            date: '2025-01-09',
+            description: 'https://www.jobkorea.co.kr/Recruit/GI_Read/46253705',
+          }),
+        },
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
+          description: '이미지 파일 등록',
+        },
+      },
+      required: ['stringDto'],
+    },
+  })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @UseInterceptors(FilesInterceptor('images', 10))
@@ -211,10 +231,14 @@ export class GymsController {
     if (center.gym) {
       throw new UnauthorizedException('Recruitment already exists');
     }
-    const registerRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
+    const gymRegisterRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
+    const errors = await validate(gymRegisterRequestDto);
+    if (errors.length > 0) {
+      throw new BadRequestException(errors);
+    }
     const registeredGym = await this.gymsService.register(
       center,
-      registerRequestDto,
+      gymRegisterRequestDto,
       files,
     );
     return registeredGym;
@@ -268,6 +292,13 @@ export class GymsController {
     model: GymResponseDto,
   })
   @ErrorApiResponse({
+    status: 500,
+    description: 'stringDto 입력값의 필드 조건 및 JSON 형식 오류',
+    message:
+      'maxClassFee must be a number conforming to the specified constraints',
+    error: 'SyntaxError',
+  })
+  @ErrorApiResponse({
     status: 401,
     description: '유효하지 않거나 기간이 만료된 acccessToken',
     message: 'Invalid or expired accessToken',
@@ -280,6 +311,55 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('My gym recruitment modified successfully')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '헬스장 등록 정보 및 이미지 파일',
+    schema: {
+      type: 'object',
+      properties: {
+        stringDto: {
+          type: 'string',
+          description: 'JSON 문자열로 변환된 DTO',
+          example: JSON.stringify({
+            workType: ['정규직'],
+            workTime: ['오전', '오후'],
+            workDays: ['주5일'],
+            weekendDuty: ['있음'],
+            salary: ['기본급', '인센티브'],
+            basePay: [80, 100],
+            classPay: [5, 6.5],
+            classFee: [40, 50],
+            hourly: [2, 3],
+            monthly: [200, 250],
+            maxClassFee: -1,
+            gender: ['명시 안 됨'],
+            qualifications: ['명시 안 됨'],
+            preference: ['경력자', '생활체육지도사 자격증'],
+            site: ['잡코리아'],
+            date: '2025-01-09',
+            description: 'https://www.jobkorea.co.kr/Recruit/GI_Read/46253705',
+          }),
+        },
+        existImageUrls: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+          description: '기존 이미지 중 계속 사용하는 이미지들의 url',
+          example: [
+            'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_001.png',
+            'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_002.png',
+          ],
+        },
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
+          description: '이미지 파일 등록',
+        },
+      },
+      required: ['stringDto'],
+    },
+  })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
   @UseInterceptors(FilesInterceptor('images', 10))
