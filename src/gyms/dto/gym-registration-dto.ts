@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -14,6 +15,7 @@ export class GymRegisterRequestDto {
     description: '근무 형태',
     example: ['정규직'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   workType: string[];
@@ -23,6 +25,7 @@ export class GymRegisterRequestDto {
     description: '근무 시간',
     example: ['오후'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   workTime: string[];
@@ -32,6 +35,7 @@ export class GymRegisterRequestDto {
     description: '근무일 수',
     example: ['주5일'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   workDays: string[];
@@ -41,6 +45,7 @@ export class GymRegisterRequestDto {
     description: '주말 당직',
     example: ['명시 안 됨'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   weekendDuty: string[];
@@ -50,6 +55,7 @@ export class GymRegisterRequestDto {
     description: '급여 조건',
     example: ['기본급', '수업료', '인센티브', '퇴직금', '4대 보험'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   salary: string[];
@@ -119,6 +125,7 @@ export class GymRegisterRequestDto {
     description: '성별',
     example: ['명시 안 됨'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   gender: string[];
@@ -128,6 +135,7 @@ export class GymRegisterRequestDto {
     description: '지원자격',
     example: ['명시 안 됨'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   qualifications: string[];
@@ -137,6 +145,7 @@ export class GymRegisterRequestDto {
     description: '우대사항',
     example: ['경력자', '체육 관련 자격증'],
   })
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   preference: string[];
@@ -150,4 +159,21 @@ export class GymRegisterRequestDto {
   @IsOptional()
   @IsString()
   description: string;
+
+  @ApiProperty({
+    type: [String],
+    description: '이미지 파일 url',
+    example: [
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_001.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_002.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_003.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_004.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_005.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_006.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/머슬비치짐 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_007.png',
+    ],
+  })
+  @IsOptional()
+  @IsString({ each: true })
+  image: string[];
 }

@@ -12,31 +12,31 @@ export class GymEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'text', name: 'centerName' })
+  @Column({ type: 'text', name: 'centerName', nullable: false })
   centerName: string;
 
-  @Column({ type: 'text', name: 'city' })
+  @Column({ type: 'text', name: 'city', nullable: false })
   city: string;
 
-  @Column({ type: 'json', name: 'location' })
+  @Column({ type: 'json', name: 'location', nullable: false })
   location: string[];
 
   @Column({ type: 'json', name: 'subway', nullable: true })
   subway: string[];
 
-  @Column({ type: 'json', name: 'workType' })
+  @Column({ type: 'json', name: 'workType', nullable: false })
   workType: string[];
 
-  @Column({ type: 'json', name: 'workTime' })
+  @Column({ type: 'json', name: 'workTime', nullable: false })
   workTime: string[];
 
-  @Column({ type: 'json', name: 'workDays' })
+  @Column({ type: 'json', name: 'workDays', nullable: false })
   workDays: string[];
 
-  @Column({ type: 'json', name: 'weekendDuty' })
+  @Column({ type: 'json', name: 'weekendDuty', nullable: false })
   weekendDuty: string[];
 
-  @Column({ type: 'json', name: 'salary' })
+  @Column({ type: 'json', name: 'salary', nullable: false })
   salary: string[];
 
   @Column({ type: 'json', name: 'basePay', nullable: true })
@@ -54,22 +54,22 @@ export class GymEntity {
   @Column({ type: 'json', name: 'monthly', nullable: true })
   monthly: number[];
 
-  @Column({ type: 'int', name: 'maxClassFee' })
+  @Column({ type: 'int', name: 'maxClassFee', nullable: false })
   maxClassFee: number;
 
-  @Column({ type: 'json', name: 'gender' })
+  @Column({ type: 'json', name: 'gender', nullable: false })
   gender: string[];
 
-  @Column({ type: 'json', name: 'qualifications' })
+  @Column({ type: 'json', name: 'qualifications', nullable: false })
   qualifications: string[];
 
-  @Column({ type: 'json', name: 'preference' })
+  @Column({ type: 'json', name: 'preference', nullable: false })
   preference: string[];
 
-  @Column({ type: 'json', name: 'site' })
+  @Column({ type: 'json', name: 'site', nullable: false })
   site: string[];
 
-  @Column({ type: 'date', name: 'date' })
+  @Column({ type: 'date', name: 'date', nullable: false })
   date: Date;
 
   @Column({ type: 'text', name: 'description', nullable: true })

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
@@ -299,7 +303,6 @@ export class GymsService {
   async register(
     center: CenterEntity,
     registerRequestDto: GymRegisterRequestDto,
-    files?: Express.Multer.File[],
   ): Promise<GymResponseDto> {
     const {
       workType,
@@ -316,15 +319,12 @@ export class GymsService {
       qualifications,
       preference,
       description,
+      image,
     } = registerRequestDto;
 
     const centerName = center.centerName;
     const address = this.extractLocation(center.address);
     const maxClassFee = classFee ? classFee[1] : -2;
-
-    // 이미지 업로드 후 URL 리스트 가져오기
-    const imageUrls = await this.uploadGymImages(centerName, files || []);
-    const finalImageUrls = imageUrls.length > 0 ? imageUrls : null; // 빈 배열이면 null 설정
 
     const newGym = this.gymRepository.create({
       centerName: centerName,
@@ -349,7 +349,7 @@ export class GymsService {
       date: new Date(),
       description,
       center: center,
-      image: finalImageUrls, // 이미지 URL 저장
+      image, // 이미지 URL 저장
     });
 
     const savedGym = await this.gymRepository.save(newGym);
@@ -414,8 +414,13 @@ export class GymsService {
   // method8: 내 채용 중 공고 만료시키기
   async expireMyGym(center: CenterEntity): Promise<void> {
     const myGym = await this.gymRepository.findOneBy({ center });
+    if (!myGym) {
+      throw new NotFoundException('There is no recruiting data for you');
+    }
+    const { id, ...gymData } = myGym;
     const expiredGym = this.expiredGymRepository.create({
-      ...myGym, // 기존 데이터 복사
+      ...gymData, // 기존 데이터 복사
+      center,
     });
     await this.expiredGymRepository.save(expiredGym);
     await this.deleteMyGym(center);
@@ -439,7 +444,7 @@ export class GymsService {
     files?: Express.Multer.File[],
   ): Promise<GymResponseDto> {
     // 이미지 업로드 후 URL 리스트 가져오기
-    const newImageUrls = await this.uploadGymImages(
+    const newImageUrls = await this.uploadImages(
       center.centerName,
       files || [],
     );
@@ -458,7 +463,7 @@ export class GymsService {
   }
 
   // method12: 다중 이미지 S3 업로드
-  async uploadGymImages(
+  async uploadImages(
     centerName: string,
     files: Express.Multer.File[],
   ): Promise<string[]> {

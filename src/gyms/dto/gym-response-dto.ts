@@ -160,8 +160,12 @@ export class GymResponseDto {
 
   @ApiProperty({
     type: [String],
-    description: '이미지 파일',
-    example: [],
+    description: '이미지 파일 url',
+    example: [
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/헬스보이짐 배곧점 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_001.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/헬스보이짐 배곧점 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_002.png',
+      'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/헬스보이짐 배곧점 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_003.png',
+    ],
   })
   image: string[];
 

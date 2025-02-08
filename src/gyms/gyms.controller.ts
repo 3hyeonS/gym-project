@@ -149,6 +149,45 @@ export class GymsController {
     return await this.gymsService.canRegister(center.id);
   }
 
+  // 센터 공고 이미지 등록하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '센터 공고 이미지 등록하기',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '센터 공고 이미지 등록 성공',
+    message: 'Recruitment images uploaded successfully',
+    type: 'string',
+    isArray: true,
+    example: 'urlexample',
+  })
+  @ResponseMsg('Recruitment images uploaded successfully')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '이미지 파일 업로드',
+    schema: {
+      type: 'object',
+      properties: {
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
+          description: '이미지 파일 등록',
+        },
+      },
+    },
+  })
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(MemberRole.CENTER)
+  @UseInterceptors(FilesInterceptor('images', 10))
+  @Post('uploadImages')
+  async registerImages(
+    @GetUser() center: CenterEntity,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<string[]> {
+    return await this.gymsService.uploadImages(center.centerName, files);
+  }
+
   //센터 공고 등록하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
@@ -162,11 +201,11 @@ export class GymsController {
     model: GymResponseDto,
   })
   @ErrorApiResponse({
-    status: 500,
-    description: 'stringDto 입력값의 필드 조건 및 JSON 형식 오류',
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message:
       'maxClassFee must be a number conforming to the specified constraints',
-    error: 'SyntaxError',
+    error: 'BadRequestException',
   })
   @ErrorApiResponse({
     status: 401,
@@ -181,65 +220,16 @@ export class GymsController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('Gym recruitment registered successfully')
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: '헬스장 등록 정보 및 이미지 파일',
-    schema: {
-      type: 'object',
-      properties: {
-        stringDto: {
-          type: 'string',
-          description: 'JSON 문자열로 변환된 DTO',
-          example: JSON.stringify({
-            workType: ['정규직'],
-            workTime: ['오전', '오후'],
-            workDays: ['주5일'],
-            weekendDuty: ['있음'],
-            salary: ['기본급', '인센티브'],
-            basePay: [80, 100],
-            classPay: [5, 6.5],
-            classFee: [40, 50],
-            hourly: [2, 3],
-            monthly: [200, 250],
-            maxClassFee: -1,
-            gender: ['명시 안 됨'],
-            qualifications: ['명시 안 됨'],
-            preference: ['경력자', '생활체육지도사 자격증'],
-            site: ['잡코리아'],
-            date: '2025-01-09',
-            description: 'https://www.jobkorea.co.kr/Recruit/GI_Read/46253705',
-          }),
-        },
-        images: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
-          description: '이미지 파일 등록',
-        },
-      },
-      required: ['stringDto'],
-    },
-  })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
-  @UseInterceptors(FilesInterceptor('images', 10))
   @Post('register')
   async register(
     @GetUser() center: CenterEntity,
-    @Body('stringDto') stringDto: string,
-    @UploadedFiles() files?: Express.Multer.File[],
+    @Body() gymRegisterRequestDto: GymRegisterRequestDto,
   ): Promise<GymResponseDto> {
-    if (center.gym) {
-      throw new UnauthorizedException('Recruitment already exists');
-    }
-    const gymRegisterRequestDto: GymRegisterRequestDto = JSON.parse(stringDto);
-    const errors = await validate(gymRegisterRequestDto);
-    if (errors.length > 0) {
-      throw new BadRequestException(errors);
-    }
     const registeredGym = await this.gymsService.register(
       center,
       gymRegisterRequestDto,
-      files,
     );
     return registeredGym;
   }
@@ -292,11 +282,11 @@ export class GymsController {
     model: GymResponseDto,
   })
   @ErrorApiResponse({
-    status: 500,
-    description: 'stringDto 입력값의 필드 조건 및 JSON 형식 오류',
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message:
       'maxClassFee must be a number conforming to the specified constraints',
-    error: 'SyntaxError',
+    error: 'BadRequestException',
   })
   @ErrorApiResponse({
     status: 401,
