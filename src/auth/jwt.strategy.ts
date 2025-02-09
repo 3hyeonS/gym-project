@@ -19,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private centersRepository: Repository<CenterEntity>,
   ) {
     super({
-      secretOrKey: process.env.JWT_SECRET || 'default-secret', // 검증하기 위한 Secret Key
+      secretOrKey: process.env.ACCESS_SECRET || 'default-secret', // 검증하기 위한 Secret Key
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization 헤더에서 토큰 추출
       // // [3] Cookie에 있는 JWT 토큰을 추출
       // jwtFromRequest: ExtractJwt.fromExtractors([

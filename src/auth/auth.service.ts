@@ -232,7 +232,7 @@ export class AuthService {
     }
 
     // [2] 회원 유형 판별 및 토큰 생성
-    const accessToken = await this.generateJwtToken(existingMember);
+    const accessToken = await this.generateAccessToken(existingMember);
     const refreshToken = await this.generateRefreshToken(existingMember);
 
     // [3] 사용자 정보 반환
@@ -346,7 +346,7 @@ export class AuthService {
       );
 
       // [1] JWT 토큰 생성 (Secret + Payload)
-      const accessToken = await this.generateJwtToken(user);
+      const accessToken = await this.generateAccessToken(user);
       const refreshToken = await this.generateRefreshToken(user);
       // [2] 사용자 정보 반환
       return { accessToken, refreshToken, user };
@@ -388,8 +388,8 @@ export class AuthService {
     return response.data;
   }
 
-  // JWT 생성 공통 메서드
-  async generateJwtToken(member: MemberEntity): Promise<string> {
+  // accessToken 생성 공통 메서드
+  async generateAccessToken(member: MemberEntity): Promise<string> {
     // [1] JWT 토큰 생성 (Secret + Payload)
     const payload = {
       signId: member.signId,
@@ -397,17 +397,19 @@ export class AuthService {
       userId: member.id,
       role: member.role,
     };
-    const accessToken = await this.jwtService.sign(payload);
-    this.logger.debug(`Generated JWT Token: ${accessToken}`);
-    this.logger.debug(`User details: ${JSON.stringify(member)}`);
+    const accessToken = await this.jwtService.sign(payload, {
+      secret: process.env.ACCESS_SECRET,
+      expiresIn: process.env.ACCESS_EXPIRATION,
+    });
     return accessToken;
   }
 
   // Refresh Token 생성 및 저장
   async generateRefreshToken(member: MemberEntity): Promise<string> {
-    const payload = { signId: member.signId, iat: Date.now() };
+    const payload = { signId: member.signId };
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '3m', // 만료 시간 (7일)
+      secret: process.env.REFRESH_SECRET,
+      expiresIn: process.env.REFRESH_EXPIRATION,
     }); // Refresh Token 생성
     const expiresAt = new Date();
     // expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
@@ -483,7 +485,7 @@ export class AuthService {
     const member = await this.validateRefreshToken(signId, refreshToken);
 
     // 새 Access Token 생성
-    const newAccessToken = await this.generateJwtToken(member);
+    const newAccessToken = await this.generateAccessToken(member);
 
     // 새 Refresh Token 생성
     const newRefreshToken = await this.generateRefreshToken(member);

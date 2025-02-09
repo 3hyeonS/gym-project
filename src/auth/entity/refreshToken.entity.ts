@@ -4,7 +4,6 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { CenterEntity } from './center.entity';
@@ -19,9 +18,6 @@ export class RefreshTokenEntity {
 
   @Column({ type: 'varchar', name: 'signId' })
   signId: string;
-
-  @Column({ type: 'datetime', name: 'expiresAt' })
-  expiresAt: Date;
 
   @ManyToOne(() => UserEntity, (user) => user.refreshTokens, {
     nullable: true,
@@ -38,6 +34,6 @@ export class RefreshTokenEntity {
   @CreateDateColumn({ type: 'datetime', name: 'createdAt' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'datetime', name: 'updateAt' })
-  updatedAt: Date;
+  @Column({ type: 'datetime', name: 'expiresAt' })
+  expiresAt: Date;
 }

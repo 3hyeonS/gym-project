@@ -4,7 +4,6 @@ import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity/user.entity';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import * as dotenv from 'dotenv';
 import { KakaoStrategy } from './kakao.strategy';
@@ -15,6 +14,7 @@ import { GymEntity } from 'src/gyms/entity/gyms.entity';
 import { EmailService } from './email.service';
 import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { EmailCodeEntity } from './entity/emailCode.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 // .env 파일 로드
 dotenv.config();
@@ -30,12 +30,7 @@ dotenv.config();
       EmailCodeEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: {
-        expiresIn: process.env.JWT_EXPIRATION,
-      },
-    }),
+    JwtModule,
     HttpModule,
   ],
   controllers: [AuthController],
