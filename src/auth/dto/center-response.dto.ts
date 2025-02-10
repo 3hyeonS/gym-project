@@ -27,9 +27,9 @@ export class CenterResponseDto {
   constructor(center: CenterEntity) {
     this.id = center.id;
     this.centerName = center.centerName;
-    this.ceoName;
-    this.phone;
-    this.address;
+    this.ceoName = center.centerName;
+    this.phone = center.centerName;
+    this.address = center.centerName;
     this.email = center.email;
     this.role = center.role;
   }
