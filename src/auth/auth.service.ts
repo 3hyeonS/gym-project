@@ -412,8 +412,8 @@ export class AuthService {
       expiresIn: process.env.REFRESH_EXPIRATION,
     }); // Refresh Token 생성
     const expiresAt = new Date();
-    // expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
-    expiresAt.setMinutes(expiresAt.getMinutes() + 3);
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
+    // expiresAt.setMinutes(expiresAt.getMinutes() + 3);
 
     const refreshTokenEntity = this.refreshTokenRepository.create({
       token: refreshToken,
