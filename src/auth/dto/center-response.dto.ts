@@ -6,6 +6,9 @@ export class CenterResponseDto {
   @ApiProperty({ example: 1 })
   id: number;
 
+  @ApiProperty({ example: 'sampleid' })
+  signId: string;
+
   @ApiProperty({ example: '힘찬헬스장' })
   centerName: string;
 
@@ -29,6 +32,7 @@ export class CenterResponseDto {
 
   constructor(center: CenterEntity) {
     this.id = center.id;
+    this.signId = center.signId;
     this.centerName = center.centerName;
     this.ceoName = center.ceoName;
     this.phone = center.phone;

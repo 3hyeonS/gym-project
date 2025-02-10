@@ -6,6 +6,9 @@ export class UserResponseDto {
   @ApiProperty({ example: 1 })
   id: number;
 
+  @ApiProperty({ example: 'sampleid' })
+  signId: string;
+
   @ApiProperty({ example: '홍길동' })
   userName: string;
 
@@ -17,6 +20,7 @@ export class UserResponseDto {
 
   constructor(user: UserEntity) {
     this.id = user.id;
+    this.signId = user.signId;
     this.userName = user.userName;
     this.email = user.email;
     this.role = user.role;
