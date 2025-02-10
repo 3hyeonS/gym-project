@@ -12,7 +12,7 @@ export class CenterEntity extends MemberEntity {
   @Column({ type: 'varchar', name: 'ceoName' })
   ceoName: string;
 
-  @Column({ type: 'varchar', name: 'businessId' })
+  @Column({ type: 'varchar', name: 'businessId', unique: true })
   businessId: string;
 
   @Column({ type: 'varchar', name: 'phone' })

@@ -60,17 +60,25 @@ export class AuthService {
   async sendVerificationCode(email): Promise<void> {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     await this.emailService.sendVerificationToEmail(email, code);
-    const createdCode = await this.emailCodeRepository.create({ code });
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
+    const createdCode = await this.emailCodeRepository.create({
+      email,
+      code,
+      expiresAt,
+    });
     await this.emailCodeRepository.save(createdCode);
   }
 
   // 인증 코드 확인
-  async confirmVerificationCode(code: string): Promise<boolean> {
-    const savedCode = await this.emailCodeRepository.findOneBy({ code });
-    if (!savedCode) {
+  async confirmVerificationCode(email: string, code: string): Promise<boolean> {
+    const savedCode = await this.emailCodeRepository.findOneBy({ email, code });
+    const now = new Date();
+    if (!savedCode || savedCode.expiresAt < now) {
       return false;
     }
-    await this.emailCodeRepository.delete({ code });
+    await this.emailCodeRepository.delete({ email, code });
+    await this.emailCodeRepository.delete({ expiresAt: LessThan(now) }); // 만료된 코드들 삭제
     return true;
   }
 
@@ -197,6 +205,8 @@ export class AuthService {
     // email 중복 확인
     await this.checkEmailExists(email);
 
+    // businessId 중복 확인
+
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
 
@@ -266,10 +276,10 @@ export class AuthService {
   }
 
   // 이메일 중복 확인 메서드
-  private async checkEmailExists(email: string): Promise<void> {
+  async checkEmailExists(email: string): Promise<void> {
     const existingMember = await this.findMemberByEmail(email);
     if (existingMember) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('email already exists');
     }
   }
 
@@ -542,7 +552,15 @@ export class AuthService {
     }
   }
 
-  //사업자등록번호 유효성 검사
+  // 사업자 등록번호 중복 검사
+  async checkBusinessIdExists(businessId: string): Promise<void> {
+    const center = await this.centerRepository.findOneBy({ businessId });
+    if (center) {
+      throw new ConflictException('businessId already exists');
+    }
+  }
+
+  // 사업자등록번호 중복 및 유효성 검사
   async checkBusinessIdValid(businessId: string): Promise<any> {
     const apiKey = process.env.API_KEY; // 발급받은 API 키 입력
     const url = `http://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${apiKey}`; // API 엔드포인트

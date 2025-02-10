@@ -48,7 +48,7 @@ import { RolesGuard } from './custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
 import { MemberRole } from './entity/member.entity';
 import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
-import { EmailCodeRequestDto } from './dto/email-code-request.dto';
+import { EmailRequestDto } from './dto/email-request.dto';
 import { PasswordRequestDto } from './dto/password-request-dto';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
@@ -121,6 +121,42 @@ export class AuthController {
     }
   }
 
+  // 이메일 중복 검사
+  @ApiOperation({
+    summary: '이메일 중복 검사',
+    description: `
+    true: 사용 가능한 이메일  \n
+    false: 사용 불가능한 이메일`,
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '이메일 중복 검사 완료',
+    message: 'email duplicate checked successfully',
+    type: 'boolean',
+    example: true,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'email must be an email',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('signId duplicate checked successfully')
+  @Post('/signup/checkEmail')
+  async checkEmailExists(
+    @Body() emailRequestDto: EmailRequestDto,
+  ): Promise<boolean> {
+    try {
+      await this.authService.checkEmailExists(emailRequestDto.email);
+      return true;
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        return false;
+      }
+      throw error; // 다른 예외는 그대로 throw
+    }
+  }
+
   // 이메일 인증코드 전송
   @ApiOperation({
     summary: '회원가입 이메일 인증코드 전송',
@@ -138,12 +174,8 @@ export class AuthController {
   })
   @ResponseMsg('Verification code was sent to your email successfully')
   @Post('/sendCode')
-  async sendCode(
-    @Body() emailCodeRequestDto: EmailCodeRequestDto,
-  ): Promise<void> {
-    return await this.authService.sendVerificationCode(
-      emailCodeRequestDto.email,
-    );
+  async sendCode(@Body() emailRequestDto: EmailRequestDto): Promise<void> {
+    return await this.authService.sendVerificationCode(emailRequestDto.email);
   }
 
   // 이메일 인증코드 확인
@@ -169,6 +201,7 @@ export class AuthController {
     @Body() emailCodeConfirmRequestDto: EmailCodeConfirmRequestDto,
   ): Promise<boolean> {
     return await this.authService.confirmVerificationCode(
+      emailCodeConfirmRequestDto.email,
       emailCodeConfirmRequestDto.code,
     );
   }
@@ -241,16 +274,18 @@ export class AuthController {
     return this.authService.searchAddress(addressRequestDto.address);
   }
 
+  // 사업자 등록 번호 중복 및 유효성 검사
   @ApiOperation({
-    summary: '사업자 등록 번호 유효성 검사',
+    summary: '사업자 등록 번호 중복 및 유효성 검사',
     description: `
+    중복 시 ConflictException(409)  \n
     유효성 여부: isValid  \n
     true: 유효한 사업자 등록 번호 \n
     false: 유효하지 않은 사업자 등록 번호`,
   })
   @GenericApiResponse({
     status: 201,
-    description: '사업자 등록 번호 유효성 검사 완료',
+    description: '사업자 등록 번호 중복 및 유효성 검사 완료',
     message: 'businessId validated successfully',
     model: BusinessIdIsValidResponseDto,
   })
@@ -259,6 +294,12 @@ export class AuthController {
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message: 'businessId format must be 000-00-00000',
     error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '중복된 businessId',
+    message: 'businessId already exists',
+    error: 'ConflictException',
   })
   @ErrorApiResponse({
     status: 500,
@@ -272,10 +313,9 @@ export class AuthController {
   async checkBusinessIsValid(
     @Body() businessIdRequestDto: BusinessIdRequestDto,
   ) {
-    if (!businessIdRequestDto.businessId) {
-      throw new BadRequestException('사업자등록번호를 입력하세요.');
-    }
-
+    await this.authService.checkBusinessIdExists(
+      businessIdRequestDto.businessId,
+    );
     return this.authService.checkBusinessIdValid(
       businessIdRequestDto.businessId,
     );
@@ -307,6 +347,12 @@ export class AuthController {
     status: 409,
     description: '중복된 email',
     message: 'email already exists',
+    error: 'ConflictException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '중복된 businessId',
+    message: 'businessId already exists',
     error: 'ConflictException',
   })
   @ResponseMsg('Center signed up successfully')
