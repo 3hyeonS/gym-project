@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -82,8 +83,8 @@ export class AuthService {
     if (center) {
       return center.signId;
     }
-    throw new BadRequestException(
-      "There's no center entity with requested ceoName and businessId",
+    throw new NotFoundException(
+      'There is no center entity with requested ceoName and businessId',
     );
   }
 
@@ -93,8 +94,8 @@ export class AuthService {
       signId,
     });
     if (!center) {
-      throw new BadRequestException(
-        "There's no center entity with requested signId",
+      throw new NotFoundException(
+        'There is no center entity with requested signId',
       );
     }
 
@@ -111,12 +112,14 @@ export class AuthService {
       signId,
     });
     if (!center) {
-      throw new BadRequestException(
+      throw new NotFoundException(
         "There's no center entity with requested signId",
       );
     }
+    // 비밀번호 해싱
+    const hashedPassword = await this.hashPassword(newPassword);
     await this.centerRepository.update(center.id, {
-      password: newPassword,
+      password: hashedPassword,
     });
   }
 
@@ -125,7 +128,7 @@ export class AuthService {
     member: UserEntity | CenterEntity,
     password: string,
   ): Promise<boolean> {
-    if (member.password == password) {
+    if (await bcrypt.compare(password, member.password)) {
       return true;
     }
     return false;
@@ -227,7 +230,6 @@ export class AuthService {
       !existingMember ||
       !(await bcrypt.compare(password, existingMember.password))
     ) {
-      this.logger.error('Signin failed: Incorrect signId or password');
       throw new UnauthorizedException('Incorrect signId or password');
     }
 
@@ -243,7 +245,6 @@ export class AuthService {
   async checkSignIdExists(signId: string): Promise<void> {
     const existingMember = await this.findMemberBySignId(signId);
     if (existingMember) {
-      this.logger.warn(`signId already exists: ${signId}`);
       throw new ConflictException('signId already exists');
     }
   }
@@ -458,12 +459,6 @@ export class AuthService {
 
   // 해당 아이디의 모든 refresh token 삭제 (회원 탈퇴 시)
   async revokeRefreshTokenBySignId(signId: string): Promise<void> {
-    // const tokenEntities = await this.refreshTokenRepository.find({
-    //   where: { signId: signId },
-    // });
-    // if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
-    //   throw new UnauthorizedException('Invalid or expired refreshToken');
-    // } else {
     await this.refreshTokenRepository.delete({ signId: signId });
   }
 
@@ -499,13 +494,6 @@ export class AuthService {
 
   // 카카오 주소 검색
   async searchAddress(query: string): Promise<addressResponseDto> {
-    if (!query) {
-      throw new HttpException(
-        '검색어(query)가 필요합니다.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     const api_url = 'https://dapi.kakao.com/v2/local/search/address.json';
 
     try {
@@ -530,7 +518,7 @@ export class AuthService {
     } catch (error) {
       console.error('주소 검색 API 호출 오류:', error);
       throw new HttpException(
-        error.response?.data?.message || '주소 검색 중 오류가 발생했습니다.',
+        error.response?.data?.message || 'API 요청 실패',
         error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -547,12 +535,10 @@ export class AuthService {
     // 탈퇴 처리
     if (member instanceof UserEntity) {
       await this.userRepository.delete({ signId: signId });
-      console.log('user deleted');
     } else {
       await this.gymRepository.delete({ center: member });
       await this.expiredGymRepository.delete({ center: member });
       await this.centerRepository.delete({ signId: signId });
-      console.log('center deleted');
     }
   }
 
@@ -583,8 +569,8 @@ export class AuthService {
     } catch (error) {
       console.log(error.response?.data);
       throw new HttpException(
-        error.response?.data || 'API 요청 실패',
-        HttpStatus.BAD_REQUEST,
+        error.response?.data?.message || 'API 요청 실패',
+        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

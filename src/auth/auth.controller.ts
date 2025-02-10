@@ -146,9 +146,9 @@ export class AuthController {
     );
   }
 
-  // 이메일 인증코드 입력
+  // 이메일 인증코드 확인
   @ApiOperation({
-    summary: '이메일 인증코드 입력',
+    summary: '이메일 인증코드 확인',
   })
   @PrimitiveApiResponse({
     status: 201,
@@ -198,6 +198,12 @@ export class AuthController {
     message: 'signId already exists',
     error: 'ConflictException',
   })
+  @ErrorApiResponse({
+    status: 409,
+    description: '중복된 email',
+    message: 'email already exists',
+    error: 'ConflictException',
+  })
   @ResponseMsg('User signed up successfully')
   @Post('/signup/user')
   async userSignUp(
@@ -219,6 +225,13 @@ export class AuthController {
     message: 'Detailed address value returned successfully',
     model: addressResponseDto,
     isArray: true,
+  })
+  @ErrorApiResponse({
+    status: 500,
+    description:
+      '주소 검색 API 호출 오류  \n kakao api 서버 상태에 따라 statusCode, message가 달라질 수 있음',
+    message: 'API 요청 실패',
+    error: 'InternalServerError',
   })
   @ResponseMsg('Detailed address value returned successfully')
   @Get('/signup/address')
@@ -246,6 +259,13 @@ export class AuthController {
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message: 'businessId format must be 000-00-00000',
     error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 500,
+    description:
+      '사업자 등록 번호 유효성 검사 API 호출 오류  \n 공공데이터포탈 서버 상태에 따라 statusCode, message가 달라질 수 있음',
+    message: 'API 요청 실패',
+    error: 'InternalServerError',
   })
   @ResponseMsg('businessId validated successfully')
   @Post('/signup/checkBusinessId')
@@ -283,6 +303,12 @@ export class AuthController {
     message: 'signId already exists',
     error: 'ConflictException',
   })
+  @ErrorApiResponse({
+    status: 409,
+    description: '중복된 email',
+    message: 'email already exists',
+    error: 'ConflictException',
+  })
   @ResponseMsg('Center signed up successfully')
   @Post('/signup/center')
   async centerSignUp(
@@ -309,6 +335,12 @@ export class AuthController {
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message: 'businessId format must be 000-00-00000',
     error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '입력된 ceoName과 businessId에 해당하는 계정을 찾을 수 없음',
+    message: 'There is no center entity with requested ceoName and businessId',
+    error: 'NotFoundException',
   })
   @ResponseMsg('Your signId was found successfully')
   @Post('findCenterSignId')
@@ -337,6 +369,12 @@ export class AuthController {
     message: 'signId must be a string',
     error: 'BadRequestException',
   })
+  @ErrorApiResponse({
+    status: 404,
+    description: '입력된 signId에 해당하는 계정을 찾을 수 없음',
+    message: 'There is no center entity with requested signId',
+    error: 'NotFoundException',
+  })
   @ResponseMsg('Verification code was sent to your email successfully')
   @Post('findCenterPassword')
   async findCenterPassword(
@@ -361,10 +399,10 @@ export class AuthController {
     error: 'BadRequestException',
   })
   @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \n잘 못된 signId 입력 오류',
+    status: 404,
+    description: '입력된 signId에 해당하는 계정을 찾을 수 없음',
     message: 'There is no center entity with requested signId',
-    error: 'BadRequestException',
+    error: 'NotFoundException',
   })
   @ResponseMsg('New password set successfully')
   @Post('/newCenterPassword')
@@ -441,7 +479,7 @@ export class AuthController {
   @ErrorApiResponse({
     status: 403,
     description: '센터 회원이 아님 (센터 회원만 정보 수정 가능)',
-    message: 'Forbidden resource',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
     error: 'ForbiddenException',
   })
   @ResponseMsg('Your information modified successfully')
@@ -501,9 +539,9 @@ export class AuthController {
 
     // [2] 응답 반환 JSON으로 토큰 전송
     return {
+      member: responseDto,
       accessToken: accessToken,
       refreshToken: refreshToken,
-      member,
     };
   }
 

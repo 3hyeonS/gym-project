@@ -3,11 +3,13 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
+import { apply, TApply } from '../entity/gyms.entity';
 
 export class GymRegisterRequestDto {
   @ApiProperty({
@@ -176,4 +178,17 @@ export class GymRegisterRequestDto {
   @IsOptional()
   @IsString({ each: true })
   image: string[];
+
+  @ApiProperty({
+    type: String,
+    enum: ['EMAIL', 'PHONE', 'BOTH'],
+    description:
+      '지원 방법  \n이메일 지원: EMAIL  \n문자 지원: PHONE  \n이메일 지원 후 문자 방송: BOTH',
+    example: 'BOTH',
+  })
+  @IsNotEmpty()
+  @IsEnum(apply, {
+    message: 'apply must be EMAIL, PHONE or BOTH only',
+  })
+  apply: TApply;
 }

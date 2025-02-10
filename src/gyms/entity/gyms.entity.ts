@@ -7,6 +7,14 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+export type TApply = 'EMAIL' | 'PHONE' | 'BOTH';
+
+export const apply = {
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+  BOTH: 'BOTH',
+} as const;
+
 @Entity({ name: 'gymList' })
 export class GymEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
@@ -77,6 +85,14 @@ export class GymEntity {
 
   @Column({ type: 'json', name: 'image', nullable: true })
   image: string[];
+
+  @Column({
+    type: 'enum',
+    name: 'apply',
+    enum: apply,
+    nullable: true,
+  })
+  apply: TApply;
 
   @OneToOne(() => CenterEntity, (center) => center.gym, {
     nullable: true,

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,7 +9,7 @@ import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { GymEntity } from './entity/gyms.entity';
 import { GymResponseDto } from './dto/gym-response-dto';
-import { GymRegisterRequestDto } from './dto/gym-registration-dto';
+import { GymRegisterRequestDto } from './dto/gym-registration-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ExpiredGymEntity } from './entity/expiredGyms.entity';
@@ -278,7 +279,7 @@ export class GymsService {
     const objectList = await queryBuilder.getMany();
 
     return {
-      gymList: objectList,
+      gymList: objectList.map((gym) => new GymResponseDto(gym)),
       page,
       totalGyms: totalCount, // 전체 헬스장 수
       totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
@@ -300,6 +301,9 @@ export class GymsService {
     center: CenterEntity,
     registerRequestDto: GymRegisterRequestDto,
   ): Promise<GymResponseDto> {
+    if (!this.canRegister(center)) {
+      throw new ForbiddenException('Your hiring recruitment already exists');
+    }
     const {
       workType,
       workTime,
@@ -400,6 +404,16 @@ export class GymsService {
 
   // method7: 내 채용 중 공고 끌어올리기
   async refreshMyGym(center: CenterEntity): Promise<GymResponseDto> {
+    const myGym = await this.gymRepository.findOneBy({ center });
+    if (!myGym) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    // 하루에 한 번만
+    const date = myGym.date;
+    if (date.getDate() == new Date().getDate()) {
+      throw new ForbiddenException('You already updated recruitment today');
+    }
     await this.gymRepository.update(
       { center },
       {
@@ -414,7 +428,7 @@ export class GymsService {
   async expireMyGym(center: CenterEntity): Promise<void> {
     const myGym = await this.gymRepository.findOneBy({ center });
     if (!myGym) {
-      throw new NotFoundException('There is no recruiting data for you');
+      throw new NotFoundException('There is no hring recruitment');
     }
     const { id, ...gymData } = myGym;
     const expiredGym = this.expiredGymRepository.create({
@@ -427,12 +441,22 @@ export class GymsService {
 
   // method9: 내 채용 중 공고 삭제하기
   async deleteMyGym(center: CenterEntity): Promise<void> {
-    const myGym = await this.gymRepository.delete({ center });
+    const myGym = await this.gymRepository.findOneBy({ center });
+    if (!myGym) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
+    await this.gymRepository.delete({ center });
   }
 
   // method10: 내 만료된 공고 삭제하기
-  async deleteMyExpiredGym(center: CenterEntity): Promise<void> {
-    const myGym = await this.expiredGymRepository.delete({ center });
+  async deleteMyExpiredGym(id: number): Promise<void> {
+    const myGym = await this.expiredGymRepository.findOneBy({ id });
+    if (!myGym) {
+      throw new NotFoundException(
+        'There is no expired recruitment for selected id',
+      );
+    }
+    await this.expiredGymRepository.delete({ id });
   }
 
   // method11: 내 채용 중 공고 수정하기
@@ -441,6 +465,9 @@ export class GymsService {
     registerRequestDto: GymRegisterRequestDto,
   ): Promise<GymResponseDto> {
     const myGym = await this.gymRepository.findOneBy({ center });
+    if (!myGym) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
     await this.gymRepository.update(myGym.id, {
       ...registerRequestDto,
     });

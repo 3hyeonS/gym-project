@@ -1,5 +1,6 @@
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { apply, TApply } from './gyms.entity';
 
 @Entity({ name: 'expiredGymList' })
 export class ExpiredGymEntity {
@@ -71,6 +72,14 @@ export class ExpiredGymEntity {
 
   @Column({ type: 'json', name: 'image', nullable: true })
   image: string[];
+
+  @Column({
+    type: 'enum',
+    name: 'apply',
+    enum: apply,
+    nullable: true,
+  })
+  apply: TApply;
 
   @ManyToOne(() => CenterEntity, (center) => center.gym, {
     nullable: true,

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
-import { GymRegisterRequestDto } from './gym-registration-dto';
 import { GymResponseDto } from './gym-response-dto';
 
 export class GymPageResponseDto {
@@ -10,7 +9,7 @@ export class GymPageResponseDto {
     type: [GymResponseDto],
     description: '공고 리스트',
   })
-  @Type(() => GymRegisterRequestDto)
+  @Type(() => GymResponseDto)
   gymList: GymResponseDto[];
 
   @ApiProperty({
