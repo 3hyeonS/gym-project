@@ -21,16 +21,20 @@ export class CenterResponseDto {
   @ApiProperty({ example: 'example@email.com' })
   email: string;
 
+  @ApiProperty({ example: '000-00-00000' })
+  businessId: string;
+
   @ApiProperty({ example: 'CENTER' })
   role: TRole;
 
   constructor(center: CenterEntity) {
     this.id = center.id;
     this.centerName = center.centerName;
-    this.ceoName = center.centerName;
-    this.phone = center.centerName;
-    this.address = center.centerName;
+    this.ceoName = center.ceoName;
+    this.phone = center.phone;
+    this.address = center.address;
     this.email = center.email;
+    this.businessId = center.businessId;
     this.role = center.role;
   }
 }

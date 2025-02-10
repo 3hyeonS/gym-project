@@ -31,26 +31,25 @@ export class EmailService {
   async sendVerificationToEmail(email: string, code: string): Promise<void> {
     const emailOptions: EmailOptions = {
       from: 'officefit19@gmail.com', // 보내는 사람 이메일 주소
-      to: email, // 회원가입한 사람의 받는 이메일 주소
+      to: email, // 받는 사람의 이메일 주소
       subject: '가입 인증 메일',
-      html: `<h1> 인증 코드를 입력하면 가입 인증이 완료됩니다.</h1><br/>${code}`,
+      html: `<h1> 아래의 입력코드를 입력하세요.</h1><br/>${code}`,
     };
 
     return await this.transporter.sendMail(emailOptions);
   }
 
-  async sendNewPasswordToEmail(
-    email: string,
-    newPassword: string,
-  ): Promise<void> {
-    const emailOptions: EmailOptions = {
-      from: 'officefit19@gmail.com', // 보내는 사람 이메일 주소
-      to: email, // 회원가입한 사람의 받는 이메일 주소
-      subject: '임시 비밀번호 발송 메일',
-      html: `<h1> 임시 비밀번호 입니다..</h1><br/>${newPassword}`,
-    };
+  // async sendNewPasswordToEmail(
+  //   email: string,
+  //   newPassword: string,
+  // ): Promise<void> {
+  //   const emailOptions: EmailOptions = {
+  //     from: 'officefit19@gmail.com', // 보내는 사람 이메일 주소
+  //     to: email, // 회원가입한 사람의 받는 이메일 주소
+  //     subject: '임시 비밀번호 발송 메일',
+  //     html: `<h1> 임시 비밀번호 입니다..</h1><br/>${newPassword}`,
+  //   };
 
-    return await this.transporter.sendMail(emailOptions);
-  }
-  ync;
+  //   return await this.transporter.sendMail(emailOptions);
+  // }
 }
