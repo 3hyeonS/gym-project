@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  GoneException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -74,9 +75,14 @@ export class AuthService {
   async confirmVerificationCode(email: string, code: string): Promise<boolean> {
     const savedCode = await this.emailCodeRepository.findOneBy({ email, code });
     const now = new Date();
-    if (!savedCode || savedCode.expiresAt < now) {
+    if (!savedCode) {
       return false;
     }
+
+    if (savedCode.expiresAt < now) {
+      throw new GoneException('Verification code has expired'); // 410 Gone 사용
+    }
+
     await this.emailCodeRepository.delete({ email, code });
     await this.emailCodeRepository.delete({ expiresAt: LessThan(now) }); // 만료된 코드들 삭제
     return true;

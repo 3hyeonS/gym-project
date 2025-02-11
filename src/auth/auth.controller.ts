@@ -195,6 +195,12 @@ export class AuthController {
     message: 'code must be a string',
     error: 'BadRequestException',
   })
+  @ErrorApiResponse({
+    status: 410,
+    description: '인증 코드가 유효 시간(3분)이 만료됨',
+    message: 'Verification code has expired',
+    error: 'GoneException',
+  })
   @ResponseMsg('Verification code validated successfully')
   @Post('/confirmCode')
   async confirmCode(
