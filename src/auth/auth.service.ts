@@ -107,12 +107,13 @@ export class AuthService {
       );
     }
 
+    const email = center.email;
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await this.emailService.sendVerificationToEmail(center.email, code);
+    await this.emailService.sendVerificationToEmail(email, code);
 
-    const createdCode = await this.emailCodeRepository.create({ code });
+    const createdCode = await this.emailCodeRepository.create({ email, code });
     await this.emailCodeRepository.save(createdCode);
-    return center.email;
+    return email;
   }
 
   // 센터 새로운 비밀번호 입력
