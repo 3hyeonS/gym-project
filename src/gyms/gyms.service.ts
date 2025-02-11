@@ -320,6 +320,7 @@ export class GymsService {
       preference,
       description,
       image,
+      apply,
     } = registerRequestDto;
 
     const centerName = center.centerName;
@@ -350,6 +351,7 @@ export class GymsService {
       description,
       center: center,
       image, // 이미지 URL 저장
+      apply,
     });
 
     const savedGym = await this.gymRepository.save(newGym);
@@ -425,17 +427,15 @@ export class GymsService {
   }
 
   // method8: 내 채용 중 공고 만료시키기
-  async expireMyGym(centerEntity: CenterEntity): Promise<void> {
-    const myGym = await this.gymRepository.findOneBy({ center: centerEntity });
+  async expireMyGym(center: CenterEntity): Promise<void> {
+    const myGym = await this.gymRepository.findOneBy({ center });
     if (!myGym) {
       throw new NotFoundException('There is no hring recruitment');
     }
-    const { id, apply, center, ...gymData } = myGym;
-    const applyDuplicate = myGym.apply;
+    const { id, ...gymData } = myGym;
     const expiredGym = this.expiredGymRepository.create({
       ...gymData, // 기존 데이터 복사
-      apply: applyDuplicate,
-      center: centerEntity,
+      center,
     });
     await this.expiredGymRepository.save(expiredGym);
     await this.deleteMyGym(center);
