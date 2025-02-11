@@ -111,7 +111,14 @@ export class AuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     await this.emailService.sendVerificationToEmail(email, code);
 
-    const createdCode = await this.emailCodeRepository.create({ email, code });
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
+
+    const createdCode = await this.emailCodeRepository.create({
+      email,
+      code,
+      expiresAt,
+    });
     await this.emailCodeRepository.save(createdCode);
     return email;
   }
