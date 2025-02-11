@@ -284,7 +284,6 @@ export class GymsController {
   ): Promise<GetMyGymResponseDto> {
     const myGym = await this.gymsService.getMyGym(center);
     const myExpiredGyms = await this.gymsService.getMyExpiredGyms(center);
-    console.log(myGym, myExpiredGyms);
     return new GetMyGymResponseDto(myGym, myExpiredGyms);
   }
 
