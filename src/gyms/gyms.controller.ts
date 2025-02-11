@@ -284,6 +284,7 @@ export class GymsController {
   ): Promise<GetMyGymResponseDto> {
     const myGym = await this.gymsService.getMyGym(center);
     const myExpiredGyms = await this.gymsService.getMyExpiredGyms(center);
+    console.log(myGym, myExpiredGyms);
     return new GetMyGymResponseDto(myGym, myExpiredGyms);
   }
 
@@ -484,7 +485,7 @@ export class GymsController {
   @ResponseMsg('Selected expired recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
-  @Get('deleteExpired')
+  @Post('deleteExpired')
   async deleteMyExpiredGym(@Body() idRequestDto: IdRequestDto): Promise<void> {
     await this.gymsService.deleteMyExpiredGym(idRequestDto.id);
   }
