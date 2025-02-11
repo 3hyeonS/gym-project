@@ -176,19 +176,21 @@ export class GymRegisterRequestDto {
     ],
   })
   @IsOptional()
+  @IsArray()
   @IsString({ each: true })
   image: string[];
 
   @ApiProperty({
-    type: String,
+    type: [String],
     enum: ['EMAIL', 'PHONE', 'BOTH'],
     description:
       '지원 방법  \n이메일 지원: EMAIL  \n문자 지원: PHONE  \n이메일 지원 후 문자 방송: BOTH',
-    example: 'BOTH',
+    example: ['EMAIL', 'PHONE'],
   })
   @IsNotEmpty()
   @IsEnum(apply, {
-    message: 'apply must be EMAIL, PHONE or BOTH only',
+    each: true,
+    message: 'apply element must be EMAIL, PHONE or BOTH only',
   })
-  apply: TApply;
+  apply: TApply[];
 }

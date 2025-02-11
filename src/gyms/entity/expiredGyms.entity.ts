@@ -81,12 +81,12 @@ export class ExpiredGymEntity {
   image: string[];
 
   @Column({
-    type: 'enum',
+    type: 'set',
     name: 'apply',
     enum: apply,
     nullable: true,
   })
-  apply: TApply;
+  apply: TApply[];
 
   @ManyToOne(() => CenterEntity, (center) => center.gym, {
     nullable: true,

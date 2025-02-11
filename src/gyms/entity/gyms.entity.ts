@@ -87,12 +87,12 @@ export class GymEntity {
   image: string[];
 
   @Column({
-    type: 'enum',
+    type: 'set',
     name: 'apply',
     enum: apply,
     nullable: true,
   })
-  apply: TApply;
+  apply: TApply[];
 
   @OneToOne(() => CenterEntity, (center) => center.gym, {
     nullable: true,

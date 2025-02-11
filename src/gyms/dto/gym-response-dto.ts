@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GymEntity } from '../entity/gyms.entity';
-import { ExpiredGymEntity } from '../entity/expiredGyms.entity';
-import { EmailCodeConfirmRequestDto } from 'src/auth/dto/email-code-confirm-request.dto';
+import { ExpiredGymEntity, TApply } from '../entity/expiredGyms.entity';
 
 export class GymResponseDto {
   @ApiProperty({
@@ -171,6 +170,13 @@ export class GymResponseDto {
   image: string[];
 
   @ApiProperty({
+    type: [String],
+    description: '지원 방법',
+    example: ['EMAIL, PHONE'],
+  })
+  howToapply: TApply[];
+
+  @ApiProperty({
     type: 'object',
     additionalProperties: {
       type: 'string',
@@ -178,9 +184,10 @@ export class GymResponseDto {
     description: '지원 루트 (이메일, 전화번호)',
     example: {
       email: 'sample@email.com',
+      phone: '000-0000-0000',
     },
   })
-  apply: Record<string, string>;
+  whereToApply: Record<string, string>;
 
   constructor(gym: GymEntity | ExpiredGymEntity) {
     this.id = gym.id;
@@ -206,18 +213,10 @@ export class GymResponseDto {
     this.date = gym.date;
     this.description = gym.description;
     this.image = gym.image;
-
-    if (gym.apply) {
-      if (gym.apply == 'EMAIL') {
-        this.apply = { email: gym.center.email };
-      } else if (gym.apply == 'PHONE') {
-        this.apply = { phone: gym.center.phone };
-      } else {
-        this.apply = {
-          email: gym.center.email,
-          phone: gym.center.phone,
-        };
-      }
-    }
+    this.howToapply = gym.apply;
+    this.whereToApply = {
+      email: gym.center.email,
+      phone: gym.center.phone,
+    };
   }
 }
