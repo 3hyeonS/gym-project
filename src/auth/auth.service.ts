@@ -163,9 +163,22 @@ export class AuthService {
     centerModifyRequestDto: CenterModifyRequestDto,
   ): Promise<CenterEntity> {
     const id = center.id;
-    await this.centerRepository.update(id, {
-      ...centerModifyRequestDto,
-    });
+    if (centerModifyRequestDto.password) {
+      const hashedPassword = await this.hashPassword(
+        centerModifyRequestDto.password,
+      );
+      await this.centerRepository.update(id, {
+        password: hashedPassword,
+        ceoName: centerModifyRequestDto.ceoName,
+        address: centerModifyRequestDto.address,
+        phone: centerModifyRequestDto.phone,
+      });
+    } else {
+      await this.centerRepository.update(id, {
+        ...centerModifyRequestDto,
+      });
+    }
+
     const modifiedCenter = await this.centerRepository.findOne({
       where: { id },
     });
