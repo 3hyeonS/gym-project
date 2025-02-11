@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CenterModifyRequestDto {
@@ -7,7 +13,7 @@ export class CenterModifyRequestDto {
     description: '비밀번호(8~16자리)  \n영문, 숫자, 특수문자를 1개 이상씩 포함',
     example: 'sample@pw123',
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @Length(8, 16)
   @Matches(
@@ -17,16 +23,6 @@ export class CenterModifyRequestDto {
     },
   ) // 영문, 숫자, 특수문자 포함
   password: string;
-
-  @ApiProperty({
-    type: String,
-    description: '센터명',
-    example: '힘찬헬스장',
-  })
-  @IsNotEmpty() // null 값 체크
-  @IsString()
-  @Length(1, 100) // 문자 수
-  centerName: string;
 
   @ApiProperty({
     type: String,

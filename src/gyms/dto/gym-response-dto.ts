@@ -213,10 +213,12 @@ export class GymResponseDto {
     this.date = gym.date;
     this.description = gym.description;
     this.image = gym.image;
-    this.howToapply = gym.apply;
-    this.whereToApply = {
-      email: gym.center.email,
-      phone: gym.center.phone,
-    };
+    if (gym.center) {
+      this.howToapply = gym.apply;
+      this.whereToApply = {
+        email: gym.center.email,
+        phone: gym.center.phone,
+      };
+    }
   }
 }
