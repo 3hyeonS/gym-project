@@ -97,7 +97,7 @@ export class AuthService {
   }
 
   // 센터 비밀번호 찾기 이메일 인증코드 전송
-  async findCenterPassword(signId: string): Promise<void> {
+  async findCenterPassword(signId: string): Promise<string> {
     const center = await this.centerRepository.findOneBy({
       signId,
     });
@@ -112,6 +112,7 @@ export class AuthService {
 
     const createdCode = await this.emailCodeRepository.create({ code });
     await this.emailCodeRepository.save(createdCode);
+    return center.email;
   }
 
   // 센터 새로운 비밀번호 입력

@@ -425,7 +425,7 @@ export class AuthController {
   @Post('findCenterPassword')
   async findCenterPassword(
     @Body() signIdRequestDto: SignIdRequestDto,
-  ): Promise<void> {
+  ): Promise<string> {
     return await this.authService.findCenterPassword(signIdRequestDto.signId);
   }
 
