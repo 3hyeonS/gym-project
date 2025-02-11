@@ -411,7 +411,7 @@ export class GymsService {
 
     // 하루에 한 번만
     const date = myGym.date;
-    if (date.getDate() == new Date().getDate()) {
+    if (new Date(date).getDate() == new Date().getDate()) {
       throw new ForbiddenException('You already updated recruitment today');
     }
     await this.gymRepository.update(
@@ -425,15 +425,17 @@ export class GymsService {
   }
 
   // method8: 내 채용 중 공고 만료시키기
-  async expireMyGym(center: CenterEntity): Promise<void> {
-    const myGym = await this.gymRepository.findOneBy({ center });
+  async expireMyGym(centerEntity: CenterEntity): Promise<void> {
+    const myGym = await this.gymRepository.findOneBy({ center: centerEntity });
     if (!myGym) {
       throw new NotFoundException('There is no hring recruitment');
     }
-    const { id, ...gymData } = myGym;
+    const { id, apply, center, ...gymData } = myGym;
+    const applyDuplicate = myGym.apply;
     const expiredGym = this.expiredGymRepository.create({
       ...gymData, // 기존 데이터 복사
-      center,
+      apply: applyDuplicate,
+      center: centerEntity,
     });
     await this.expiredGymRepository.save(expiredGym);
     await this.deleteMyGym(center);

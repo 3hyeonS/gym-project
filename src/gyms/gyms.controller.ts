@@ -448,7 +448,7 @@ export class GymsController {
   @ResponseMsg('Hiring recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
-  @Get('delete')
+  @Get('deleteHiring')
   async deleteMyGym(@GetUser() center: CenterEntity): Promise<void> {
     await this.gymsService.deleteMyGym(center);
   }
@@ -484,7 +484,7 @@ export class GymsController {
   @ResponseMsg('Selected expired recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(MemberRole.CENTER)
-  @Get('delete')
+  @Get('deleteExpired')
   async deleteMyExpiredGym(@Body() idRequestDto: IdRequestDto): Promise<void> {
     await this.gymsService.deleteMyExpiredGym(idRequestDto.id);
   }
