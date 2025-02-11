@@ -1,13 +1,6 @@
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-
-export type TApply = 'EMAIL' | 'PHONE' | 'BOTH';
-
-export const apply = {
-  EMAIL: 'EMAIL',
-  PHONE: 'PHONE',
-  BOTH: 'BOTH',
-} as const;
+import { apply, TApply } from './gyms.entity';
 
 @Entity({ name: 'expiredGymList' })
 export class ExpiredGymEntity {

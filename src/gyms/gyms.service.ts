@@ -290,7 +290,6 @@ export class GymsService {
   async canRegister(center: CenterEntity): Promise<boolean> {
     const myGym = await this.gymRepository.findOneBy({ center });
     if (myGym) {
-      console.log(myGym);
       return false;
     }
     return true;
@@ -301,7 +300,7 @@ export class GymsService {
     center: CenterEntity,
     registerRequestDto: GymRegisterRequestDto,
   ): Promise<GymResponseDto> {
-    if (!this.canRegister(center)) {
+    if (!(await this.canRegister(center))) {
       throw new ForbiddenException('Your hiring recruitment already exists');
     }
     const {
@@ -389,7 +388,10 @@ export class GymsService {
 
   // method5: 내 채용 중 공고 불러오기
   async getMyGym(center: CenterEntity): Promise<GymResponseDto | null> {
-    const myGym = await this.gymRepository.findOneBy({ center });
+    const myGym = await this.gymRepository.findOne({
+      where: { center },
+      relations: ['center'], // center 관계를 로드
+    });
     if (!myGym) {
       return null;
     }
@@ -400,6 +402,7 @@ export class GymsService {
   async getMyExpiredGyms(center: CenterEntity): Promise<GymResponseDto[]> {
     const myExpiredGyms = await this.expiredGymRepository.find({
       where: { center },
+      relations: ['center'], // center 관계를 로드
     });
     return myExpiredGyms.map((gym) => new GymResponseDto(gym));
   }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GymEntity } from '../entity/gyms.entity';
-import { ExpiredGymEntity, TApply } from '../entity/expiredGyms.entity';
+import { GymEntity, TApply } from '../entity/gyms.entity';
+import { ExpiredGymEntity } from '../entity/expiredGyms.entity';
 
 export class GymResponseDto {
   @ApiProperty({
