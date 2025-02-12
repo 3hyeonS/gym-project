@@ -57,6 +57,7 @@ export class GymsService {
       order: { date: 'DESC' }, // 최신순 정렬
       take: limit, // 한 페이지에 보여줄 개수
       skip: (page - 1) * limit, // 페이지 계산
+      relations: ['center'],
     });
     return {
       gymList: gymList.map((gym) => new GymResponseDto(gym)),
@@ -77,7 +78,9 @@ export class GymsService {
     totalPages: number;
     page: number;
   }> {
-    const queryBuilder = this.gymRepository.createQueryBuilder('gymList');
+    const queryBuilder = this.gymRepository
+      .createQueryBuilder('gymList')
+      .leftJoinAndSelect('gymList.center', 'center');
     const conditions: { condition: string; parameters: Record<string, any> }[] =
       [];
 
