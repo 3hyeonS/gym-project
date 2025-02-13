@@ -568,13 +568,16 @@ export class AuthService {
     signId: string,
   ): Promise<void> {
     //해당 signId의 모든 refreshToken 삭제
-    this.revokeRefreshTokenBySignId(signId);
+    await this.revokeRefreshTokenBySignId(signId);
 
     // 탈퇴 처리
     if (member instanceof UserEntity) {
       await this.userRepository.delete({ signId: signId });
     } else {
-      await this.gymRepository.delete({ center: member });
+      await this.gymRepository.update(
+        { center: member },
+        { center: null, apply: null },
+      );
       await this.expiredGymRepository.delete({ center: member });
       await this.centerRepository.delete({ signId: signId });
     }
