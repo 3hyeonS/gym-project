@@ -110,8 +110,9 @@ export class GymsService {
         selectedOptionsDto.selectedLocation,
       )) {
         const cityKey = `city_${index}`;
+        const cityAllKeyword = `${city.split(' ')[0]} 전체`; // "{city} 전체" 생성
 
-        if (districts.includes('전체')) {
+        if (districts.includes(cityAllKeyword)) {
           locConditions.push(`gymList.city = :${cityKey}`);
           locParameters[cityKey] = city;
         } else {
