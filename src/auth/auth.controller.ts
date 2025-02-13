@@ -277,7 +277,7 @@ export class AuthController {
   async searchAddress(
     @Query() addressRequestDto: AddressRequestDto,
   ): Promise<addressResponseDto> {
-    return this.authService.searchAddress(addressRequestDto.address);
+    return await this.authService.searchAddress(addressRequestDto.address);
   }
 
   // 사업자 등록 번호 중복 및 유효성 검사
@@ -322,7 +322,7 @@ export class AuthController {
     await this.authService.checkBusinessIdExists(
       businessIdRequestDto.businessId,
     );
-    return this.authService.checkBusinessIdValid(
+    return await this.authService.checkBusinessIdValid(
       businessIdRequestDto.businessId,
     );
   }
@@ -703,9 +703,9 @@ export class AuthController {
     member: UserResponseDto | CenterResponseDto;
   }> {
     // refresh token 에서 signId 추출
-    const decodedToken = this.jwtService.decode(
+    const decodedToken = (await this.jwtService.decode(
       refreshTokenRequestDto.refreshToken,
-    ) as any;
+    )) as any;
     const signId = decodedToken?.signId;
     if (!signId) {
       throw new UnauthorizedException('Invalid or expired refreshToken');

@@ -326,13 +326,13 @@ export class GymsService {
     } = registerRequestDto;
 
     const centerName = center.centerName;
-    const address = this.extractLocation(center.address);
+    const address = await this.extractLocation(center.address);
     const maxClassFee = classFee ? classFee[1] : -2;
 
     const newGym = this.gymRepository.create({
       centerName: centerName,
-      city: (await address).city,
-      location: (await address).location,
+      city: address.city,
+      location: address.location,
       subway: null,
       workType,
       workTime,

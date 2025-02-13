@@ -63,7 +63,7 @@ export class AuthService {
     await this.emailService.sendVerificationToEmail(email, code);
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
-    const createdCode = await this.emailCodeRepository.create({
+    const createdCode = this.emailCodeRepository.create({
       email,
       code,
       expiresAt,
@@ -120,7 +120,7 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
 
-    const createdCode = await this.emailCodeRepository.create({
+    const createdCode = this.emailCodeRepository.create({
       email,
       code,
       expiresAt,
@@ -364,7 +364,7 @@ export class AuthService {
       // 기타 필요한 필드 설정
       role: 'USER',
     });
-    return this.userRepository.save(newUser);
+    return await this.userRepository.save(newUser);
   }
 
   // 카카오 로그인
@@ -436,7 +436,7 @@ export class AuthService {
       userId: member.id,
       role: member.role,
     };
-    const accessToken = await this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_SECRET,
       expiresIn: process.env.ACCESS_EXPIRATION,
     });
