@@ -376,7 +376,7 @@ export class GymsService {
     // 시/군/구 추출
     const addressWithoutcity = address.replace(cityMatch[0], '').trim();
     const locationMatch = addressWithoutcity.match(
-      /([가-힣]+(시|구|군)\s?[가-힣]*(구|군)?)/,
+      /([가-힣]+(시|구|군)\s?[가-힣]+(구|군)?)/,
     );
 
     if (!locationMatch) {
