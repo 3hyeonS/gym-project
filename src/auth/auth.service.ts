@@ -63,6 +63,7 @@ export class AuthService {
     await this.emailService.sendVerificationToEmail(email, code);
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
+    await this.emailCodeRepository.delete({ email });
     const createdCode = this.emailCodeRepository.create({
       email,
       code,
@@ -78,7 +79,6 @@ export class AuthService {
     if (!savedCode) {
       return false;
     }
-
     if (savedCode.expiresAt < now) {
       throw new GoneException('Verification code has expired'); // 410 Gone 사용
     }
