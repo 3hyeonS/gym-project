@@ -3,7 +3,6 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { UserEntity } from './entity/user.entity';
 import { Reflector } from '@nestjs/core';

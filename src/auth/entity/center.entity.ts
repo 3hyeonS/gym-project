@@ -6,19 +6,24 @@ import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 
 @Entity({ name: 'center' })
 export class CenterEntity extends MemberEntity {
-  @Column({ type: 'varchar', name: 'centerName' })
+  @Column({ type: 'varchar', name: 'centerName', nullable: false })
   centerName: string;
 
-  @Column({ type: 'varchar', name: 'ceoName' })
+  @Column({ type: 'varchar', name: 'ceoName', nullable: false })
   ceoName: string;
 
-  @Column({ type: 'varchar', name: 'businessId', unique: true })
+  @Column({
+    type: 'varchar',
+    name: 'businessId',
+    unique: true,
+    nullable: false,
+  })
   businessId: string;
 
-  @Column({ type: 'varchar', name: 'phone' })
+  @Column({ type: 'varchar', name: 'phone', nullable: false })
   phone: string;
 
-  @Column({ type: 'varchar', name: 'address' })
+  @Column({ type: 'varchar', name: 'address', nullable: false })
   address: string;
 
   @Column({

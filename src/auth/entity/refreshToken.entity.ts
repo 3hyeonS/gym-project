@@ -13,10 +13,10 @@ export class RefreshTokenEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'token', unique: true })
+  @Column({ type: 'varchar', name: 'token', unique: true, nullable: false })
   token: string;
 
-  @Column({ type: 'varchar', name: 'signId' })
+  @Column({ type: 'varchar', name: 'signId', nullable: false })
   signId: string;
 
   @ManyToOne(() => UserEntity, (user) => user.refreshTokens, {
@@ -31,9 +31,9 @@ export class RefreshTokenEntity {
   })
   center: CenterEntity;
 
-  @CreateDateColumn({ type: 'datetime', name: 'createdAt' })
+  @CreateDateColumn({ type: 'datetime', name: 'createdAt', nullable: false })
   createdAt: Date;
 
-  @Column({ type: 'datetime', name: 'expiresAt' })
+  @Column({ type: 'datetime', name: 'expiresAt', nullable: false })
   expiresAt: Date;
 }

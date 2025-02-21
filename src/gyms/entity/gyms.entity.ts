@@ -9,12 +9,6 @@ import {
 
 export type TApply = 'EMAIL' | 'PHONE' | 'BOTH';
 
-export const apply = {
-  EMAIL: 'EMAIL',
-  PHONE: 'PHONE',
-  BOTH: 'BOTH',
-} as const;
-
 @Entity({ name: 'gymList' })
 export class GymEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
@@ -89,7 +83,7 @@ export class GymEntity {
   @Column({
     type: 'set',
     name: 'apply',
-    enum: apply,
+    enum: ['EMAIL', 'PHONE', 'BOTH'],
     nullable: true,
   })
   apply: TApply[];
@@ -98,6 +92,6 @@ export class GymEntity {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn() // GymEntity 테이블에 FK가 생성됨
+  @JoinColumn({ name: 'centerId' }) // GymEntity 테이블에 FK가 생성됨
   center: CenterEntity;
 }

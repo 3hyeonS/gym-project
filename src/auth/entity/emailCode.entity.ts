@@ -10,15 +10,15 @@ export class EmailCodeEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'email' })
+  @Column({ type: 'varchar', name: 'email', nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', name: 'code' })
+  @Column({ type: 'varchar', name: 'code', nullable: false })
   code: string;
 
-  @CreateDateColumn({ type: 'datetime', name: 'createdAt' })
+  @CreateDateColumn({ type: 'datetime', name: 'createdAt', nullable: false })
   createdAt: Date;
 
-  @Column({ type: 'datetime', name: 'expiresAt' })
+  @Column({ type: 'datetime', name: 'expiresAt', nullable: false })
   expiresAt: Date;
 }
