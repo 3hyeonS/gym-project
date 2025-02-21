@@ -9,7 +9,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { apply, TApply } from '../entity/gyms.entity';
+import { TApply } from '../entity/gyms.entity';
 
 export class GymRegisterRequestDto {
   @ApiProperty({
@@ -188,7 +188,7 @@ export class GymRegisterRequestDto {
     example: ['EMAIL', 'PHONE'],
   })
   @IsNotEmpty()
-  @IsEnum(apply, {
+  @IsEnum(['EMAIL', 'PHONE', 'BOTH'], {
     each: true,
     message: 'apply element must be EMAIL, PHONE or BOTH only',
   })
