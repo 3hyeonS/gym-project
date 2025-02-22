@@ -14,11 +14,13 @@ import { KakaoStrategy } from 'src/auth/kakao.strategy';
 import { AuthModule } from 'src/auth/auth.module';
 import { ExpiredGymEntity } from './entity/expiredGyms.entity';
 import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
+import { Gym2Entity } from './entity/gyms2.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       GymEntity,
+      Gym2Entity,
       CenterEntity,
       UserEntity,
       RefreshTokenEntity,

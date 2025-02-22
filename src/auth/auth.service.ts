@@ -29,6 +29,7 @@ import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
+import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +44,8 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshTokenEntity>,
     @InjectRepository(GymEntity)
     private gymRepository: Repository<GymEntity>,
+    @InjectRepository(Gym2Entity)
+    private gym2Repository: Repository<Gym2Entity>,
     @InjectRepository(ExpiredGymEntity)
     private expiredGymRepository: Repository<ExpiredGymEntity>,
     @InjectRepository(EmailCodeEntity)
@@ -578,6 +581,13 @@ export class AuthService {
         { center: member },
         { center: null, apply: null },
       );
+
+      // 디비 업데이트용
+      await this.gym2Repository.update(
+        { center: member },
+        { center: null, apply: null },
+      );
+
       await this.expiredGymRepository.delete({ center: member });
       await this.centerRepository.delete({ signId: signId });
     }

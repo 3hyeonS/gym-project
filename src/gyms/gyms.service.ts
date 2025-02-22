@@ -13,6 +13,7 @@ import { GymRegisterRequestDto } from './dto/gym-registration-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ExpiredGymEntity } from './entity/expiredGyms.entity';
+import { Gym2Entity } from './entity/gyms2.entity';
 
 @Injectable()
 export class GymsService {
@@ -27,6 +28,8 @@ export class GymsService {
   constructor(
     @InjectRepository(GymEntity)
     private gymRepository: Repository<GymEntity>,
+    @InjectRepository(Gym2Entity)
+    private gym2Repository: Repository<Gym2Entity>,
     @InjectRepository(ExpiredGymEntity)
     private expiredGymRepository: Repository<ExpiredGymEntity>,
     @InjectRepository(CenterEntity)
@@ -357,6 +360,35 @@ export class GymsService {
       apply,
     });
 
+    // 디비 업데이트용
+    const newGym2 = this.gym2Repository.create({
+      centerName: centerName,
+      city: address.city,
+      location: address.location,
+      subway: null,
+      workType,
+      workTime,
+      workDays,
+      weekendDuty,
+      salary,
+      basePay,
+      classPay,
+      classFee,
+      hourly,
+      monthly,
+      maxClassFee: maxClassFee,
+      gender,
+      qualifications,
+      preference,
+      site: ['직접 등록'],
+      date: new Date(),
+      description,
+      center: center,
+      image, // 이미지 URL 저장
+      apply,
+    });
+    await this.gym2Repository.save(newGym2);
+
     const savedGym = await this.gymRepository.save(newGym);
     return new GymResponseDto(savedGym);
   }
@@ -429,6 +461,14 @@ export class GymsService {
         date: new Date(),
       },
     );
+    // 디비 업데이트용
+    await this.gymRepository.update(
+      { center },
+      {
+        date: new Date(),
+      },
+    );
+
     const myRefreshedGym = await this.gymRepository.findOneBy({ center });
     return new GymResponseDto(myRefreshedGym);
   }
@@ -454,6 +494,10 @@ export class GymsService {
     if (!myGym) {
       throw new NotFoundException('There is no hiring recruitment');
     }
+
+    // 디비 업데이트용
+    await this.gym2Repository.delete({ center });
+
     await this.gymRepository.delete({ center });
   }
 
@@ -480,6 +524,12 @@ export class GymsService {
     await this.gymRepository.update(myGym.id, {
       ...registerRequestDto,
     });
+
+    // 디비 업데이트용
+    await this.gym2Repository.update(myGym.id, {
+      ...registerRequestDto,
+    });
+
     const updatedGym = await this.gymRepository.findOne({
       where: { id: myGym.id },
     });
@@ -496,7 +546,7 @@ export class GymsService {
       return [];
     }
     const uploadPromises = files.map(async (file) => {
-      const fileKey = `images/${centerName}-register/${file.originalname}`;
+      const fileKey = `register/${centerName}-register/${file.originalname}`;
 
       const params = {
         Bucket: this.bucketName,

@@ -3,6 +3,7 @@ import { MemberEntity, MemberRole, TRole } from './member.entity';
 import { RefreshTokenEntity } from './refreshToken.entity';
 import { GymEntity } from 'src/gyms/entity/gyms.entity';
 import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
+import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 
 @Entity({ name: 'center' })
 export class CenterEntity extends MemberEntity {
@@ -41,6 +42,11 @@ export class CenterEntity extends MemberEntity {
     nullable: true,
   })
   gym: GymEntity;
+
+  @OneToOne(() => Gym2Entity, (gym2) => gym2.center, {
+    nullable: true,
+  })
+  gym2: GymEntity;
 
   @OneToMany(() => ExpiredGymEntity, (expiredGyms) => expiredGyms.center, {
     nullable: true,

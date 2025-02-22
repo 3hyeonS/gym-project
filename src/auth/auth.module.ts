@@ -15,6 +15,7 @@ import { EmailService } from './email.service';
 import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -26,6 +27,7 @@ dotenv.config();
       CenterEntity,
       RefreshTokenEntity,
       GymEntity,
+      Gym2Entity,
       ExpiredGymEntity,
       EmailCodeEntity,
     ]),
