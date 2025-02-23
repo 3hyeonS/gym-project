@@ -526,7 +526,8 @@ export class GymsService {
     });
 
     // 디비 업데이트용
-    await this.gym2Repository.update(myGym.id, {
+    const myGym2 = await this.gym2Repository.findOneBy({ center });
+    await this.gym2Repository.update(myGym2.id, {
       ...registerRequestDto,
     });
 
