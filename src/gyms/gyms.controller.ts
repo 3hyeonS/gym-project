@@ -62,17 +62,34 @@ export class GymsController {
     return this.gymsService.getHello();
   }
 
+  // 공고 총 개수 출력
+  @ApiOperation({
+    summary: '채용 공고 개수 출력',
+  })
+  @PrimitiveApiResponse({
+    status: 200,
+    description: '채용 공고 개수 출력 성공',
+    message: 'Total number of recruitments printed successfully',
+    type: 'number',
+    example: 1015,
+  })
+  @ResponseMsg('Total number of recruitments printed successfully')
+  @Get('getTotalNumber')
+  async getTotalNumber(): Promise<number> {
+    return await this.gymsService.getTotalNumber();
+  }
+
   // 모든 헬스장 불러오기
   @ApiOperation({
-    summary: '모든 헬스장 불러오기',
+    summary: '모든 채용 공고 불러오기',
   })
   @GenericApiResponse({
     status: 200,
-    description: '모든 헬스장 불러오기 성공',
-    message: 'All gyms returned successfully',
+    description: '모든 채용 공고 불러오기 성공',
+    message: 'All recruitments returned successfully',
     model: GymPageResponseDto,
   })
-  @ResponseMsg('All gyms returned successfully')
+  @ResponseMsg('All recruitments returned successfully')
   @Get('getAll')
   async getAll(
     @Query('page') page: number = 1, // 기본값 1
@@ -87,15 +104,15 @@ export class GymsController {
     return allGyms;
   }
 
-  // 선택 조건에 맞는 헬스장 불러오기
+  // 선택 조건에 맞는 채용 공고 불러오기
   @ApiOperation({
-    summary: '조건에 맞는 헬스장 불러오기',
+    summary: '조건에 맞는 채용 공고 불러오기',
     description: 'body 조건 Schema 클릭해서 각 필드별로 확인',
   })
   @GenericApiResponse({
     status: 201,
-    description: '해당 조건의 헬스장 불러오기 성공',
-    message: 'Gyms with selected conditions returned successfully',
+    description: '해당 조건의 채용 공고 불러오기 성공',
+    message: 'Recruitments with selected conditions returned successfully',
     model: GymPageResponseDto,
     isArray: true,
   })
@@ -106,7 +123,7 @@ export class GymsController {
       'selectedMaxClassFee must be a number conforming to the specified constraints',
     error: 'BadRequestException',
   })
-  @ResponseMsg('Gyms with selected conditions returned successfully')
+  @ResponseMsg('Recruitments with selected conditions returned successfully')
   @Post('selected')
   async searchSelected(
     @Body() selectedOptionsDto: SelectedOptionsDto,
@@ -154,14 +171,14 @@ export class GymsController {
     return await this.gymsService.canRegister(center);
   }
 
-  // 센터 공고 이미지 등록하기
+  // 채용 공고 이미지 등록하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '센터 공고 이미지 등록하기',
+    summary: '채용 공고 이미지 등록하기',
   })
   @PrimitiveApiResponse({
     status: 201,
-    description: '센터 공고 이미지 등록 성공',
+    description: '채용 공고 이미지 등록 성공',
     message: 'Recruitment images uploaded successfully',
     type: 'string',
     isArray: true,

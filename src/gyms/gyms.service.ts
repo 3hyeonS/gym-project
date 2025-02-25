@@ -46,7 +46,12 @@ export class GymsService {
     this.bucketName = process.env.S3_BUCKET_NAME;
   }
 
-  // method1 : 모든 헬스장 리스트 가져오기
+  // method0 : 공고 총 개수 가져오기
+  async getTotalNumber(): Promise<number> {
+    return await this.gymRepository.count();
+  }
+
+  // method1 : 모든 공고 가져오기
   async getAll(
     page: number,
     limit: number,
