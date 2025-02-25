@@ -41,13 +41,13 @@ export class UserSignUpRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '이름',
+    description: '닉네임',
     example: '홍길동',
   })
   @IsNotEmpty() // null 값 체크
   @IsString()
   @Length(1, 20) // 문자 수
-  userName: string;
+  nickname: string;
 
   @ApiProperty({
     type: String,

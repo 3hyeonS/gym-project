@@ -192,7 +192,7 @@ export class AuthService {
   async userSignUp(
     userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<UserEntity> {
-    const { signId, userName, email, password, role } = userSignUpRequestDto;
+    const { signId, nickname, email, password, role } = userSignUpRequestDto;
 
     // signId 중복 확인
     await this.checkSignIdExists(signId);
@@ -205,7 +205,7 @@ export class AuthService {
 
     const newUser = this.userRepository.create({
       signId,
-      userName,
+      nickname: nickname,
       password: hashedPassword, // 해싱된 비밀번호 사용
       email,
       role,
@@ -341,7 +341,7 @@ export class AuthService {
   async signUpWithKakao(kakaoId: string, profile: any): Promise<UserEntity> {
     const kakaoAccount = profile.kakao_account;
 
-    const kakaoUsername = kakaoAccount.name;
+    const kakaoUserNickname = kakaoAccount.profile.nickname;
     const kakaoEmail = kakaoAccount.email;
 
     // 카카오 프로필 데이터를 기반으로 사용자 찾기 또는 생성 로직을 구현
@@ -360,7 +360,7 @@ export class AuthService {
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
       signId: temporaryId,
-      userName: kakaoUsername,
+      nickname: kakaoUserNickname,
       email: kakaoEmail,
       password: hashedPassword, // 해싱된 임시 비밀번호 사용
 

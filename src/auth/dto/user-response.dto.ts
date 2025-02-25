@@ -10,7 +10,7 @@ export class UserResponseDto {
   signId: string;
 
   @ApiProperty({ example: '홍길동' })
-  userName: string;
+  nickname: string;
 
   @ApiProperty({ example: 'example@email.com' })
   email: string;
@@ -21,7 +21,7 @@ export class UserResponseDto {
   constructor(user: UserEntity) {
     this.id = user.id;
     this.signId = user.signId;
-    this.userName = user.userName;
+    this.nickname = user.nickname;
     this.email = user.email;
     this.role = user.role;
   }

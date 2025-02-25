@@ -4,8 +4,8 @@ import { RefreshTokenEntity } from './refreshToken.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity extends MemberEntity {
-  @Column({ type: 'varchar', name: 'userName', nullable: false })
-  userName: string;
+  @Column({ type: 'varchar', name: 'nickname', nullable: false })
+  nickname: string;
 
   @Column({
     type: 'enum',
