@@ -633,4 +633,99 @@ export class AuthService {
       );
     }
   }
+
+  // 애플 공개 키를 PEM 형식으로 변환
+  private convertAppleKeyToPEM(key: any): string {
+    return `-----BEGIN PUBLIC KEY-----\n${key.n}\n-----END PUBLIC KEY-----`;
+  }
+
+  // ✅ 애플 ID 토큰 검증 (HttpService 활용)
+  async verifyAppleIdToken(idToken: string): Promise<any> {
+    // 애플 공개 키 가져오기 (axios 없이 HttpService 사용)
+    const appleKeysUrl = 'https://appleid.apple.com/auth/keys';
+    const { data } = await firstValueFrom(this.httpService.get(appleKeysUrl));
+    const keys = data.keys;
+
+    // ID 토큰의 헤더를 디코딩하여 해당하는 키 찾기
+    const decodedHeader: any = this.jwtService.decode(idToken, {
+      complete: true,
+    });
+    if (!decodedHeader) {
+      throw new UnauthorizedException('Invalid Apple ID Token');
+    }
+
+    const key = keys.find((k) => k.kid === decodedHeader.header.kid);
+    if (!key) {
+      throw new UnauthorizedException('Invalid Apple ID Token');
+    }
+
+    // 애플 공개 키를 PEM 형식으로 변환
+    const publicKey = this.convertAppleKeyToPEM(key);
+
+    // ID 토큰 검증 및 사용자 정보 추출
+    try {
+      const payload = this.jwtService.verify(idToken, {
+        publicKey,
+        algorithms: ['RS256'],
+      });
+
+      return {
+        sub: payload.sub, // 애플 유저 ID
+        email: payload.email, // 이메일 (사용자가 이메일 공유 동의한 경우)
+        name: payload.name, // 사용자가 제공한 이름 (선택 사항)
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Failed to verify Apple ID Token');
+    }
+  }
+
+  // 애플 정보 기반 회원가입 또는 로그인 처리
+  async signUpWithApple(appleUserInfo: any): Promise<UserEntity> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: appleUserInfo.email },
+    });
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // 임시 비밀번호 생성
+    const temporaryPassword = uuidv4();
+    const hashedPassword = await this.hashPassword(temporaryPassword);
+
+    const newUser = this.userRepository.create({
+      signId: appleUserInfo.sub,
+      email: appleUserInfo.email,
+      password: hashedPassword,
+      nickname: appleUserInfo.name || 'Apple User',
+      role: 'USER',
+    });
+
+    return await this.userRepository.save(newUser);
+  }
+
+  // 애플 로그인 처리
+  async signInWithApple(
+    appleAuthResCode: string,
+    idToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
+    try {
+      // ID 토큰 검증 및 사용자 정보 추출
+      const appleUserInfo = await this.verifyAppleIdToken(idToken);
+      if (!appleUserInfo) {
+        throw new UnauthorizedException('Invalid Apple ID Token');
+      }
+
+      // 회원가입 또는 로그인 처리
+      const user = await this.signUpWithApple(appleUserInfo);
+
+      // JWT 토큰 생성
+      const accessToken = await this.generateAccessToken(user);
+      const refreshToken = await this.generateRefreshToken(user);
+
+      return { accessToken, refreshToken, user };
+    } catch (error) {
+      throw new UnauthorizedException('Apple login failed');
+    }
+  }
 }

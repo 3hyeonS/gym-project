@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -726,6 +725,30 @@ export class AuthController {
       accessToken: accessToken,
       refreshToken: newRefreshToken,
       member: responseDto,
+    };
+  }
+
+  // 애플 로그인 엔드포인트
+  @ApiOperation({
+    summary: '애플 로그인 콜백',
+    description: '애플 로그인 후 ID 토큰을 받아 로그인 또는 회원가입 처리',
+  })
+  @Post('/apple/callback')
+  async appleCallback(
+    @Body('code') appleAuthResCode: string,
+    @Body('id_token') idToken: string,
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: UserResponseDto;
+  }> {
+    const { accessToken, refreshToken, user } =
+      await this.authService.signInWithApple(appleAuthResCode, idToken);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: new UserResponseDto(user),
     };
   }
 }
