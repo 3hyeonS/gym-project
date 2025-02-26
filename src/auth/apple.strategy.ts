@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { AuthService } from './auth.service';
 import * as dotenv from 'dotenv';
 import { Strategy } from '@arendajaelu/nestjs-passport-apple';
 
@@ -9,12 +8,12 @@ dotenv.config();
 
 @Injectable()
 export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
-  constructor(private readonly authService: AuthService) {
+  constructor() {
     super({
       clientID: process.env.APPLE_CLIENT_ID,
       teamID: process.env.APPLE_TEAM_ID,
       keyID: process.env.APPLE_KEY_ID,
-      privateKeyString: process.env.APPLE_PRIVATE_KEY_STRING,
+      key: process.env.APPLE_PRIVATE_KEY_STRING?.replace(/\\n/g, '\n'),
       callbackURL: process.env.APPLE_CALLBACK_URL,
     });
   }

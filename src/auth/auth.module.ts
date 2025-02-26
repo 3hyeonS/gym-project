@@ -16,6 +16,7 @@ import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
+import { AppleStrategy } from './apple.strategy';
 
 // .env 파일 로드
 dotenv.config();
@@ -36,7 +37,13 @@ dotenv.config();
     HttpModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, KakaoStrategy, EmailService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    AppleStrategy,
+    KakaoStrategy,
+    EmailService,
+  ],
   exports: [AuthService, AuthModule, JwtModule, PassportModule],
 })
 export class AuthModule {}
