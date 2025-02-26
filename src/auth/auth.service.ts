@@ -709,7 +709,6 @@ export class AuthService {
 
   // 애플 로그인 처리
   async signInWithApple(
-    appleAuthResCode: string,
     idToken: string,
   ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
     try {
