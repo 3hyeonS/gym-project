@@ -649,9 +649,9 @@ export class AuthService {
       //You can also extract the email, firstName and lastName from the user, but they are only shown in the first time.
       if (payload.hasOwnProperty('user')) {
         const userData = JSON.parse(payload.user);
-        email = userData.email;
-        firstName = userData.firstName;
-        lastName = userData.lastName;
+        email = userData.email || '';
+        firstName = userData.name?.firstName || '';
+        lastName = userData.name?.lastName || '';
       }
 
       const name = firstName + lastName;
