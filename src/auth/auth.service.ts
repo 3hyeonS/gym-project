@@ -634,156 +634,31 @@ export class AuthService {
     }
   }
 
-  // 애플 공개 키를 PEM 형식으로 변환
-  private convertAppleKeyToPEM(key: any): string {
-    return `-----BEGIN PUBLIC KEY-----\n${key.n}\n-----END PUBLIC KEY-----`;
-  }
-
-  // ✅ 애플 ID 토큰 검증 (HttpService 활용)
-  async verifyAppleIdToken(idToken: string): Promise<any> {
-    // 애플 공개 키 가져오기 (axios 없이 HttpService 사용)
-    const appleKeysUrl = 'https://appleid.apple.com/auth/keys';
-    const { data } = await firstValueFrom(this.httpService.get(appleKeysUrl));
-    const keys = data.keys;
-
-    // ID 토큰의 헤더를 디코딩하여 해당하는 키 찾기
-    const decodedHeader: any = this.jwtService.decode(idToken, {
-      complete: true,
-    });
-    if (!decodedHeader) {
-      throw new UnauthorizedException('Invalid Apple ID Token');
-    }
-
-    const key = keys.find((k) => k.kid === decodedHeader.header.kid);
-    if (!key) {
-      throw new UnauthorizedException('Invalid Apple ID Token');
-    }
-
-    // 애플 공개 키를 PEM 형식으로 변환
-    const publicKey = this.convertAppleKeyToPEM(key);
-
-    // ID 토큰 검증 및 사용자 정보 추출
-    try {
-      const payload = this.jwtService.verify(idToken, {
-        publicKey,
-        algorithms: ['RS256'],
-      });
-
-      return {
-        sub: payload.sub, // 애플 유저 ID
-        email: payload.email, // 이메일 (사용자가 이메일 공유 동의한 경우)
-        name: payload.name, // 사용자가 제공한 이름 (선택 사항)
-      };
-    } catch (error) {
-      throw new UnauthorizedException('Failed to verify Apple ID Token');
-    }
-  }
-
-  // // 애플 로그인 처리
-  // async signInWithApple(
-  //   appleAuthResCode: string,
-  //   idToken: string,
-  // ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
-  //   try {
-  //     // ID 토큰 검증 및 사용자 정보 추출
-  //     const appleUserInfo = await this.verifyAppleIdToken(idToken);
-  //     if (!appleUserInfo) {
-  //       throw new UnauthorizedException('Invalid Apple ID Token');
-  //     }
-
-  //     // 회원가입 또는 로그인 처리
-  //     const user = await this.signUpWithApple(appleUserInfo);
-
-  //     // JWT 토큰 생성
-  //     const accessToken = await this.generateAccessToken(user);
-  //     const refreshToken = await this.generateRefreshToken(user);
-
-  //     return { accessToken, refreshToken, user };
-  //   } catch (error) {
-  //     throw new UnauthorizedException('Apple login failed');
-  //   }
-  // }
-
-  // async signInWithApple(authCode: string) {
-  //   const tokenEndpoint = 'https://appleid.apple.com/auth/token';
-  //   const clientSecret = this.generateAppleClientSecret(); // 🔥 Apple Client Secret 생성
-
-  //   const params = new URLSearchParams();
-  //   params.append('grant_type', 'authorization_code');
-  //   params.append('code', authCode);
-  //   params.append('client_id', process.env.APPLE_CLIENT_ID);
-  //   params.append('client_secret', clientSecret);
-  //   params.append('redirect_uri', process.env.APPLE_CALLBACK_URL);
-
-  //   try {
-  //     const response = await firstValueFrom(
-  //       this.httpService.post(tokenEndpoint, params.toString(), {
-  //         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  //       })
-  //     );
-
-  //     console.log('Apple Token Response:', response.data); // ✅ 디버깅
-  //     return response.data; // id_token, access_token 포함됨
-  //   } catch (error) {
-  //     console.error(
-  //       'Error fetching Apple ID Token:',
-  //       error.response?.data || error.message
-  //     );
-  //     throw new UnauthorizedException('Failed to get Apple ID Token');
-  //   }
-  // }
-
-  // // 애플 `client_secret` 생성
-  // private generateAppleClientSecret(): Promise<string> {
-  //   const payload = {
-  //     iss: process.env.APPLE_TEAM_ID, // 🔥 Apple Developer Team ID
-  //     iat: Math.floor(Date.now() / 1000), // 현재 시간 (초 단위)
-  //     exp: Math.floor(Date.now() / 1000) + 3600, // 1시간 후 만료
-  //     aud: 'https://appleid.apple.com', // 고정 값
-  //     sub: process.env.APPLE_CLIENT_ID, // 서비스 ID (client_id)
-  //   };
-
-  //   return await this.jwtService.signAsync(payload, {
-  //     algorithm: 'ES256', // Apple OAuth 요구 사항
-  //     key: process.env.APPLE_PRIVATE_KEY_STRING.replace(/\\n/g, '\n'), // 🔥 개행 변환
-  //     keyid: process.env.APPLE_KEY_ID, // 🔥 Apple Key ID
-  //   } as any);
-  // }
-
-  async registerByIDtoken(payload: any) {
+  // apple 로그인
+  async signInWithApple(payload: any) {
     if (payload.hasOwnProperty('id_token')) {
-      // let email,
-      //   name = '';
+      let email,
+        firstName,
+        lastName = '';
 
       //You can decode the id_token which returned from Apple,
       const decodedObj = await this.jwtService.decode(payload.id_token);
       const accountId = decodedObj.sub || '';
       console.info(`Apple Account ID: ${accountId}`);
 
-      //Email address
-      // if (decodedObj.hasOwnProperty('email')) {
-      //   email = decodedObj['email'];
-      //   console.info(`Apple Email: ${email}`);
-      // }
-      const email = decodedObj['email'];
+      //You can also extract the email, firstName and lastName from the user, but they are only shown in the first time.
+      if (payload.hasOwnProperty('user')) {
+        const userData = JSON.parse(payload.user);
+        email = userData.email;
+        firstName = userData.firstName;
+        lastName = userData.lastName;
+      }
 
-      //You can also extract the firstName and lastName from the user, but they are only shown in the first time.
-      // if (payload.hasOwnProperty('user')) {
-      //   const userData = JSON.parse(payload.user);
-      //   const { firstName, lastName } = userData.name || {};
-      //   name = firstName + lastName;
-      // }
-      const userData = JSON.parse(payload.user);
-      const { firstName, lastName } = userData.name || {};
-
-      const appleUserInfo = {
-        email: email,
-        name: firstName + lastName,
-      };
+      const name = firstName + lastName;
 
       //.... you logic for registration and login here
       // 애플 사용자 정보를 기반으로 회원가입 또는 로그인 처리
-      const user = await this.signUpWithApple(appleUserInfo);
+      const user = await this.signUpWithApple(email, name);
 
       // [1] JWT 토큰 생성 (Secret + Payload)
       const accessToken = await this.generateAccessToken(user);
@@ -795,13 +670,13 @@ export class AuthService {
   }
 
   // 애플 정보 기반 회원가입 또는 로그인 처리
-  async signUpWithApple(appleUserInfo: any): Promise<any> {
+  async signUpWithApple(email: string, name: string): Promise<any> {
     const existingUser = await this.userRepository.findOne({
-      where: { email: appleUserInfo.email },
+      where: { email },
     });
 
     if (existingUser) {
-      return appleUserInfo;
+      return existingUser;
     }
 
     // signId, password 필드에 랜덤 문자열 생성
@@ -812,8 +687,8 @@ export class AuthService {
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
       signId: temporaryId,
-      nickname: appleUserInfo.name,
-      email: appleUserInfo.email,
+      nickname: name,
+      email: email,
       password: hashedPassword, // 해싱된 임시 비밀번호 사용
 
       // 기타 필요한 필드 설정
