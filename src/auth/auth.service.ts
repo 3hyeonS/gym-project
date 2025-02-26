@@ -803,6 +803,6 @@ export class AuthService {
 
       //.... you logic for registration and login here
     }
-    throw new UnauthorizedException('Unauthorized');
+    throw new UnauthorizedException('Unauthorized2');
   }
 }
