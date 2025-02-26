@@ -792,13 +792,13 @@ export class AuthService {
   }
 
   // 애플 정보 기반 회원가입 또는 로그인 처리
-  async signUpWithApple(appleUserInfo: any): Promise<UserEntity> {
+  async signUpWithApple(appleUserInfo: any): Promise<any> {
     const existingUser = await this.userRepository.findOne({
       where: { email: appleUserInfo.email },
     });
 
     if (existingUser) {
-      return existingUser;
+      return appleUserInfo;
     }
 
     // signId, password 필드에 랜덤 문자열 생성
