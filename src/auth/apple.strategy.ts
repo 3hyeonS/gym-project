@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as dotenv from 'dotenv';
-import { Strategy } from '@arendajaelu/nestjs-passport-apple';
+import { Strategy } from 'passport-apple';
 
 // .env 파일 로드
 dotenv.config();
@@ -13,7 +13,7 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
       clientID: process.env.APPLE_CLIENT_ID,
       teamID: process.env.APPLE_TEAM_ID,
       keyID: process.env.APPLE_KEY_ID,
-      key: `——BEGIN PRIVATE KEY——
+      privateKeyString: `——BEGIN PRIVATE KEY——
 MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgW/8iU0CT467JY4AP
 +6mkwnhgsE5NY/6q9T4YuJMW4EKgCgYIKoZIzj0DAQehRANCAAQhMFFv45d6kiVr
 tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
