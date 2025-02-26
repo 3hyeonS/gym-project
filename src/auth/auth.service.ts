@@ -779,18 +779,14 @@ export class AuthService {
       };
 
       //.... you logic for registration and login here
-      try {
-        // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
-        const user = await this.signUpWithApple(appleUserInfo);
+      // 애플 사용자 정보를 기반으로 회원가입 또는 로그인 처리
+      const user = await this.signUpWithApple(appleUserInfo);
 
-        // [1] JWT 토큰 생성 (Secret + Payload)
-        const accessToken = await this.generateAccessToken(user);
-        const refreshToken = await this.generateRefreshToken(user);
-        // [2] 사용자 정보 반환
-        return { accessToken, refreshToken, user };
-      } catch (error) {
-        throw new UnauthorizedException('Authorization code is Invalid');
-      }
+      // [1] JWT 토큰 생성 (Secret + Payload)
+      const accessToken = await this.generateAccessToken(user);
+      const refreshToken = await this.generateRefreshToken(user);
+      // [2] 사용자 정보 반환
+      return { accessToken, refreshToken, user };
     }
     throw new UnauthorizedException('Unauthorized2');
   }
@@ -802,7 +798,6 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new UnauthorizedException('Unauthorized3');
       return existingUser;
     }
 
