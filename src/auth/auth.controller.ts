@@ -774,17 +774,19 @@ export class AuthController {
   @ResponseMsg('Signed in successfully with Apple Account')
   @Post('/apple/callback')
   async appleCallback(
-    @Req() req,
-    @Body() body,
+    @Body() payload,
     // @Query('code') appleAuthResCode: string,
     // @Query('id_token') idToken: string,
-  ) {
+  ): Promise<any> {
     // : Promise<{
     //   accessToken: string;
     //   refreshToken: string;
     //   member: UserResponseDto;
     // }>
-    return { body, headers: req.headers, query: req.query }; // ✅ JSON 변환 가능
+    if (payload.id_token) {
+      return this.authService.registerByIDtoken(payload);
+    }
+    throw new UnauthorizedException('Unauthorized');
     // // Authorization Code 받기
     // const { accessToken, refreshToken, user } =
     //   await this.authService.signInWithApple(appleAuthResCode, idToken);
