@@ -6,6 +6,7 @@ import {
   Logger,
   Post,
   Query,
+  Req,
   UnauthorizedException,
   UseFilters,
   UseGuards,
@@ -773,22 +774,26 @@ export class AuthController {
   @ResponseMsg('Signed in successfully with Apple Account')
   @Post('/apple/callback')
   async appleCallback(
-    @Query('code') appleAuthResCode: string,
-    @Query('id_token') idToken: string,
-  ): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    member: UserResponseDto;
-  }> {
-    // Authorization Code 받기
-    const { accessToken, refreshToken, user } =
-      await this.authService.signInWithApple(appleAuthResCode, idToken);
+    @Req() req,
+    @Body() body,
+    // @Query('code') appleAuthResCode: string,
+    // @Query('id_token') idToken: string,
+  ) {
+    // : Promise<{
+    //   accessToken: string;
+    //   refreshToken: string;
+    //   member: UserResponseDto;
+    // }>
+    return { body, headers: req.headers, query: req.query }; // ✅ JSON 변환 가능
+    // // Authorization Code 받기
+    // const { accessToken, refreshToken, user } =
+    //   await this.authService.signInWithApple(appleAuthResCode, idToken);
 
-    const userResponseDto = new UserResponseDto(user);
-    return {
-      accessToken: accessToken, // 헤더로 사용할 Access Token
-      refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-      member: userResponseDto,
-    };
+    // const userResponseDto = new UserResponseDto(user);
+    // return {
+    //   accessToken: accessToken, // 헤더로 사용할 Access Token
+    //   refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
+    //   member: userResponseDto,
+    // };
   }
 }

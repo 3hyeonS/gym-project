@@ -21,6 +21,7 @@ tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
 ——END PRIVATE KEY——`,
       // process.env.APPLE_PRIVATE_KEY_STRING?.replace(/\\n/g, '\n'),
       callbackURL: process.env.APPLE_CALLBACK_URL,
+      passReqToCallback: true,
     });
   }
 }
