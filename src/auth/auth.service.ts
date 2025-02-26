@@ -338,7 +338,7 @@ export class AuthService {
   }
 
   // 카카오 정보 회원 가입
-  async signUpWithKakao(kakaoId: string, profile: any): Promise<UserEntity> {
+  async signUpWithKakao(profile: any): Promise<UserEntity> {
     const kakaoAccount = profile.kakao_account;
 
     const kakaoUserNickname = kakaoAccount.profile.nickname;
@@ -382,10 +382,7 @@ export class AuthService {
       const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
 
       // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
-      const user = await this.signUpWithKakao(
-        kakaoUserInfo.id.toString(),
-        kakaoUserInfo,
-      );
+      const user = await this.signUpWithKakao(kakaoUserInfo);
 
       // [1] JWT 토큰 생성 (Secret + Payload)
       const accessToken = await this.generateAccessToken(user);
@@ -682,31 +679,6 @@ export class AuthService {
     }
   }
 
-  // 애플 정보 기반 회원가입 또는 로그인 처리
-  async signUpWithApple(appleUserInfo: any): Promise<UserEntity> {
-    const existingUser = await this.userRepository.findOne({
-      where: { email: appleUserInfo.email },
-    });
-
-    if (existingUser) {
-      return existingUser;
-    }
-
-    // 임시 비밀번호 생성
-    const temporaryPassword = uuidv4();
-    const hashedPassword = await this.hashPassword(temporaryPassword);
-
-    const newUser = this.userRepository.create({
-      signId: appleUserInfo.sub,
-      email: appleUserInfo.email,
-      password: hashedPassword,
-      nickname: appleUserInfo.name || 'Apple User',
-      role: 'USER',
-    });
-
-    return await this.userRepository.save(newUser);
-  }
-
   // // 애플 로그인 처리
   // async signInWithApple(
   //   appleAuthResCode: string,
@@ -781,8 +753,7 @@ export class AuthService {
   async registerByIDtoken(payload: any) {
     if (payload.hasOwnProperty('id_token')) {
       let email,
-        firstName,
-        lastName = '';
+        name = '';
 
       //You can decode the id_token which returned from Apple,
       const decodedObj = await this.jwtService.decode(payload.id_token);
@@ -799,10 +770,57 @@ export class AuthService {
       if (payload.hasOwnProperty('user')) {
         const userData = JSON.parse(payload.user);
         const { firstName, lastName } = userData.name || {};
+        name = firstName + lastName;
       }
 
+      const appleUserInfo = {
+        email: email,
+        name: name,
+      };
+
       //.... you logic for registration and login here
+      try {
+        // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
+        const user = await this.signUpWithApple(appleUserInfo);
+
+        // [1] JWT 토큰 생성 (Secret + Payload)
+        const accessToken = await this.generateAccessToken(user);
+        const refreshToken = await this.generateRefreshToken(user);
+        // [2] 사용자 정보 반환
+        return { accessToken, refreshToken, user };
+      } catch (error) {
+        throw new UnauthorizedException('Authorization code is Invalid');
+      }
     }
     throw new UnauthorizedException('Unauthorized2');
+  }
+
+  // 애플 정보 기반 회원가입 또는 로그인 처리
+  async signUpWithApple(appleUserInfo: any): Promise<UserEntity> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: appleUserInfo.email },
+    });
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // signId, password 필드에 랜덤 문자열 생성
+    const temporaryId = uuidv4();
+    const temporaryPassword = uuidv4(); // 랜덤 문자열 생성
+    const hashedPassword = await this.hashPassword(temporaryPassword);
+
+    // 새 사용자 생성 로직
+    const newUser = this.userRepository.create({
+      signId: temporaryId,
+      nickname: appleUserInfo.name,
+      email: appleUserInfo.email,
+      password: hashedPassword, // 해싱된 임시 비밀번호 사용
+
+      // 기타 필요한 필드 설정
+      role: 'USER',
+    });
+
+    return await this.userRepository.save(newUser);
   }
 }
