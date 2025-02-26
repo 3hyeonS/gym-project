@@ -265,11 +265,24 @@ export class AuthController {
     isArray: true,
   })
   @ErrorApiResponse({
+    status: 401,
+    description:
+      '잘못된 KAKAO_CLIENT_ID, 카카오 개발자 페이지 REST API 키 확인',
+    message: 'KAKAO_CLIENT_ID is invalid',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '앱 설정에서 카카오맵이 활성화되지 않음',
+    message: 'App disabled OPEN_MAP_AND_LOCAL service',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
     status: 500,
     description:
-      '주소 검색 API 호출 오류  \n kakao api 서버 상태에 따라 statusCode, message가 달라질 수 있음',
+      '주소 검색 API 호출 오류  \n kakao api 서버 상태에 따라 message가 달라짐',
     message: 'API 요청 실패',
-    error: 'InternalServerError',
+    error: 'AxiosError',
   })
   @ResponseMsg('Detailed address value returned successfully')
   @Get('/signup/address')
@@ -728,27 +741,54 @@ export class AuthController {
     };
   }
 
-  // 애플 로그인 엔드포인트
+  // 애플 로그인/회원가입 페이지 요청
+  @ApiOperation({
+    summary: '애플 로그인/회원가입 페이지',
+    description: `애플 로그인/회원가입 페이지로 redirect  \n
+    Swagger에서 redirect 테스트 불가. 외부에서 해당 엔드포인트 호출`,
+  })
+  @Get('/apple')
+  @UseGuards(AuthGuard('apple'))
+  async appleLogin() {
+    // 이 부분은 Passport의 AuthGuard에 의해 애플 로그인 페이지로 리다이렉트
+  }
+
+  // 애플 로그인 콜백 엔드포인트
   @ApiOperation({
     summary: '애플 로그인 콜백',
-    description: '애플 로그인 후 ID 토큰을 받아 로그인 또는 회원가입 처리',
+    description: '애플 로그인 콜백 및 accessToken, refreshToken 생성',
   })
+  @GenericApiResponse({
+    status: 201,
+    description: '애플 로그인에 성공',
+    message: 'Signed in successfully with Apple Account',
+    model: tokenResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않은 인가코드 입력(재사용 포함)',
+    message: 'Authorization code is invalid',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Signed in successfully with Apple Account')
   @Post('/apple/callback')
   async appleCallback(
-    @Body('code') appleAuthResCode: string,
-    @Body('id_token') idToken: string,
+    @Query('code') appleAuthResCode: string,
+    @Query('id_token') idToken: string,
   ): Promise<{
     accessToken: string;
     refreshToken: string;
-    user: UserResponseDto;
+    member: UserResponseDto;
   }> {
+    // Authorization Code 받기
     const { accessToken, refreshToken, user } =
       await this.authService.signInWithApple(appleAuthResCode, idToken);
 
+    const userResponseDto = new UserResponseDto(user);
     return {
-      accessToken,
-      refreshToken,
-      user: new UserResponseDto(user),
+      accessToken: accessToken, // 헤더로 사용할 Access Token
+      refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
+      member: userResponseDto,
     };
   }
 }

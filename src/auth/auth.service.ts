@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   GoneException,
   HttpException,
   HttpStatus,
@@ -557,11 +558,14 @@ export class AuthService {
           : '도로명 주소 없음',
       }));
     } catch (error) {
-      console.error('주소 검색 API 호출 오류:', error);
-      throw new HttpException(
-        error.response?.data?.message || 'API 요청 실패',
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const message = error.message;
+      if (message.indexOf('401')) {
+        throw new UnauthorizedException('KAKAO_CLIENT_ID is invalid');
+      } else if (message.indexOf('403')) {
+        throw new ForbiddenException('App disabled OPEN_MAP_AND_LOCAL service');
+      } else {
+        throw error;
+      }
     }
   }
 
