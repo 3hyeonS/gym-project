@@ -30,7 +30,7 @@ export class EmailService {
 
   async sendVerificationToEmail(email: string, code: string): Promise<void> {
     const emailOptions: EmailOptions = {
-      from: 'oasisapp2025@gmail.com', // 보내는 사람 이메일 주소
+      from: '"오아시스" <oasisapp2025@gmail.com>', // 보내는 사람 이메일 주소
       to: email, // 받는 사람의 이메일 주소
       subject: '가입 인증 메일',
       html: `
@@ -44,7 +44,8 @@ export class EmailService {
             ${code}
           </div>
           <p style="text-align: center; font-size: 14px; color: #777; margin-top: 15px;">
-            본 메일은 자동 발송되었습니다.\n문의가 필요하시면 <a href="mailto:oasisapp2025@gmail.com" style="color: #007bff; text-decoration: none;">oasisapp2025@gmail.com</a>으로 연락주세요.
+            본 메일은 자동 발송되었습니다.<br>
+            문의가 필요하시면 <a href="mailto:oasisapp2025@gmail.com" style="color: #007bff; text-decoration: none;">oasisapp2025@gmail.com</a>으로 연락주세요.
           </p>
           <p style="text-align: center; font-size: 12px; color: #aaa;">
             ⓒ 2025 oasis. All rights reserved.
