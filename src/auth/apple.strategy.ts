@@ -24,4 +24,8 @@ tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
       passReqToCallback: true,
     });
   }
+
+  async validate(req, accessToken, refreshToken, idToken, profile) {
+    return { req, accessToken, refreshToken, idToken, profile };
+  }
 }
