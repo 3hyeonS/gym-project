@@ -35,7 +35,7 @@ export class EmailService {
       subject: '가입 인증 메일',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-          <h2 style="text-align: center; color: #333;">OfficeFit 인증 메일</h2>
+          <h2 style="text-align: center; color: #333;">oasis 인증 메일</h2>
           <p style="text-align: center; font-size: 16px; color: #555;">
             안녕하세요, oasis 인증 코드입니다.<br>
             아래 인증 코드를 입력하여 인증을 완료하세요.
@@ -44,7 +44,7 @@ export class EmailService {
             ${code}
           </div>
           <p style="text-align: center; font-size: 14px; color: #777; margin-top: 15px;">
-            본 메일은 자동 발송되었습니다. 문의가 필요하시면 <a href="mailto:oasisapp2025@gmail.com" style="color: #007bff; text-decoration: none;">oasisapp2025@gmail.com</a>으로 연락주세요.
+            본 메일은 자동 발송되었습니다.\n문의가 필요하시면 <a href="mailto:oasisapp2025@gmail.com" style="color: #007bff; text-decoration: none;">oasisapp2025@gmail.com</a>으로 연락주세요.
           </p>
           <p style="text-align: center; font-size: 12px; color: #aaa;">
             ⓒ 2025 oasis. All rights reserved.
