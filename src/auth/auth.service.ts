@@ -802,6 +802,7 @@ export class AuthService {
     });
 
     if (existingUser) {
+      throw new UnauthorizedException('Unauthorized3');
       return existingUser;
     }
 

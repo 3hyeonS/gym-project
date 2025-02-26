@@ -784,7 +784,7 @@ export class AuthController {
     //   member: UserResponseDto;
     // }>
     if (payload.id_token) {
-      return payload;
+      return this.authService.registerByIDtoken(payload);
     }
     throw new UnauthorizedException('Unauthorized');
     // // Authorization Code 받기
