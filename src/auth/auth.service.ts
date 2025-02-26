@@ -802,8 +802,8 @@ export class AuthService {
     });
 
     if (existingUser) {
-      return existingUser;
       throw new UnauthorizedException('Unauthorized3');
+      return existingUser;
     }
 
     // signId, password 필드에 랜덤 문자열 생성
