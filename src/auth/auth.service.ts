@@ -727,7 +727,7 @@ export class AuthService {
       const clientSecret = this.generateClientSecret();
 
       // 2. Apple 서버에 토큰 요청
-      const tokenUrl = 'https://appleid.apple.com/auth/token';
+      const tokenUrl = 'https://appleid.apple.com/auth/oauth2/v2/token';
       const data = qs.stringify({
         client_id: process.env.APPLE_CLIENT_ID,
         client_secret: clientSecret,
