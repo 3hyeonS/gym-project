@@ -717,7 +717,7 @@ export class AuthService {
     const clientSecret = jwt.sign(payload, privateKey, {
       header,
     });
-
+    console.log(clientSecret);
     return clientSecret;
   }
 
