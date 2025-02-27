@@ -30,6 +30,7 @@ import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
+import * as qs from 'qs';
 
 @Injectable()
 export class AuthService {

@@ -1,4 +1,4 @@
-import { Strategy } from '@arendajaelu/nestjs-passport-apple';
+import { Profile, Strategy } from '@arendajaelu/nestjs-passport-apple';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as dotenv from 'dotenv';
@@ -22,5 +22,17 @@ tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
       passReqToCallback: false,
       scope: ['email', 'name'],
     });
+  }
+
+  async validate(
+    _accessToken: string,
+    _refreshToken: string,
+    profile: Profile,
+  ) {
+    return {
+      emailAddress: profile.email,
+      firstName: profile.name?.firstName || '',
+      lastName: profile.name?.lastName || '',
+    };
   }
 }
