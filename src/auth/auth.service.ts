@@ -694,4 +694,32 @@ export class AuthService {
 
     return await this.userRepository.save(newUser);
   }
+
+  async createAppleClientSecret(): Promise<string> {
+    const header = {
+      alg: 'ES256',
+      kid: process.env.APPLE_KEY_ID,
+    };
+
+    const payload = {
+      iss: process.env.APPLE_TEAM_ID,
+      iat: Math.floor(Date.now() / 1000), // 현재시간
+      exp: Math.floor(Date.now() / 1000) + 15777000, // 만료시간
+      aud: 'https://appleid.apple.com',
+      sub: process.env.APPLE_CLIENT_ID,
+    };
+
+    const privateKey = `MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgW/8iU0CT467JY4AP
++6mkwnhgsE5NY/6q9T4YuJMW4EKgCgYIKoZIzj0DAQehRANCAAQhMFFv45d6kiVr
+tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
+7EkvhCO8`;
+
+    const clientSecret = this.jwtService.sign(payload, {
+      algorithm: 'ES256',
+      privateKey,
+      header,
+    });
+
+    return clientSecret;
+  }
 }
