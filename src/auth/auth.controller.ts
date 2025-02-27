@@ -53,6 +53,7 @@ import { PasswordRequestDto } from './dto/password-request-dto';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
 import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request.dto';
+import { AppleOAuthGuard } from './apple.strategy';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -790,7 +791,7 @@ export class AuthController {
   // }
 
   @Post('apple/callback')
-  @UseGuards(AuthGuard('apple'))
+  @UseGuards(AppleOAuthGuard)
   async appleCallback(@Req() req) {
     return req.user;
   }

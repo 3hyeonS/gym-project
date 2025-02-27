@@ -1,6 +1,6 @@
 import { Profile, Strategy } from '@arendajaelu/nestjs-passport-apple';
 import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
+import { AuthGuard, PassportStrategy } from '@nestjs/passport';
 import * as dotenv from 'dotenv';
 
 // .env 파일 로드
@@ -37,3 +37,6 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     };
   }
 }
+
+@Injectable()
+export class AppleOAuthGuard extends AuthGuard('apple') {}
