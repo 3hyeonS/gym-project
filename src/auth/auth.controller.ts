@@ -791,7 +791,7 @@ export class AuthController {
 
   @Post('apple/callback')
   @UseGuards(AuthGuard('apple'))
-  async appleCallback(@Req() req) {
-    return req.user;
+  async appleCallback(@Body() payload) {
+    return payload;
   }
 }
