@@ -37,6 +37,3 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     };
   }
 }
-
-@Injectable()
-export class AppleOAuthGuard extends AuthGuard('apple') {}
