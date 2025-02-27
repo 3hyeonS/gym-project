@@ -32,7 +32,7 @@ import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 import * as fs from 'fs';
 import * as jwt from 'jsonwebtoken';
-import * as qs from 'qs';
+import appleSignin from 'apple-signin-auth';
 
 @Injectable()
 export class AuthService {
@@ -721,31 +721,52 @@ export class AuthService {
   }
 
   async getAppleToken(code: string, idToken: string): Promise<any> {
+    const clientSecret = appleSignin.getClientSecret({
+      clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+      teamID: process.env.APPLE_TEAM_ID, // Apple Developer Team ID.
+      privateKeyPath: process.env.APPLE_KEYFILE_PATH, // private key associated with your client ID. -- Or provide a `privateKeyPath` property instead.
+      keyIdentifier: process.env.APPLE_KEY_ID, // identifier of the private key.
+      // OPTIONAL
+      expAfter: 15777000, // Unix time in seconds after which to expire the clientSecret JWT. Default is now+5 minutes.
+    });
+
+    const options = {
+      clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+      redirectUri: process.env.APPLE_CALLBACK_URL, // use the same value which you passed to authorisation URL.
+      clientSecret: clientSecret,
+    };
+
     try {
-      // 1. JWT Client Secret 생성
-      const clientSecret = this.generateClientSecret();
-
-      // 2. Apple 서버에 토큰 요청
-      const tokenUrl = 'https://appleid.apple.com/auth/oauth2/v2/token';
-      const data = qs.stringify({
-        client_id: process.env.APPLE_CLIENT_ID,
-        client_secret: clientSecret,
-        code: code,
-        grant_type: 'authorization_code',
-        redirect_uri: process.env.APPLE_CALLBACK_URL,
-      });
-
-      const headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
-
-      // `firstValueFrom()`을 사용하여 Promise 변환
-      const response = await firstValueFrom(
-        this.httpService.post(tokenUrl, data, { headers }),
-      );
-      return response.data;
+      return await appleSignin.getAuthorizationToken(code, options);
     } catch (error) {
-      throw new Error(`Apple Token Request Failed: ${error.message}`);
+      throw new Error(error.message);
     }
+
+    // try {
+    //   // 1. JWT Client Secret 생성
+    //   const clientSecret = this.generateClientSecret();
+
+    //   // 2. Apple 서버에 토큰 요청
+    //   const tokenUrl = 'https://appleid.apple.com/auth/oauth2/v2/token';
+    //   const data = qs.stringify({
+    //     client_id: process.env.APPLE_CLIENT_ID,
+    //     client_secret: clientSecret,
+    //     code: code,
+    //     grant_type: 'authorization_code',
+    //     redirect_uri: process.env.APPLE_CALLBACK_URL,
+    //   });
+
+    //   const headers = {
+    //     'Content-Type': 'application/x-www-form-urlencoded',
+    //   };
+
+    //   // `firstValueFrom()`을 사용하여 Promise 변환
+    //   const response = await firstValueFrom(
+    //     this.httpService.post(tokenUrl, data, { headers }),
+    //   );
+    //   return response.data;
+    // } catch (error) {
+    //   throw new Error(`Apple Token Request Failed: ${error.message}`);
+    // }
   }
 }
