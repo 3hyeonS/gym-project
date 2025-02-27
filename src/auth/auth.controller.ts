@@ -6,7 +6,6 @@ import {
   Logger,
   Post,
   Query,
-  Req,
   UnauthorizedException,
   UseFilters,
   UseGuards,
@@ -789,9 +788,8 @@ export class AuthController {
   //   };
   // }
 
-  @Post('apple/callback')
-  @UseGuards(AuthGuard('apple'))
+  @Post('/apple/callback')
   async appleCallback(@Body() payload) {
-    return payload;
+    await this.authService.getAppleToken(payload.code, payload.id_token);
   }
 }

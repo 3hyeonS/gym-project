@@ -30,6 +30,8 @@ import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
+import * as fs from 'fs';
+import * as jwt from 'jsonwebtoken';
 import * as qs from 'qs';
 
 @Injectable()
@@ -696,7 +698,7 @@ export class AuthService {
     return await this.userRepository.save(newUser);
   }
 
-  async createAppleClientSecret(): Promise<string> {
+  async generateClientSecret(): Promise<string> {
     const header = {
       alg: 'ES256',
       kid: process.env.APPLE_KEY_ID,
@@ -710,17 +712,42 @@ export class AuthService {
       sub: process.env.APPLE_CLIENT_ID,
     };
 
-    const privateKey = `MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgW/8iU0CT467JY4AP
-+6mkwnhgsE5NY/6q9T4YuJMW4EKgCgYIKoZIzj0DAQehRANCAAQhMFFv45d6kiVr
-tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
-7EkvhCO8`;
+    const privateKey = fs.readFileSync(process.env.APPLE_KEYFILE_PATH);
 
-    const clientSecret = this.jwtService.sign(payload, {
-      algorithm: 'ES256',
-      privateKey,
+    const clientSecret = jwt.sign(payload, privateKey, {
       header,
     });
 
     return clientSecret;
+  }
+
+  async getAppleToken(code: string, idToken: string): Promise<any> {
+    try {
+      // 1. JWT Client Secret 생성
+      const clientSecret = this.generateClientSecret();
+
+      // 2. Apple 서버에 토큰 요청
+      const tokenUrl = 'https://appleid.apple.com/auth/token';
+      const data = qs.stringify({
+        client_id: process.env.APPLE_CLIENT_ID,
+        client_secret: clientSecret,
+        code: code,
+        id_token: idToken,
+        grant_type: 'authorization_code',
+        redirect_uri: process.env.APPLE_CALLBACK_URL,
+      });
+
+      const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+
+      // `firstValueFrom()`을 사용하여 Promise 변환
+      const response = await firstValueFrom(
+        this.httpService.post(tokenUrl, data, { headers }),
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Apple Token Request Failed: ${error.message}`);
+    }
   }
 }
