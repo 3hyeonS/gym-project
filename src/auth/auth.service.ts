@@ -698,29 +698,8 @@ export class AuthService {
     return await this.userRepository.save(newUser);
   }
 
-  async generateClientSecret(): Promise<string> {
-    const header = {
-      alg: 'ES256',
-      kid: process.env.APPLE_KEY_ID,
-    };
-
-    const payload = {
-      iss: process.env.APPLE_TEAM_ID,
-      iat: Math.floor(Date.now() / 1000), // 현재시간
-      exp: Math.floor(Date.now() / 1000) + 15776999, // 만료시간
-      aud: 'https://appleid.apple.com',
-      sub: process.env.APPLE_CLIENT_ID,
-    };
-
-    const privateKey = fs.readFileSync('./AuthKey_95L44R7WXB.p8');
-
-    const clientSecret = jwt.sign(payload, privateKey, {
-      header,
-    });
-    return clientSecret;
-  }
-
-  async getAppleToken(code: string, idToken: string): Promise<any> {
+  async revokeAppleTokens(payload: any): Promise<any> {
+    const code = payload.code;
     const clientSecret = appleSignin.getClientSecret({
       clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
       teamID: process.env.APPLE_TEAM_ID, // Apple Developer Team ID.
@@ -736,37 +715,53 @@ export class AuthService {
       clientSecret: clientSecret,
     };
 
-    try {
-      return await appleSignin.getAuthorizationToken(code, options);
-    } catch (error) {
-      throw new Error(error.message);
-    }
+    const tokenResponse = await appleSignin.getAuthorizationToken(
+      code,
+      options,
+    );
 
-    // try {
-    //   // 1. JWT Client Secret 생성
-    //   const clientSecret = this.generateClientSecret();
+    const refreshToken = tokenResponse.refresh_token;
+    const accessToken = tokenResponse.access_token;
 
-    //   // 2. Apple 서버에 토큰 요청
-    //   const tokenUrl = 'https://appleid.apple.com/auth/oauth2/v2/token';
-    //   const data = qs.stringify({
-    //     client_id: process.env.APPLE_CLIENT_ID,
-    //     client_secret: clientSecret,
-    //     code: code,
-    //     grant_type: 'authorization_code',
-    //     redirect_uri: process.env.APPLE_CALLBACK_URL,
-    //   });
+    const options1 = {
+      clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+      clientSecret,
+      tokenTypeHint: 'refresh_token' as 'refresh_token',
+    };
 
-    //   const headers = {
-    //     'Content-Type': 'application/x-www-form-urlencoded',
-    //   };
+    const options2 = {
+      clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+      clientSecret,
+      tokenTypeHint: 'access_token' as 'access_token',
+    };
 
-    //   // `firstValueFrom()`을 사용하여 Promise 변환
-    //   const response = await firstValueFrom(
-    //     this.httpService.post(tokenUrl, data, { headers }),
-    //   );
-    //   return response.data;
-    // } catch (error) {
-    //   throw new Error(`Apple Token Request Failed: ${error.message}`);
-    // }
+    await appleSignin.revokeAuthorizationToken(refreshToken, options1);
+    await appleSignin.revokeAuthorizationToken(accessToken, options2);
   }
+
+  // async revokeAppleTokens(accessToken: string, refreshToken: string) {
+  //   const clientSecret = appleSignin.getClientSecret({
+  //     clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+  //     teamID: process.env.APPLE_TEAM_ID, // Apple Developer Team ID.
+  //     privateKeyPath: process.env.APPLE_KEYFILE_PATH, // private key associated with your client ID. -- Or provide a `privateKeyPath` property instead.
+  //     keyIdentifier: process.env.APPLE_KEY_ID, // identifier of the private key.
+  //     // OPTIONAL
+  //     expAfter: 15777000, // Unix time in seconds after which to expire the clientSecret JWT. Default is now+5 minutes.
+  //   });
+
+  //   const options1 = {
+  //     clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+  //     clientSecret,
+  //     tokenTypeHint: 'refresh_token' as 'refresh_token',
+  //   };
+
+  //   const options2 = {
+  //     clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+  //     clientSecret,
+  //     tokenTypeHint: 'access_token' as 'access_token',
+  //   };
+
+  //   await appleSignin.revokeAuthorizationToken(refreshToken, options1);
+  //   await appleSignin.revokeAuthorizationToken(accessToken, options2);
+  // };
 }
