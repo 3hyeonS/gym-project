@@ -639,26 +639,28 @@ export class AuthService {
     payload: any,
   ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
     if (payload.hasOwnProperty('id_token')) {
-      let email,
-        firstName,
-        lastName = '';
-
       //You can decode the id_token which returned from Apple,
       const decodedObj = await this.jwtService.decode(payload.id_token);
       const accountId = decodedObj.sub || '';
 
-      //You can also extract the email, firstName and lastName from the user, but they are only shown in the first time.
+      let user: UserEntity;
+
+      // You can also extract the email, firstName and lastName from the user, but they are only shown in the first time.
       if (payload.hasOwnProperty('user')) {
         const userData = JSON.parse(payload.user);
-        email = userData.email || '';
-        firstName = userData.name?.firstName || '';
-        lastName = userData.name?.lastName || '';
+        const email = userData.email || '';
+        const firstName = userData.name?.firstName || '';
+        const lastName = userData.name?.lastName || '';
+        const name = lastName + firstName;
+
+        // 애플 사용자 정보를 기반으로 회원가입 처리
+        user = await this.signUpWithApple(accountId, email, name);
+      } else {
+        // 기존 애플 사용자 정보 불러오기
+        user = await this.userRepository.findOne({
+          where: { signId: accountId },
+        });
       }
-
-      const name = lastName + firstName;
-
-      // 애플 사용자 정보를 기반으로 회원가입 또는 로그인 처리
-      const user = await this.signUpWithApple(accountId, email, name);
 
       // [1] JWT 토큰 생성 (Secret + Payload)
       const accessToken = await this.generateAccessToken(user);
@@ -671,25 +673,17 @@ export class AuthService {
 
   // 애플 정보 기반 회원가입 또는 로그인 처리
   async signUpWithApple(
-    accountID: string,
+    accountId: string,
     email: string,
     name: string,
   ): Promise<UserEntity> {
-    const existingUser = await this.userRepository.findOne({
-      where: { signId: accountID },
-    });
-
-    if (existingUser) {
-      return existingUser;
-    }
-
     // password 필드에 랜덤 문자열 생성
     const temporaryPassword = uuidv4(); // 랜덤 문자열 생성
     const hashedPassword = await this.hashPassword(temporaryPassword);
 
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
-      signId: accountID, // apple 계정별 고유 아이디
+      signId: accountId, // apple 계정별 고유 아이디
       nickname: name,
       email: email,
       password: hashedPassword, // 해싱된 임시 비밀번호 사용
