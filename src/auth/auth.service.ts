@@ -714,16 +714,9 @@ export class AuthService {
 
     const privateKey = fs.readFileSync('./AuthKey_95L44R7WXB.p8');
 
-    const signOptions = {
-      alg: 'ES256',
-      header: {
-        alg: 'ES256', // Algorithm in the header
-        kid: process.env.APPLE_KEY_ID, // Key ID in the header
-        typ: 'JWT', // JWT type
-      },
-    };
-
-    const clientSecret = jwt.sign(payload, privateKey, signOptions);
+    const clientSecret = jwt.sign(payload, privateKey, {
+      header,
+    });
     return clientSecret;
   }
 
