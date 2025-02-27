@@ -717,7 +717,6 @@ export class AuthService {
     const clientSecret = jwt.sign(payload, privateKey, {
       header,
     });
-    console.log(clientSecret);
     return clientSecret;
   }
 
@@ -732,7 +731,6 @@ export class AuthService {
         client_id: process.env.APPLE_CLIENT_ID,
         client_secret: clientSecret,
         code: code,
-        id_token: idToken,
         grant_type: 'authorization_code',
         redirect_uri: process.env.APPLE_CALLBACK_URL,
       });
