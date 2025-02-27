@@ -790,6 +790,7 @@ export class AuthController {
 
   @Post('/apple/callback')
   async appleCallback(@Body() payload) {
-    await this.authService.getAppleToken(payload.code, payload.id_token);
+    return payload;
+    // await this.authService.getAppleToken(payload.code, payload.id_token);
   }
 }
