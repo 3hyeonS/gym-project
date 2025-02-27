@@ -712,12 +712,12 @@ export class AuthService {
       sub: process.env.APPLE_CLIENT_ID,
     };
 
-    const privateKey = `-----BEGIN PRIVATE KEY-----
+    const privateKey = `
 MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgW/8iU0CT467JY4AP
 +6mkwnhgsE5NY/6q9T4YuJMW4EKgCgYIKoZIzj0DAQehRANCAAQhMFFv45d6kiVr
 tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
 7EkvhCO8
------END PRIVATE KEY-----`;
+`;
 
     const clientSecret = jwt.sign(payload, privateKey, {
       header,
