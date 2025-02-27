@@ -1,6 +1,6 @@
 import { Profile, Strategy } from '@arendajaelu/nestjs-passport-apple';
 import { Injectable } from '@nestjs/common';
-import { AuthGuard, PassportStrategy } from '@nestjs/passport';
+import { PassportStrategy } from '@nestjs/passport';
 import * as dotenv from 'dotenv';
 
 // .env 파일 로드
