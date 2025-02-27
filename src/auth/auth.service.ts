@@ -712,12 +712,7 @@ export class AuthService {
       sub: process.env.APPLE_CLIENT_ID,
     };
 
-    const privateKey = `
-MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgW/8iU0CT467JY4AP
-+6mkwnhgsE5NY/6q9T4YuJMW4EKgCgYIKoZIzj0DAQehRANCAAQhMFFv45d6kiVr
-tF3RYFhmtmzKGsD4qbw0TqioKHCNgrhxpdrTkqy684t3Nc+8NkbMmLVjwN0wiZSo
-7EkvhCO8
-`;
+    const privateKey = fs.readFileSync('./AuthKey_95L44R7WXB.p8');
 
     const clientSecret = jwt.sign(payload, privateKey, {
       header,
