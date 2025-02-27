@@ -48,6 +48,7 @@
     "nodemailer": "^6.10.0",
     "passport": "^0.7.0",
     "passport-apple": "^2.0.2",
+    "passport-apple-token": "^0.0.1",
     "passport-jwt": "^4.0.1",
     "passport-kakao": "^1.0.1",
     "reflect-metadata": "^0.2.0",

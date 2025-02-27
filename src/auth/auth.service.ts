@@ -654,7 +654,7 @@ export class AuthService {
         lastName = userData.name?.lastName || '';
       }
 
-      const name = firstName + lastName;
+      const name = lastName + firstName;
 
       //.... you logic for registration and login here
       // 애플 사용자 정보를 기반으로 회원가입 또는 로그인 처리
