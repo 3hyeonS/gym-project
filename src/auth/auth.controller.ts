@@ -767,35 +767,25 @@ export class AuthController {
   })
   @ErrorApiResponse({
     status: 401,
-    description: '유효하지 않은 인가코드 입력(재사용 포함)',
-    message: 'Authorization code is invalid',
+    description: '유효하지 않은 Apple ID_Token',
+    message: 'ID Token is invalid',
     error: 'UnauthorizedException',
   })
   @ResponseMsg('Signed in successfully with Apple Account')
   @Post('/apple/callback')
-  async appleCallback(
-    @Body() payload,
-    // @Query('code') appleAuthResCode: string,
-    // @Query('id_token') idToken: string,
-  ): Promise<any> {
-    // : Promise<{
-    //   accessToken: string;
-    //   refreshToken: string;
-    //   member: UserResponseDto;
-    // }>
-    if (payload.id_token) {
-      return this.authService.signInWithApple(payload);
-    }
-    throw new UnauthorizedException('Unauthorized');
-    // // Authorization Code 받기
-    // const { accessToken, refreshToken, user } =
-    //   await this.authService.signInWithApple(appleAuthResCode, idToken);
+  async appleCallback(@Body() payload): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    member: UserResponseDto;
+  }> {
+    const { accessToken, refreshToken, user } =
+      await this.authService.signInWithKakao(payload);
 
-    // const userResponseDto = new UserResponseDto(user);
-    // return {
-    //   accessToken: accessToken, // 헤더로 사용할 Access Token
-    //   refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-    //   member: userResponseDto,
-    // };
+    const userResponseDto = new UserResponseDto(user);
+    return {
+      accessToken: accessToken, // 헤더로 사용할 Access Token
+      refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
+      member: userResponseDto,
+    };
   }
 }
