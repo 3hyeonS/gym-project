@@ -707,7 +707,7 @@ export class AuthService {
     const payload = {
       iss: process.env.APPLE_TEAM_ID,
       iat: Math.floor(Date.now() / 1000), // 현재시간
-      exp: Math.floor(Date.now() / 1000) + 15777000, // 만료시간
+      exp: Math.floor(Date.now() / 1000) + 15776999, // 만료시간
       aud: 'https://appleid.apple.com',
       sub: process.env.APPLE_CLIENT_ID,
     };
