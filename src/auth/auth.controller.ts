@@ -779,7 +779,7 @@ export class AuthController {
     member: UserResponseDto;
   }> {
     const { accessToken, refreshToken, user } =
-      await this.authService.signInWithKakao(payload);
+      await this.authService.signInWithApple(payload);
 
     const userResponseDto = new UserResponseDto(user);
     return {
