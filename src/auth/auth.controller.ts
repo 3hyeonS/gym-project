@@ -773,19 +773,21 @@ export class AuthController {
   })
   @ResponseMsg('Signed in successfully with Apple Account')
   @Post('/apple/callback')
-  async appleCallback(@Body() payload): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    member: UserResponseDto;
-  }> {
-    const { accessToken, refreshToken, user } =
-      await this.authService.signInWithKakao(payload);
+  async appleCallback(@Body() payload) {
+    // : Promise<{
+    //   accessToken: string;
+    //   refreshToken: string;
+    //   member: UserResponseDto;
+    // }>
+    return payload;
+    // const { accessToken, refreshToken, user } =
+    //   await this.authService.signInWithKakao(payload);
 
-    const userResponseDto = new UserResponseDto(user);
-    return {
-      accessToken: accessToken, // 헤더로 사용할 Access Token
-      refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-      member: userResponseDto,
-    };
+    // const userResponseDto = new UserResponseDto(user);
+    // return {
+    //   accessToken: accessToken, // 헤더로 사용할 Access Token
+    //   refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
+    //   member: userResponseDto,
+    // };
   }
 }
