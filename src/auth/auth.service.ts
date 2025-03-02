@@ -30,8 +30,6 @@ import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
-import * as fs from 'fs';
-import * as jwt from 'jsonwebtoken';
 import appleSignin from 'apple-signin-auth';
 
 @Injectable()
@@ -200,8 +198,8 @@ export class AuthService {
     // signId 중복 확인
     await this.checkSignIdExists(signId);
 
-    // email 중복 확인
-    await this.checkEmailExists(email);
+    // // email 중복 확인
+    // await this.checkEmailExists(email);
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
@@ -211,6 +209,7 @@ export class AuthService {
       nickname: nickname,
       password: hashedPassword, // 해싱된 비밀번호 사용
       email,
+      signWith: 'LOCAL',
       role,
     });
 
@@ -341,32 +340,35 @@ export class AuthService {
   }
 
   // 카카오 정보 회원 가입
-  async signUpWithKakao(profile: any): Promise<UserEntity> {
+  async signUpWithKakao(
+    profile: any,
+    kakaoUserId: number,
+  ): Promise<UserEntity> {
     const kakaoAccount = profile.kakao_account;
 
     const kakaoUserNickname = kakaoAccount.profile.nickname;
     const kakaoEmail = kakaoAccount.email;
+    const kakaoStringId = kakaoUserId.toString();
 
     // 카카오 프로필 데이터를 기반으로 사용자 찾기 또는 생성 로직을 구현
     const existingUser = await this.userRepository.findOne({
-      where: { email: kakaoEmail },
+      where: { signWith: 'KAKAO', signId: kakaoStringId },
     });
     if (existingUser) {
       return existingUser;
     }
 
-    // signId, password 필드에 랜덤 문자열 생성
-    const temporaryId = uuidv4();
+    // password 필드에 랜덤 문자열 생성
     const temporaryPassword = uuidv4(); // 랜덤 문자열 생성
     const hashedPassword = await this.hashPassword(temporaryPassword);
 
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
-      signId: temporaryId,
+      signId: kakaoStringId,
       nickname: kakaoUserNickname,
       email: kakaoEmail,
       password: hashedPassword, // 해싱된 임시 비밀번호 사용
-
+      signWith: 'KAKAO',
       // 기타 필요한 필드 설정
       role: 'USER',
     });
@@ -381,11 +383,12 @@ export class AuthService {
       // Authorization Code로 Kakao API에 Access Token 요청
       const kakaoAccessToken = await this.getKakaoAccessToken(kakaoAuthResCode);
 
-      // Access Token으로 Kakao 사용자 정보 요청
+      // Access Token으로 Kakao 사용자 정보, 회원번호 요청
       const kakaoUserInfo = await this.getKakaoUserInfo(kakaoAccessToken);
+      const kakaoUserId = await this.getKakaoUserId(kakaoAccessToken);
 
       // 카카오 사용자 정보를 기반으로 회원가입 또는 로그인 처리
-      const user = await this.signUpWithKakao(kakaoUserInfo);
+      const user = await this.signUpWithKakao(kakaoUserInfo, kakaoUserId);
 
       // [1] JWT 토큰 생성 (Secret + Payload)
       const accessToken = await this.generateAccessToken(user);
@@ -430,8 +433,21 @@ export class AuthService {
     return response.data;
   }
 
+  // Kakao Access Token 으로 Kakao 회원 번호 요청
+  async getKakaoUserId(accessToken: string): Promise<number> {
+    const tokenInfoUrl = 'https://kapi.kakao.com/v1/user/access_token_info';
+    const response = await firstValueFrom(
+      this.httpService.get(tokenInfoUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+    );
+    return response.data.id;
+  }
+
   // accessToken 생성 공통 메서드
-  async generateAccessToken(member: MemberEntity): Promise<string> {
+  async generateAccessToken(
+    member: UserEntity | CenterEntity,
+  ): Promise<string> {
     // [1] JWT 토큰 생성 (Secret + Payload)
     const payload = {
       signId: member.signId,
@@ -568,6 +584,23 @@ export class AuthService {
     }
   }
 
+  // 앱 어드민 키, Kakao 회원번호로 Kakao 연결 끊기
+  async unlinkKakao(signId: string): Promise<void> {
+    const unlinkUrl = 'https://kapi.kakao.com/v1/user/unlink';
+    const payload = {
+      target_id_type: 'user_id',
+      target_id: Number(signId),
+    };
+
+    this.httpService.post(unlinkUrl, null, {
+      params: payload,
+      headers: {
+        Authorization: `Bearer ${process.env.KAKAO_ADMIN_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+  }
+
   // 회원 탈퇴 기능
   async deleteUser(
     member: UserEntity | CenterEntity,
@@ -578,6 +611,9 @@ export class AuthService {
 
     // 탈퇴 처리
     if (member instanceof UserEntity) {
+      if (member.signWith == 'KAKAO') {
+        await this.unlinkKakao(member.signId);
+      }
       await this.userRepository.delete({ signId: signId });
     } else {
       await this.gymRepository.update(
@@ -641,14 +677,28 @@ export class AuthService {
   async signInWithApple(
     payload: any,
   ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
-    if (payload.hasOwnProperty('id_token')) {
-      //You can decode the id_token which returned from Apple,
-      const decodedObj = await this.jwtService.decode(payload.id_token);
-      const accountId = decodedObj.sub || '';
+    try {
+      const { sub: userAppleId } = await appleSignin.verifyIdToken(
+        payload.id_token,
+      );
+
+      const clientSecret = appleSignin.getClientSecret({
+        clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+        teamID: process.env.APPLE_TEAM_ID, // Apple Developer Team ID.
+        privateKeyPath: process.env.APPLE_KEYFILE_PATH, // private key associated with your client ID. -- Or provide a `privateKeyPath` property instead.
+        keyIdentifier: process.env.APPLE_KEY_ID, // identifier of the private key.
+        // OPTIONAL
+        expAfter: 15777000, // Unix time in seconds after which to expire the clientSecret JWT. Default is now+5 minutes.
+      });
+
+      const options = {
+        clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
+        redirectUri: process.env.APPLE_CALLBACK_URL, // use the same value which you passed to authorisation URL.
+        clientSecret: clientSecret,
+      };
 
       let user: UserEntity;
 
-      // You can also extract the email, firstName and lastName from the user, but they are only shown in the first time.
       if (payload.hasOwnProperty('user')) {
         const userData = JSON.parse(payload.user);
         const email = userData.email || '';
@@ -657,11 +707,18 @@ export class AuthService {
         const name = lastName + firstName;
 
         // 애플 사용자 정보를 기반으로 회원가입 처리
-        user = await this.signUpWithApple(accountId, email, name);
+        const { refresh_token: appleRefreshToken } =
+          await appleSignin.getAuthorizationToken(payload.code, options);
+        user = await this.signUpWithApple(
+          userAppleId,
+          appleRefreshToken,
+          email,
+          name,
+        );
       } else {
         // 기존 애플 사용자 정보 불러오기
         user = await this.userRepository.findOne({
-          where: { signId: accountId },
+          where: { signId: userAppleId },
         });
       }
 
@@ -670,27 +727,33 @@ export class AuthService {
       const refreshToken = await this.generateRefreshToken(user);
       // [2] 사용자 정보 반환
       return { accessToken, refreshToken, user };
+    } catch (err) {
+      // Token is not verified
+      throw new UnauthorizedException('ID_Token is invalid');
     }
-    throw new UnauthorizedException('ID_Token is invalid');
+    // if (payload.hasOwnProperty('id_token')) {
+    //   //You can decode the id_token which returned from Apple,
+    //   const decodedObj = await this.jwtService.decode(payload.id_token);
+    //   const accountId = decodedObj.sub || '';
+
+    //   let user: UserEntity;
+    // }
   }
 
   // 애플 정보 기반 회원가입 또는 로그인 처리
   async signUpWithApple(
-    accountId: string,
+    userAppleId: string,
+    appleRefreshToken: string,
     email: string,
     name: string,
   ): Promise<UserEntity> {
-    // password 필드에 랜덤 문자열 생성
-    const temporaryPassword = uuidv4(); // 랜덤 문자열 생성
-    const hashedPassword = await this.hashPassword(temporaryPassword);
-
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
-      signId: accountId, // apple 계정별 고유 아이디
+      signId: userAppleId, // apple 계정별 고유 아이디
       nickname: name,
       email: email,
-      password: hashedPassword, // 해싱된 임시 비밀번호 사용
-
+      password: appleRefreshToken, // apple refresh token 사용
+      signWith: 'APPLE',
       // 기타 필요한 필드 설정
       role: 'USER',
     });
@@ -698,8 +761,7 @@ export class AuthService {
     return await this.userRepository.save(newUser);
   }
 
-  async revokeAppleTokens(payload: any): Promise<any> {
-    const code = payload.code;
+  async revokeAppleTokens(appleRefreshToken: string): Promise<void> {
     const clientSecret = appleSignin.getClientSecret({
       clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
       teamID: process.env.APPLE_TEAM_ID, // Apple Developer Team ID.
@@ -711,57 +773,9 @@ export class AuthService {
 
     const options = {
       clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
-      redirectUri: process.env.APPLE_CALLBACK_URL, // use the same value which you passed to authorisation URL.
       clientSecret: clientSecret,
-    };
-
-    const tokenResponse = await appleSignin.getAuthorizationToken(
-      code,
-      options,
-    );
-
-    const refreshToken = tokenResponse.refresh_token;
-    const accessToken = tokenResponse.access_token;
-
-    const options1 = {
-      clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
-      clientSecret,
       tokenTypeHint: 'refresh_token' as 'refresh_token',
     };
-
-    const options2 = {
-      clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
-      clientSecret,
-      tokenTypeHint: 'access_token' as 'access_token',
-    };
-
-    await appleSignin.revokeAuthorizationToken(refreshToken, options1);
-    await appleSignin.revokeAuthorizationToken(accessToken, options2);
+    await appleSignin.revokeAuthorizationToken(appleRefreshToken, options);
   }
-
-  // async revokeAppleTokens(accessToken: string, refreshToken: string) {
-  //   const clientSecret = appleSignin.getClientSecret({
-  //     clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
-  //     teamID: process.env.APPLE_TEAM_ID, // Apple Developer Team ID.
-  //     privateKeyPath: process.env.APPLE_KEYFILE_PATH, // private key associated with your client ID. -- Or provide a `privateKeyPath` property instead.
-  //     keyIdentifier: process.env.APPLE_KEY_ID, // identifier of the private key.
-  //     // OPTIONAL
-  //     expAfter: 15777000, // Unix time in seconds after which to expire the clientSecret JWT. Default is now+5 minutes.
-  //   });
-
-  //   const options1 = {
-  //     clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
-  //     clientSecret,
-  //     tokenTypeHint: 'refresh_token' as 'refresh_token',
-  //   };
-
-  //   const options2 = {
-  //     clientID: process.env.APPLE_CLIENT_ID, // Apple Client ID
-  //     clientSecret,
-  //     tokenTypeHint: 'access_token' as 'access_token',
-  //   };
-
-  //   await appleSignin.revokeAuthorizationToken(refreshToken, options1);
-  //   await appleSignin.revokeAuthorizationToken(accessToken, options2);
-  // };
 }

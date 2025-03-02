@@ -21,6 +21,9 @@ export class CenterEntity extends MemberEntity {
   })
   businessId: string;
 
+  @Column({ type: 'varchar', name: 'email', unique: true, nullable: false })
+  email: string;
+
   @Column({ type: 'varchar', name: 'phone', nullable: false })
   phone: string;
 
