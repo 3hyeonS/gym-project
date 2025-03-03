@@ -752,41 +752,6 @@ export class AuthController {
     // 이 부분은 Passport의 AuthGuard에 의해 애플 로그인 페이지로 리다이렉트
   }
 
-  // // 애플 로그인 콜백 엔드포인트
-  // @ApiOperation({
-  //   summary: '애플 로그인 콜백',
-  //   description: '애플 로그인 콜백 및 accessToken, refreshToken 생성',
-  // })
-  // @GenericApiResponse({
-  //   status: 201,
-  //   description: '애플 로그인에 성공',
-  //   message: 'Signed in successfully with Apple Account',
-  //   model: tokenResponseDto,
-  // })
-  // @ErrorApiResponse({
-  //   status: 401,
-  //   description: '유효하지 않은 Apple ID_Token',
-  //   message: 'ID Token is invalid',
-  //   error: 'UnauthorizedException',
-  // })
-  // @ResponseMsg('Signed in successfully with Apple Account')
-  // @Post('/apple/callback')
-  // async appleCallback(@Body() payload): Promise<{
-  //   accessToken: string;
-  //   refreshToken: string;
-  //   member: UserResponseDto;
-  // }> {
-  //   const { accessToken, refreshToken, user } =
-  //     await this.authService.signInWithApple(payload);
-
-  //   const userResponseDto = new UserResponseDto(user);
-  //   return {
-  //     accessToken: accessToken, // 헤더로 사용할 Access Token
-  //     refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-  //     member: userResponseDto,
-  //   };
-  // }
-
   // 애플 로그인 콜백 엔드포인트
   @ApiOperation({
     summary: '애플 로그인 콜백',

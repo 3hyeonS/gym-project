@@ -595,7 +595,7 @@ export class AuthService {
     this.httpService.post(unlinkUrl, null, {
       params: payload,
       headers: {
-        Authorization: `Bearer ${process.env.KAKAO_ADMIN_KEY}`,
+        Authorization: `KakaoAK ${process.env.KAKAO_ADMIN_KEY}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
@@ -732,13 +732,6 @@ export class AuthService {
       // Token is not verified
       throw new UnauthorizedException('ID_Token is invalid');
     }
-    // if (payload.hasOwnProperty('id_token')) {
-    //   //You can decode the id_token which returned from Apple,
-    //   const decodedObj = await this.jwtService.decode(payload.id_token);
-    //   const accountId = decodedObj.sub || '';
-
-    //   let user: UserEntity;
-    // }
   }
 
   // 애플 정보 기반 회원가입 또는 로그인 처리
