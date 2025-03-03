@@ -602,10 +602,8 @@ export class AuthService {
   }
 
   // 회원 탈퇴 기능
-  async deleteUser(
-    member: UserEntity | CenterEntity,
-    signId: string,
-  ): Promise<void> {
+  async deleteUser(member: UserEntity | CenterEntity): Promise<void> {
+    const signId = member.signId;
     //해당 signId의 모든 refreshToken 삭제
     await this.revokeRefreshTokenBySignId(signId);
 
@@ -613,6 +611,9 @@ export class AuthService {
     if (member instanceof UserEntity) {
       if (member.signWith == 'KAKAO') {
         await this.unlinkKakao(member.signId);
+      }
+      if (member.signWith == 'APPLE') {
+        await this.revokeAppleTokens(member.password);
       }
       await this.userRepository.delete({ signId: signId });
     } else {

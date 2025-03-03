@@ -679,7 +679,7 @@ export class AuthController {
   @UseGuards(AuthGuard()) // JWT 인증이 필요한 엔드포인트
   @UseFilters(CustomUnauthorizedExceptionFilter)
   async deleteUser(@GetUser() member: UserEntity | CenterEntity) {
-    await this.authService.deleteUser(member, member.signId);
+    await this.authService.deleteUser(member);
   }
 
   // 토큰 재발급
