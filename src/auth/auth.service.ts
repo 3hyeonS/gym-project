@@ -596,7 +596,7 @@ export class AuthService {
       params: payload,
       headers: {
         Authorization: `KakaoAK ${process.env.KAKAO_ADMIN_KEY}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
       },
     });
   }
