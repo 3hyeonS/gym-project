@@ -591,14 +591,16 @@ export class AuthService {
       target_id_type: 'user_id',
       target_id: Number(signId),
     };
-
-    this.httpService.post(unlinkUrl, null, {
-      params: payload,
-      headers: {
-        Authorization: `KakaoAK ${process.env.KAKAO_ADMIN_KEY}`,
-        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-      },
-    });
+    const response = await firstValueFrom(
+      this.httpService.post(unlinkUrl, null, {
+        params: payload,
+        headers: {
+          Authorization: `KakaoAK ${process.env.KAKAO_ADMIN_KEY}`,
+          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+        },
+      }),
+    );
+    console.log(response.data);
   }
 
   // 회원 탈퇴 기능
