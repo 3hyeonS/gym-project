@@ -247,6 +247,7 @@ export class GymsService {
         selectedOptionsDto.selectedQualifications.push('명시 안 됨');
         selectedOptionsDto.selectedQualifications.push('채용공고참고');
       }
+      selectedOptionsDto.selectedQualifications.push('없음');
       conditions.push({
         condition: 'JSON_OVERLAPS(gymList.qualifications, :qfc) > 0',
         parameters: {
@@ -261,6 +262,7 @@ export class GymsService {
         selectedOptionsDto.selectedPreference.push('명시 안 됨');
         selectedOptionsDto.selectedPreference.push('채용공고참고');
       }
+      selectedOptionsDto.selectedPreference.push('없음');
       conditions.push({
         condition: 'JSON_OVERLAPS(gymList.preference, :pre) > 0',
         parameters: {
