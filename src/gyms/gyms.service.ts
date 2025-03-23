@@ -416,7 +416,7 @@ export class GymsService {
     // 시/군/구 추출
     const addressWithoutcity = address.replace(cityMatch[0], '').trim();
     const locationMatch = addressWithoutcity.match(
-      /([가-힣]+(시|구|군)\s?[가-힣]+(구|군)?)/,
+      /^([가-힣]+(시|군|구))(?:\s([가-힣]+(구|군)))?/,
     );
 
     if (!locationMatch) {
@@ -424,7 +424,12 @@ export class GymsService {
         'Invalid address: 시/군/구 정보를 찾을 수 없습니다.',
       );
     }
-    const location = [locationMatch[0].trim()];
+
+    // locationMatch[0] 전체 매칭 문자열, ex: "성남시 분당구"
+    const location =
+      locationMatch[3] != null
+        ? [`${locationMatch[1]} ${locationMatch[3]}`]
+        : [locationMatch[1]];
 
     return { city, location };
   }
