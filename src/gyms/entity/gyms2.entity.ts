@@ -94,4 +94,7 @@ export class Gym2Entity {
   })
   @JoinColumn({ name: 'centerId' }) // Gym2Entity 테이블에 FK가 생성됨
   center: CenterEntity;
+
+  @Column({ type: 'int', name: 'view', nullable: false, default: 0 })
+  view: number;
 }
