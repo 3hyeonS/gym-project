@@ -300,6 +300,29 @@ export class GymsService {
     };
   }
 
+  // 채용 공고 조회 수 증가
+  async viewed(id: number): Promise<void> {
+    const viewedGym = await this.gymRepository.findOneBy({ id });
+
+    if (!viewedGym) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    await this.gymRepository.update(
+      { id },
+      {
+        view: viewedGym.view + 1,
+      },
+    );
+    // 디비 업데이트용
+    await this.gym2Repository.update(
+      { id },
+      {
+        view: viewedGym.view + 1,
+      },
+    );
+  }
+
   // 채용 공고 등록 가능 여부 확인
   async canRegister(center: CenterEntity): Promise<boolean> {
     const myGym = await this.gymRepository.findOneBy({ center });
@@ -474,7 +497,7 @@ export class GymsService {
       },
     );
     // 디비 업데이트용
-    await this.gymRepository.update(
+    await this.gym2Repository.update(
       { center },
       {
         date: new Date(),
