@@ -17,6 +17,10 @@ import { EmailCodeEntity } from './entity/emailCode.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 import { AppleStrategy } from './apple.strategy';
+import { AuthorityEntity } from './entity/authority.entity';
+import { KakaoKeyEntity } from './entity/kakaoKey.entity';
+import { AppleKeyEntity } from './entity/appleKey.entity';
+import { SignWithEntity } from './entity/signWith.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -26,6 +30,10 @@ dotenv.config();
     TypeOrmModule.forFeature([
       UserEntity,
       CenterEntity,
+      AuthorityEntity,
+      KakaoKeyEntity,
+      AppleKeyEntity,
+      SignWithEntity,
       RefreshTokenEntity,
       GymEntity,
       Gym2Entity,

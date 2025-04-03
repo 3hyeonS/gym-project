@@ -1,13 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TRole } from '../entity/member.entity';
 import { UserEntity } from '../entity/user.entity';
+import { TRole } from '../entity/authority.entity';
+import { TPlatform } from '../entity/signWith.entity';
 
 export class UserResponseDto {
   @ApiProperty({ example: 1 })
   id: number;
-
-  @ApiProperty({ example: 'sampleid' })
-  signId: string;
 
   @ApiProperty({ example: '홍길동' })
   nickname: string;
@@ -15,14 +13,17 @@ export class UserResponseDto {
   @ApiProperty({ example: 'example@email.com' })
   email: string;
 
+  @ApiProperty({ example: 'KAKAO' })
+  platform: TPlatform;
+
   @ApiProperty({ example: 'USER' })
   role: TRole;
 
   constructor(user: UserEntity) {
     this.id = user.id;
-    this.signId = user.signId;
     this.nickname = user.nickname;
     this.email = user.email;
-    this.role = user.role;
+    this.platform = user.signWith.platform;
+    this.role = user.authority.role;
   }
 }

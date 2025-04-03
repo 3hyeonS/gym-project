@@ -5,10 +5,9 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { CenterEntity } from '../entity/center.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CenterSignUpRequestDto extends CenterEntity {
+export class CenterSignUpRequestDto {
   @ApiProperty({
     type: String,
     description: '아이디(6~16자리)  \n영소문자 및 숫자만 허용',
@@ -62,13 +61,15 @@ export class CenterSignUpRequestDto extends CenterEntity {
 
   @ApiProperty({
     type: String,
-    description: '주소',
-    example: '서울특별시 00구 00로 00',
+    description: '사업자 등록 번호(10자리)',
+    example: '000-00-00000',
   })
   @IsNotEmpty()
   @IsString()
-  @Length(1, 100) // 주소는 최대 100자
-  address: string;
+  @Matches(/^\d{3}-\d{2}-\d{5}$/, {
+    message: 'businessId format must be 000-00-00000',
+  })
+  businessId: string;
 
   @ApiProperty({
     type: String,
@@ -84,18 +85,6 @@ export class CenterSignUpRequestDto extends CenterEntity {
 
   @ApiProperty({
     type: String,
-    description: '사업자 등록 번호(10자리)',
-    example: '000-00-00000',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @Matches(/^\d{3}-\d{2}-\d{5}$/, {
-    message: 'businessId format must be 000-00-00000',
-  })
-  businessId: string;
-
-  @ApiProperty({
-    type: String,
     description: '이메일(이메일 형식만 허용)',
     example: 'sample@email.com',
   })
@@ -104,4 +93,14 @@ export class CenterSignUpRequestDto extends CenterEntity {
   @IsEmail() // 이메일 형식
   @Length(1, 100)
   email: string;
+
+  @ApiProperty({
+    type: String,
+    description: '주소',
+    example: '서울특별시 00구 00로 00',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @Length(1, 100) // 주소는 최대 100자
+  address: string;
 }

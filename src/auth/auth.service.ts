@@ -20,7 +20,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
-import { MemberEntity } from './entity/member.entity';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
@@ -31,6 +30,8 @@ import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 import appleSignin from 'apple-signin-auth';
+import { SignWithEntity } from './entity/signWith.entity';
+import { AuthorityEntity } from './entity/authority.entity';
 
 @Injectable()
 export class AuthService {
@@ -51,6 +52,10 @@ export class AuthService {
     private expiredGymRepository: Repository<ExpiredGymEntity>,
     @InjectRepository(EmailCodeEntity)
     private emailCodeRepository: Repository<EmailCodeEntity>,
+    @InjectRepository(SignWithEntity)
+    private signWithRepository: Repository<SignWithEntity>,
+    @InjectRepository(AuthorityEntity)
+    private authorityRepository: Repository<AuthorityEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
     private emailService: EmailService,
@@ -152,7 +157,7 @@ export class AuthService {
 
   // 회원정보 수정을 위한 비밀번호 확인
   async isPasswordValid(
-    member: UserEntity | CenterEntity,
+    member: CenterEntity,
     password: string,
   ): Promise<boolean> {
     if (await bcrypt.compare(password, member.password)) {
@@ -172,10 +177,8 @@ export class AuthService {
         centerModifyRequestDto.password,
       );
       await this.centerRepository.update(id, {
-        password: hashedPassword,
-        ceoName: centerModifyRequestDto.ceoName,
-        address: centerModifyRequestDto.address,
-        phone: centerModifyRequestDto.phone,
+        ...centerModifyRequestDto,
+        password: hashedPassword, // DTO의 password를 덮어쓰기
       });
     } else {
       await this.centerRepository.update(id, {
@@ -189,32 +192,29 @@ export class AuthService {
     return modifiedCenter;
   }
 
-  // 일반 회원 가입
-  async userSignUp(
+  // 관리자 회원 가입
+  async adminSignUp(
     userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<UserEntity> {
-    const { signId, nickname, email, password, role } = userSignUpRequestDto;
+    const { nickname, email } = userSignUpRequestDto;
 
-    // signId 중복 확인
-    await this.checkSignIdExists(signId);
-
-    // // email 중복 확인
-    // await this.checkEmailExists(email);
-
-    // 비밀번호 해싱
-    const hashedPassword = await this.hashPassword(password);
-
-    const newUser = this.userRepository.create({
-      signId,
-      nickname: nickname,
-      password: hashedPassword, // 해싱된 비밀번호 사용
-      email,
-      signWith: 'LOCAL',
-      role,
+    const kakao = await this.signWithRepository.findOne({
+      where: { platform: 'LOCAL' },
     });
 
-    const savedUser = await this.userRepository.save(newUser);
-    return savedUser;
+    const admin = await this.authorityRepository.findOne({
+      where: { role: 'ADMIN' },
+    });
+
+    const newAdmin = this.userRepository.create({
+      nickname,
+      email,
+      signWith: kakao,
+      authority: admin,
+    });
+
+    const savedAdmin = await this.userRepository.save(newAdmin);
+    return savedAdmin;
   }
 
   // 센터 회원 가입
@@ -223,35 +223,32 @@ export class AuthService {
   ): Promise<CenterEntity> {
     const {
       signId,
+      password,
       centerName,
       ceoName,
-      email,
-      password,
       businessId,
       phone,
+      email,
       address,
     } = centerSignUpRequestDto;
-
-    // signId 중복 확인
-    await this.checkSignIdExists(signId);
-
-    // email 중복 확인
-    await this.checkEmailExists(email);
-
-    // businessId 중복 확인
 
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
 
+    const center = await this.authorityRepository.findOne({
+      where: { role: 'CENTER' },
+    });
+
     const newCenter = this.centerRepository.create({
       signId,
+      password: hashedPassword, // 해싱된 비밀번호 사용
       centerName,
       ceoName,
-      email,
-      password: hashedPassword, // 해싱된 비밀번호 사용
       businessId,
       phone,
+      email,
       address,
+      authority: center,
     });
     const savedCenter = await this.centerRepository.save(newCenter);
 
@@ -286,51 +283,34 @@ export class AuthService {
 
   // signId 중복 확인 메서드
   async checkSignIdExists(signId: string): Promise<void> {
-    const existingMember = await this.findMemberBySignId(signId);
-    if (existingMember) {
+    const existingCenter = await this.findMemberBySignId(signId);
+    if (existingCenter) {
       throw new ConflictException('signId already exists');
     }
   }
 
-  // signId로 멤버 찾기 메서드
-  async findMemberBySignId(
-    signId: string,
-  ): Promise<UserEntity | CenterEntity | undefined> {
-    const user: UserEntity = await this.userRepository.findOne({
+  // signId로 센터 찾기 메서드
+  async findMemberBySignId(signId: string): Promise<CenterEntity> {
+    const center: CenterEntity = await this.centerRepository.findOne({
       where: { signId },
     });
-
-    const center: CenterEntity = user
-      ? null
-      : await this.centerRepository.findOne({
-          where: { signId },
-        });
-    return user || center;
+    return center;
   }
 
   // 이메일 중복 확인 메서드
   async checkEmailExists(email: string): Promise<void> {
-    const existingMember = await this.findMemberByEmail(email);
-    if (existingMember) {
+    const existingCenter = await this.findMemberByEmail(email);
+    if (existingCenter) {
       throw new ConflictException('email already exists');
     }
   }
 
-  // 이메일로 멤버 찾기 메서드
-  private async findMemberByEmail(
-    email: string,
-  ): Promise<UserEntity | CenterEntity | undefined> {
-    const user: UserEntity = await this.userRepository.findOne({
+  // 이메일로 센터 찾기 메서드
+  private async findMemberByEmail(email: string): Promise<CenterEntity> {
+    const center: CenterEntity = await this.centerRepository.findOne({
       where: { email },
     });
-
-    const center: CenterEntity = user
-      ? null
-      : await this.centerRepository.findOne({
-          where: { email },
-        });
-
-    return user || center;
+    return center;
   }
 
   // 비밀번호 해싱 암호화 메서드

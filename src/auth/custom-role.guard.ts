@@ -8,7 +8,7 @@ import { UserEntity } from './entity/user.entity';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from 'src/decorators/roles-decorator';
 import { CenterEntity } from './entity/center.entity';
-import { TRole } from './entity/member.entity';
+import { TRole } from './entity/authority.entity';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -31,10 +31,10 @@ export class RolesGuard implements CanActivate {
       .switchToHttp()
       .getRequest();
     // 사용자의 역할이 필요한 역할 목록에 포함되는지 권한 확인
-    const hasRole = requiredRoles.some((role) => user.role === role);
+    const hasRole = requiredRoles.some((role) => user.authority.role === role);
     if (!hasRole) {
       throw new ForbiddenException(
-        `Not a member of the ${user.role} (only ${user.role} can call this api)`,
+        `Not a member of the ${user.authority.role} (only ${user.authority.role} can call this api)`,
       );
     }
     return true;

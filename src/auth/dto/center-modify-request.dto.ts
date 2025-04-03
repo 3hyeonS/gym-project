@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -38,16 +39,6 @@ export class CenterModifyRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '주소',
-    example: '서울특별시 00구 00로 00',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @Length(1, 100) // 주소는 최대 100자
-  address: string;
-
-  @ApiProperty({
-    type: String,
     description: '대표 전화번호',
     example: '010-0000-0000',
   })
@@ -57,4 +48,24 @@ export class CenterModifyRequestDto {
     message: 'phone format must be 000-0000-0000',
   })
   phone: string;
+
+  @ApiProperty({
+    type: String,
+    description: '이메일(이메일 형식만 허용)',
+    example: 'sample@email.com',
+  })
+  @IsNotEmpty()
+  @IsEmail()
+  @Length(1, 100)
+  email: string;
+
+  @ApiProperty({
+    type: String,
+    description: '주소',
+    example: '서울특별시 00구 00로 00',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @Length(1, 100) // 주소는 최대 100자
+  address: string;
 }

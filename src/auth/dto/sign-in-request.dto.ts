@@ -1,8 +1,7 @@
 import { IsNotEmpty, IsString, Length } from 'class-validator';
-import { MemberEntity } from '../entity/member.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SignInRequestDto extends MemberEntity {
+export class SignInRequestDto {
   @ApiProperty({
     type: String,
     description: '아이디',

@@ -3,7 +3,6 @@ import {
   ConflictException,
   Controller,
   Get,
-  Logger,
   Post,
   Query,
   UnauthorizedException,
@@ -45,7 +44,6 @@ import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
 import { CustomUnauthorizedExceptionFilter } from './custom-unauthorizedExcetption-filter';
 import { RolesGuard } from './custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
-import { MemberRole } from './entity/member.entity';
 import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
 import { EmailRequestDto } from './dto/email-request.dto';
 import { PasswordRequestDto } from './dto/password-request-dto';
@@ -58,8 +56,6 @@ import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-co
 @ApiExtraModels(ResponseDto)
 @Controller('/auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name); // Logger 인스턴스 생성
-
   constructor(
     private authService: AuthService,
     private readonly jwtService: JwtService, // JwtService 주입
@@ -211,44 +207,29 @@ export class AuthController {
     );
   }
 
-  // 일반 회원 가입 기능
+  // 관리자 회원 가입 기능
   @ApiOperation({
-    summary: '회원가입 (일반 유저, 관리자)',
-    description: `
-    role은 관리자일 경우만 ADMIN으로 입력  \n
-    (일반 유저는 입력 안해도 무관)`,
+    summary: '회원가입 (관리자)',
   })
   @GenericApiResponse({
     status: 201,
-    description: '일반 유저 회원가입 성공',
-    message: 'User signed up successfully',
+    description: '관리자 회원가입 성공',
+    message: 'Administer signed up successfully',
     model: UserResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: 'signId must contain only alphanumeric characters(lower case)',
+    message: 'email must be an email',
     error: 'BadRequestException',
   })
-  @ErrorApiResponse({
-    status: 409,
-    description: '중복된 signId',
-    message: 'signId already exists',
-    error: 'ConflictException',
-  })
-  @ErrorApiResponse({
-    status: 409,
-    description: '중복된 email',
-    message: 'email already exists',
-    error: 'ConflictException',
-  })
-  @ResponseMsg('User signed up successfully')
-  @Post('/signup/user')
-  async userSignUp(
+  @ResponseMsg('Administer signed up successfully')
+  @Post('/signup/admin')
+  async adminSignUp(
     @Body() userSignUpRequestDto: UserSignUpRequestDto,
   ): Promise<UserResponseDto> {
-    const user = await this.authService.userSignUp(userSignUpRequestDto);
-    const userResponseDto = new UserResponseDto(user);
+    const admin = await this.authService.adminSignUp(userSignUpRequestDto);
+    const userResponseDto = new UserResponseDto(admin);
     return userResponseDto;
   }
 
@@ -354,24 +335,6 @@ export class AuthController {
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
     message: 'signId must contain only alphanumeric characters(lower case)',
     error: 'BadRequestException',
-  })
-  @ErrorApiResponse({
-    status: 409,
-    description: '중복된 signId',
-    message: 'signId already exists',
-    error: 'ConflictException',
-  })
-  @ErrorApiResponse({
-    status: 409,
-    description: '중복된 email',
-    message: 'email already exists',
-    error: 'ConflictException',
-  })
-  @ErrorApiResponse({
-    status: 409,
-    description: '중복된 businessId',
-    message: 'businessId already exists',
-    error: 'ConflictException',
   })
   @ResponseMsg('Center signed up successfully')
   @Post('/signup/center')
@@ -504,15 +467,22 @@ export class AuthController {
     message: 'Invalid or expired accessToken',
     error: 'UnauthorizedException',
   })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 정보 수정 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
   @ResponseMsg('Your password validated successfully')
-  @UseGuards(AuthGuard())
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
   @Post('isPasswordValid')
   async isPasswordValid(
-    @GetUser() member: UserEntity | CenterEntity,
+    @GetUser() center: CenterEntity,
     @Body() PasswordRequestDto: PasswordRequestDto,
   ): Promise<boolean> {
     return await this.authService.isPasswordValid(
-      member,
+      center,
       PasswordRequestDto.password,
     );
   }
@@ -548,7 +518,7 @@ export class AuthController {
   })
   @ResponseMsg('Your information modified successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Post('modifyCenter')
   async modifyCenter(
     @GetUser() center: CenterEntity,
