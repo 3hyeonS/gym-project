@@ -1,13 +1,34 @@
-import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
-import { MemberEntity, MemberRole, TRole } from './member.entity';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { RefreshTokenEntity } from './refreshToken.entity';
 import { GymEntity } from 'src/gyms/entity/gyms.entity';
 import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
 import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
+import { AuthorityEntity } from './authority.entity';
 
 @Entity({ name: 'center' })
-export class CenterEntity extends MemberEntity {
-  @Column({ type: 'varchar', name: 'centerName', nullable: false })
+export class CenterEntity {
+  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  id: number;
+
+  @Column({ type: 'varchar', name: 'signId', nullable: false, unique: true })
+  signId: string;
+
+  @Column({ type: 'varchar', name: 'password', nullable: false })
+  password: string;
+
+  @Column({
+    type: 'varchar',
+    name: 'centerName',
+    nullable: false,
+    unique: true,
+  })
   centerName: string;
 
   @Column({ type: 'varchar', name: 'ceoName', nullable: false })
@@ -21,24 +42,27 @@ export class CenterEntity extends MemberEntity {
   })
   businessId: string;
 
-  @Column({ type: 'varchar', name: 'email', unique: true, nullable: false })
-  email: string;
-
   @Column({ type: 'varchar', name: 'phone', nullable: false })
   phone: string;
+
+  @Column({ type: 'varchar', name: 'email', nullable: false, unique: true })
+  email: string;
 
   @Column({ type: 'varchar', name: 'address', nullable: false })
   address: string;
 
-  @Column({
-    type: 'enum',
-    name: 'role',
-    enum: MemberRole,
-    default: 'CENTER',
+  @ManyToOne(() => AuthorityEntity, (authority) => authority.role, {
+    nullable: false,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
   })
-  role: TRole;
+  authority: AuthorityEntity;
 
-  @OneToMany(() => RefreshTokenEntity, (refreshTokens) => refreshTokens.center)
+  @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.center, {
+    nullable: true,
+    eager: true,
+    cascade: true,
+  })
   refreshTokens: RefreshTokenEntity[];
 
   @OneToOne(() => GymEntity, (gym) => gym.center, {
@@ -51,7 +75,7 @@ export class CenterEntity extends MemberEntity {
   })
   gym2: GymEntity;
 
-  @OneToMany(() => ExpiredGymEntity, (expiredGyms) => expiredGyms.center, {
+  @OneToMany(() => ExpiredGymEntity, (expiredGym) => expiredGym.center, {
     nullable: true,
   })
   expiredGyms: ExpiredGymEntity[];
