@@ -1,23 +1,22 @@
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { TApply } from './gyms.entity';
 
 @Entity({ name: 'expiredGymList' })
-export class ExpiredGymEntity {
+export class ExpiredRecruitmentEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'text', name: 'centerName', nullable: false })
+  @Column({ type: 'varchar', name: 'centerName', nullable: false })
   centerName: string;
 
-  @Column({ type: 'text', name: 'city', nullable: false })
+  @Column({ type: 'varchar', name: 'city', nullable: false })
   city: string;
 
-  @Column({ type: 'json', name: 'location', nullable: false })
-  location: string[];
+  @Column({ type: 'varchar', name: 'location', nullable: true })
+  location: string;
 
-  @Column({ type: 'json', name: 'subway', nullable: true })
-  subway: string[];
+  @Column({ type: 'varchar', name: 'address', nullable: true })
+  address: string;
 
   @Column({ type: 'json', name: 'workType', nullable: false })
   workType: string[];
@@ -25,14 +24,17 @@ export class ExpiredGymEntity {
   @Column({ type: 'json', name: 'workTime', nullable: false })
   workTime: string[];
 
-  @Column({ type: 'json', name: 'workDays', nullable: false })
-  workDays: string[];
+  @Column({ type: 'tinyint', name: 'weekendDuty', nullable: false })
+  weekendDuty: number;
 
-  @Column({ type: 'json', name: 'weekendDuty', nullable: false })
-  weekendDuty: string[];
+  @Column({ type: 'tinyint', name: 'gender', nullable: false })
+  gender: number;
 
   @Column({ type: 'json', name: 'salary', nullable: false })
   salary: string[];
+
+  @Column({ type: 'int', name: 'maxClassFee', nullable: false })
+  maxClassFee: number;
 
   @Column({ type: 'json', name: 'basePay', nullable: true })
   basePay: number[];
@@ -43,20 +45,17 @@ export class ExpiredGymEntity {
   @Column({ type: 'json', name: 'classFee', nullable: true })
   classFee: number[];
 
-  @Column({ type: 'json', name: 'hourly', nullable: true })
-  hourly: number[];
-
   @Column({ type: 'json', name: 'monthly', nullable: true })
   monthly: number[];
 
-  @Column({ type: 'int', name: 'maxClassFee', nullable: false })
-  maxClassFee: number;
+  @Column({ type: 'json', name: 'hourly', nullable: true })
+  hourly: number[];
 
-  @Column({ type: 'json', name: 'gender', nullable: false })
-  gender: string[];
+  @Column({ type: 'json', name: 'welfare', nullable: false })
+  welfare: string[];
 
   @Column({ type: 'json', name: 'qualifications', nullable: false })
-  qualifications: string[];
+  qualification: string[];
 
   @Column({ type: 'json', name: 'preference', nullable: false })
   preference: string[];
@@ -73,17 +72,14 @@ export class ExpiredGymEntity {
   @Column({ type: 'json', name: 'image', nullable: true })
   image: string[];
 
-  @Column({
-    type: 'set',
-    name: 'apply',
-    enum: ['EMAIL', 'PHONE', 'BOTH'],
-    nullable: true,
-  })
-  apply: TApply[];
+  @Column({ type: 'int', name: 'view', nullable: false, default: 0 })
+  view: number;
 
-  @ManyToOne(() => CenterEntity, (center) => center.gym, {
+  @ManyToOne(() => CenterEntity, (center) => center.recruitment, {
+    eager: true,
     nullable: true,
-    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
   })
   center: CenterEntity;
 }

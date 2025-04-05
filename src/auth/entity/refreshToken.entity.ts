@@ -18,16 +18,16 @@ export class RefreshTokenEntity {
 
   @CreateDateColumn({
     type: 'datetime',
-    length: 6,
     name: 'createdAt',
     nullable: false,
   })
   createdAt: Date;
 
-  @Column({ type: 'datetime', length: 6, name: 'expiresAt', nullable: false })
+  @Column({ type: 'datetime', name: 'expiresAt', nullable: false })
   expiresAt: Date;
 
   @ManyToOne(() => UserEntity, (user) => user.refreshTokens, {
+    eager: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -35,6 +35,7 @@ export class RefreshTokenEntity {
   user: UserEntity;
 
   @ManyToOne(() => CenterEntity, (center) => center.refreshTokens, {
+    eager: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',

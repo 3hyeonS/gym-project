@@ -7,9 +7,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { RefreshTokenEntity } from './refreshToken.entity';
-import { GymEntity } from 'src/gyms/entity/gyms.entity';
-import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
-import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
+import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
+import { ExpiredRecruitmentEntity } from 'src/recruitment/entity/expiredRecruitment.entity';
 import { AuthorityEntity } from './authority.entity';
 
 @Entity({ name: 'center' })
@@ -52,6 +51,7 @@ export class CenterEntity {
   address: string;
 
   @ManyToOne(() => AuthorityEntity, (authority) => authority.role, {
+    eager: true,
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -60,23 +60,23 @@ export class CenterEntity {
 
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.center, {
     nullable: true,
-    eager: true,
     cascade: true,
   })
   refreshTokens: RefreshTokenEntity[];
 
-  @OneToOne(() => GymEntity, (gym) => gym.center, {
+  @OneToOne(() => RecruitmentEntity, (gym) => gym.center, {
     nullable: true,
+    cascade: true,
   })
-  gym: GymEntity;
+  recruitment: RecruitmentEntity;
 
-  @OneToOne(() => Gym2Entity, (gym2) => gym2.center, {
-    nullable: true,
-  })
-  gym2: GymEntity;
-
-  @OneToMany(() => ExpiredGymEntity, (expiredGym) => expiredGym.center, {
-    nullable: true,
-  })
-  expiredGyms: ExpiredGymEntity[];
+  @OneToMany(
+    () => ExpiredRecruitmentEntity,
+    (expiredGym) => expiredGym.center,
+    {
+      nullable: true,
+      cascade: true,
+    },
+  )
+  expiredRecruitments: ExpiredRecruitmentEntity[];
 }

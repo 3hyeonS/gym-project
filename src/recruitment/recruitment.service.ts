@@ -7,31 +7,32 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
-import { GymEntity } from './entity/gyms.entity';
-import { GymResponseDto } from './dto/gym-response-dto';
-import { GymRegisterRequestDto } from './dto/gym-registration-request-dto';
+import { RecruitmentEntity } from './entity/recruitment.entity';
+import { RecruitmentResponseDto } from './dto/recruitment-response-dto';
+import {
+  RecruitmentRegisterRequestDto,
+  TGender,
+  TWeekendDuty,
+} from './dto/recruitment-registration-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { ExpiredGymEntity } from './entity/expiredGyms.entity';
-import { Gym2Entity } from './entity/gyms2.entity';
+import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
 
 @Injectable()
-export class GymsService {
+export class RecruitmentService {
   //문자 출력
   getHello(): string {
-    return 'Welcome Gyms';
+    return 'Welcome Recruitment';
   }
 
   private s3: S3Client;
   private bucketName: string;
 
   constructor(
-    @InjectRepository(GymEntity)
-    private gymRepository: Repository<GymEntity>,
-    @InjectRepository(Gym2Entity)
-    private gym2Repository: Repository<Gym2Entity>,
-    @InjectRepository(ExpiredGymEntity)
-    private expiredGymRepository: Repository<ExpiredGymEntity>,
+    @InjectRepository(RecruitmentEntity)
+    private recruitmentRepository: Repository<RecruitmentEntity>,
+    @InjectRepository(ExpiredRecruitmentEntity)
+    private expiredRecruitmentRepository: Repository<ExpiredRecruitmentEntity>,
     @InjectRepository(CenterEntity)
     private centerRepository: Repository<CenterEntity>,
   ) {
@@ -48,7 +49,7 @@ export class GymsService {
 
   // method0 : 공고 총 개수 가져오기
   async getTotalNumber(): Promise<number> {
-    return await this.gymRepository.count();
+    return await this.recruitmentRepository.count();
   }
 
   // method1 : 모든 공고 가져오기
@@ -56,21 +57,24 @@ export class GymsService {
     page: number,
     limit: number,
   ): Promise<{
-    gymList: GymResponseDto[];
-    totalGyms: number;
-    totalPages: number;
+    recruitmentsList: RecruitmentResponseDto[];
     page: number;
+    totalRecruitments: number;
+    totalPages: number;
   }> {
-    const [gymList, totalCount] = await this.gymRepository.findAndCount({
-      order: { date: 'DESC' }, // 최신순 정렬
-      take: limit, // 한 페이지에 보여줄 개수
-      skip: (page - 1) * limit, // 페이지 계산
-      relations: ['center'],
-    });
+    const [recruitmentsList, totalCount] =
+      await this.recruitmentRepository.findAndCount({
+        order: { date: 'DESC' }, // 최신순 정렬
+        take: limit, // 한 페이지에 보여줄 개수
+        skip: (page - 1) * limit, // 페이지 계산
+        relations: ['center'],
+      });
     return {
-      gymList: gymList.map((gym) => new GymResponseDto(gym)),
+      recruitmentsList: recruitmentsList.map(
+        (recruitment) => new RecruitmentResponseDto(recruitment),
+      ),
       page,
-      totalGyms: totalCount, // 전체 헬스장 수
+      totalRecruitments: totalCount, // 전체 헬스장 수
       totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
     };
   }
@@ -81,16 +85,18 @@ export class GymsService {
     page: number,
     limit: number,
   ): Promise<{
-    gymList: GymResponseDto[];
-    totalGyms: number;
-    totalPages: number;
+    recruitmentsList: RecruitmentResponseDto[];
     page: number;
+    totalRecruitments: number;
+    totalPages: number;
   }> {
-    const queryBuilder = this.gymRepository
-      .createQueryBuilder('gymList')
-      .leftJoinAndSelect('gymList.center', 'center');
-    const conditions: { condition: string; parameters: Record<string, any> }[] =
-      [];
+    const queryBuilder = this.recruitmentRepository
+      .createQueryBuilder('recruitment')
+      .leftJoinAndSelect('recruitment.center', 'center');
+    const conditions: {
+      condition: string;
+      parameters?: Record<string, any>;
+    }[] = [];
 
     // centerName 조건 처리
     if (
@@ -98,7 +104,7 @@ export class GymsService {
       selectedOptionsDto.selectedName.trim() !== ''
     ) {
       conditions.push({
-        condition: 'gymList.centerName LIKE :name',
+        condition: 'recruitment.centerName LIKE :name',
         parameters: {
           name: `%${selectedOptionsDto.selectedName}%`, // 부분 검색 (포함 여부 확인)
         },
@@ -121,15 +127,21 @@ export class GymsService {
         const cityAllKeyword = `${city.split(' ')[0]} 전체`; // "{city} 전체" 생성
 
         if (districts.includes(cityAllKeyword)) {
-          locConditions.push(`gymList.city = :${cityKey}`);
+          locConditions.push(`recruitment.city = :${cityKey}`);
           locParameters[cityKey] = city;
         } else {
-          const locKey = `loc_${index}`;
-          locConditions.push(
-            `(gymList.city = :${cityKey} AND JSON_OVERLAPS(gymList.location, :${locKey}))`,
-          );
+          const cityCondition = `recruitment.city = :${cityKey}`;
+          const locKeys = districts.map((_, i) => `loc_${index}_${i}`);
+          const locConditionsPart = locKeys
+            .map((key) => `recruitment.location = :${key}`)
+            .join(' OR ');
+
+          locConditions.push(`(${cityCondition} AND (${locConditionsPart}))`);
           locParameters[cityKey] = city;
-          locParameters[locKey] = JSON.stringify(districts);
+
+          districts.forEach((district, i) => {
+            locParameters[`loc_${index}_${i}`] = district;
+          });
         }
         index++;
       }
@@ -147,7 +159,7 @@ export class GymsService {
         selectedOptionsDto.selectedWorkType.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.workType, :wty) > 0',
+        condition: 'JSON_OVERLAPS(recruitment.workType, :wty) > 0',
         parameters: {
           wty: JSON.stringify(selectedOptionsDto.selectedWorkType),
         },
@@ -161,49 +173,49 @@ export class GymsService {
         selectedOptionsDto.selectedWorkTime.push('채용공고참고');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.workTime, :wti) > 0',
+        condition: 'JSON_OVERLAPS(recruitment.workTime, :wti) > 0',
         parameters: {
           wti: JSON.stringify(selectedOptionsDto.selectedWorkTime),
         },
       });
     }
 
-    // workDays 조건 처리
-    if (selectedOptionsDto.selectedWorkDays?.length) {
-      if (selectedOptionsDto.flexibleOptions[2] == 1) {
-        selectedOptionsDto.selectedWorkDays.push('명시 안 됨');
-        selectedOptionsDto.selectedWorkDays.push('채용공고참고');
-      }
-      conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.workDays, :wkd) > 0',
-        parameters: {
-          wkd: JSON.stringify(selectedOptionsDto.selectedWorkDays),
-        },
-      });
-    }
-
     // weekendDuty 조건 처리
     if (selectedOptionsDto.selectedWeekendDuty?.length) {
+      if (selectedOptionsDto.flexibleOptions[2] == 1) {
+        conditions.push({
+          condition:
+            '(recruitment.weekendDuty = 0 or recruitment.weekendDuty = 3)',
+        });
+      } else {
+        conditions.push({
+          condition: '(recruitment.weekendDuty = wd)',
+          parameters: { wd: selectedOptionsDto.selectedWeekendDuty },
+        });
+      }
+    }
+
+    // gender 조건 처리
+    if (selectedOptionsDto.selectedGender?.length) {
       if (selectedOptionsDto.flexibleOptions[3] == 1) {
-        selectedOptionsDto.selectedWeekendDuty.push('명시 안 됨');
-        selectedOptionsDto.selectedWeekendDuty.push('채용공고참고');
+        conditions.push({
+          condition: '(recruitment.gender <= 1)',
+        });
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.weekendDuty, :wd) > 0',
-        parameters: {
-          wd: JSON.stringify(selectedOptionsDto.selectedWeekendDuty),
-        },
+        condition: '(recruitment.gender = gd)',
+        parameters: { gd: selectedOptionsDto.selectedWeekendDuty },
       });
     }
 
     // salary 조건 처리
     if (selectedOptionsDto.selectedSalary?.length) {
-      let slyConditions = [`JSON_CONTAINS(gymList.salary, :sly) > 0`];
+      let slyConditions = [`JSON_CONTAINS(recruitment.salary, :sly) > 0`];
 
       if (selectedOptionsDto.flexibleOptions[4] == 1) {
         slyConditions.push(
-          `JSON_CONTAINS(gymList.salary, '["명시 안 됨"]') > 0`,
-          `JSON_CONTAINS(gymList.salary, '["채용공고참고"]') > 0`,
+          `JSON_CONTAINS(recruitment.salary, '["명시 안 됨"]') > 0`,
+          `JSON_CONTAINS(recruitment.salary, '["채용공고참고"]') > 0`,
         );
       }
 
@@ -218,40 +230,41 @@ export class GymsService {
       if (selectedOptionsDto.flexibleOptions[5] == 1) {
         conditions.push({
           condition:
-            '(gymList.maxClassFee >= :mcf or gymList.maxClassFee <= -1)',
+            '(recruitment.maxClassFee >= :mcf or recruitment.maxClassFee <= -1)',
           parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
         });
       } else {
         conditions.push({
-          condition: 'gymList.maxClassFee >= :mcf',
+          condition: 'recruitment.maxClassFee >= :mcf',
           parameters: { mcf: selectedOptionsDto.selectedMaxClassFee },
         });
       }
     }
 
-    // gender 조건 처리
-    if (selectedOptionsDto.selectedGender?.length) {
+    // wellfare 조건 처리
+    if (selectedOptionsDto.selectedWelfare?.length) {
       if (selectedOptionsDto.flexibleOptions[6] == 1) {
-        selectedOptionsDto.selectedGender.push('명시 안 됨');
-        selectedOptionsDto.selectedGender.push('성별 무관');
+        selectedOptionsDto.selectedWelfare.push('명시 안 됨');
       }
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.gender, :gen) > 0',
-        parameters: { gen: JSON.stringify(selectedOptionsDto.selectedGender) },
+        condition: 'JSON_OVERLAPS(recruitment.welfare, :wf) > 0',
+        parameters: {
+          wf: JSON.stringify(selectedOptionsDto.selectedWelfare),
+        },
       });
     }
 
-    // qualifications 조건 처리
-    if (selectedOptionsDto.selectedQualifications?.length) {
+    // qualification 조건 처리
+    if (selectedOptionsDto.selectedQualification?.length) {
       if (selectedOptionsDto.flexibleOptions[7] == 1) {
-        selectedOptionsDto.selectedQualifications.push('명시 안 됨');
-        selectedOptionsDto.selectedQualifications.push('채용공고참고');
+        selectedOptionsDto.selectedQualification.push('명시 안 됨');
+        selectedOptionsDto.selectedQualification.push('채용공고참고');
       }
-      selectedOptionsDto.selectedQualifications.push('없음');
+      selectedOptionsDto.selectedQualification.push('없음');
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.qualifications, :qfc) > 0',
+        condition: 'JSON_OVERLAPS(recruitment.qualification, :qfc) > 0',
         parameters: {
-          qfc: JSON.stringify(selectedOptionsDto.selectedQualifications),
+          qfc: JSON.stringify(selectedOptionsDto.selectedQualification),
         },
       });
     }
@@ -264,7 +277,7 @@ export class GymsService {
       }
       selectedOptionsDto.selectedPreference.push('없음');
       conditions.push({
-        condition: 'JSON_OVERLAPS(gymList.preference, :pre) > 0',
+        condition: 'JSON_OVERLAPS(recruitment.preference, :pre) > 0',
         parameters: {
           pre: JSON.stringify(selectedOptionsDto.selectedPreference),
         },
@@ -281,7 +294,7 @@ export class GymsService {
     });
 
     // date 내림차순 정렬 추가
-    queryBuilder.orderBy('gymList.date', 'DESC');
+    queryBuilder.orderBy('recruitment.date', 'DESC');
 
     // 총 개수 가져오기
     const totalCount = await queryBuilder.getCount();
@@ -293,40 +306,35 @@ export class GymsService {
     const objectList = await queryBuilder.getMany();
 
     return {
-      gymList: objectList.map((gym) => new GymResponseDto(gym)),
+      recruitmentsList: objectList.map(
+        (recruitment) => new RecruitmentResponseDto(recruitment),
+      ),
       page,
-      totalGyms: totalCount, // 전체 헬스장 수
+      totalRecruitments: totalCount, // 전체 헬스장 수
       totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
     };
   }
 
   // 채용 공고 조회 수 증가
   async viewed(id: number): Promise<void> {
-    const viewedGym = await this.gymRepository.findOneBy({ id });
+    const viewedRecruitment = await this.recruitmentRepository.findOneBy({
+      id,
+    });
 
-    if (!viewedGym) {
+    if (!viewedRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
-    await this.gymRepository.update(
-      { id },
-      {
-        view: viewedGym.view + 1,
-      },
-    );
-    // 디비 업데이트용
-    await this.gym2Repository.update(
-      { id },
-      {
-        view: viewedGym.view + 1,
-      },
-    );
+    viewedRecruitment.view = viewedRecruitment.view + 1;
+    await this.recruitmentRepository.save(viewedRecruitment);
   }
 
   // 채용 공고 등록 가능 여부 확인
   async canRegister(center: CenterEntity): Promise<boolean> {
-    const myGym = await this.gymRepository.findOneBy({ center });
-    if (myGym) {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (myRecruitment) {
       return false;
     }
     return true;
@@ -335,98 +343,81 @@ export class GymsService {
   // method3: 헬스장 공고 등록하기
   async register(
     center: CenterEntity,
-    registerRequestDto: GymRegisterRequestDto,
-  ): Promise<GymResponseDto> {
+    registerRequestDto: RecruitmentRegisterRequestDto,
+  ): Promise<RecruitmentResponseDto> {
     if (!(await this.canRegister(center))) {
       throw new ForbiddenException('Your hiring recruitment already exists');
     }
     const {
       workType,
       workTime,
-      workDays,
       weekendDuty,
+      gender,
       salary,
       basePay,
       classPay,
       classFee,
-      hourly,
       monthly,
-      gender,
-      qualifications,
+      hourly,
+      welfare,
+      qualification,
       preference,
       description,
       image,
-      apply,
     } = registerRequestDto;
 
-    const centerName = center.centerName;
-    const address = await this.extractLocation(center.address);
+    const seperatedAddress = await this.extractLocation(center.address);
     const maxClassFee = classFee ? classFee[1] : -2;
 
-    const newGym = this.gymRepository.create({
-      centerName: centerName,
-      city: address.city,
-      location: address.location,
-      subway: null,
+    const weekendDutyMap = {
+      [TWeekendDuty.YES]: 1,
+      [TWeekendDuty.NO]: 2,
+    };
+    const transformedWeekendDuty = weekendDutyMap[weekendDuty];
+
+    const genderMap = {
+      [TGender.BOTH]: 1,
+      [TGender.MALE]: 2,
+      [TGender.FEMALE]: 3,
+    };
+    const transformedGender = genderMap[gender];
+
+    const newRecruitment = this.recruitmentRepository.create({
+      centerName: center.centerName,
+      city: seperatedAddress.city,
+      location: seperatedAddress.location,
+      address: center.address,
       workType,
       workTime,
-      workDays,
-      weekendDuty,
+      weekendDuty: transformedWeekendDuty,
+      gender: transformedGender,
       salary,
+      maxClassFee: maxClassFee,
       basePay,
       classPay,
       classFee,
-      hourly,
       monthly,
-      maxClassFee: maxClassFee,
-      gender,
-      qualifications,
+      hourly,
+      welfare,
+      qualification,
       preference,
       site: ['직접 등록'],
       date: new Date(),
       description,
       center: center,
       image, // 이미지 URL 저장
-      apply,
+      view: 0,
     });
 
-    // 디비 업데이트용
-    const newGym2 = this.gym2Repository.create({
-      centerName: centerName,
-      city: address.city,
-      location: address.location,
-      subway: null,
-      workType,
-      workTime,
-      workDays,
-      weekendDuty,
-      salary,
-      basePay,
-      classPay,
-      classFee,
-      hourly,
-      monthly,
-      maxClassFee: maxClassFee,
-      gender,
-      qualifications,
-      preference,
-      site: ['직접 등록'],
-      date: new Date(),
-      description,
-      center: center,
-      image, // 이미지 URL 저장
-      apply,
-    });
-    await this.gym2Repository.save(newGym2);
-
-    const savedGym = await this.gymRepository.save(newGym);
-    return new GymResponseDto(savedGym);
+    const savedRecruitment =
+      await this.recruitmentRepository.save(newRecruitment);
+    return new RecruitmentResponseDto(savedRecruitment);
   }
 
   // method4: 주소에서 시/도, 시/군/구 추출
   async extractLocation(
     address: string,
-  ): Promise<{ city: string; location: string[] }> {
+  ): Promise<{ city: string; location: string }> {
     // 시/도 추출 (서울특별시, 서울시, 경기도 등)
     const cityMatch = address.match(/^([가-힣]+)(?=\s)/);
     if (!cityMatch) {
@@ -451,126 +442,130 @@ export class GymsService {
     // locationMatch[0] 전체 매칭 문자열, ex: "성남시 분당구"
     const location =
       locationMatch[3] != null
-        ? [`${locationMatch[1]} ${locationMatch[3]}`]
-        : [locationMatch[1]];
+        ? `${locationMatch[1]} ${locationMatch[3]}`
+        : locationMatch[1];
 
     return { city, location };
   }
 
   // method5: 내 채용 중 공고 불러오기
-  async getMyGym(center: CenterEntity): Promise<GymResponseDto | null> {
-    const myGym = await this.gymRepository.findOne({
-      where: { center },
-      relations: ['center'], // center 관계를 로드
+  async getMyRecruitment(
+    center: CenterEntity,
+  ): Promise<RecruitmentResponseDto | null> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
     });
-    if (!myGym) {
+    if (!myRecruitment) {
       return null;
     }
-    return new GymResponseDto(myGym);
+    return new RecruitmentResponseDto(myRecruitment);
   }
 
   // method6: 내 만료된 공고 불러오기
-  async getMyExpiredGyms(center: CenterEntity): Promise<GymResponseDto[]> {
-    const myExpiredGyms = await this.expiredGymRepository.find({
-      where: { center },
-      relations: ['center'], // center 관계를 로드
-    });
-    return myExpiredGyms.map((gym) => new GymResponseDto(gym));
+  async getMyExpiredRecruitments(
+    center: CenterEntity,
+  ): Promise<RecruitmentResponseDto[]> {
+    const myExpiredRecruitments =
+      await this.expiredRecruitmentRepository.findBy({ center });
+    return myExpiredRecruitments.map(
+      (recruitment) => new RecruitmentResponseDto(recruitment),
+    );
   }
 
   // method7: 내 채용 중 공고 끌어올리기
-  async refreshMyGym(center: CenterEntity): Promise<GymResponseDto> {
-    const myGym = await this.gymRepository.findOneBy({ center });
-    if (!myGym) {
+  async refreshMyRecruitment(center: CenterEntity): Promise<void> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     // 하루에 한 번만
-    const date = myGym.date;
+    const date = myRecruitment.date;
     if (new Date(date).getDate() == new Date().getDate()) {
       throw new ForbiddenException('You already updated recruitment today');
     }
-    await this.gymRepository.update(
-      { center },
-      {
-        date: new Date(),
-      },
-    );
-    // 디비 업데이트용
-    await this.gym2Repository.update(
-      { center },
-      {
-        date: new Date(),
-      },
-    );
-
-    const myRefreshedGym = await this.gymRepository.findOneBy({ center });
-    return new GymResponseDto(myRefreshedGym);
+    myRecruitment.date = new Date();
+    await this.recruitmentRepository.save(myRecruitment);
   }
 
   // method8: 내 채용 중 공고 만료시키기
-  async expireMyGym(center: CenterEntity): Promise<void> {
-    const myGym = await this.gymRepository.findOneBy({ center });
-    if (!myGym) {
-      throw new NotFoundException('There is no hring recruitment');
-    }
-    const { id, ...gymData } = myGym;
-    const expiredGym = this.expiredGymRepository.create({
-      ...gymData, // 기존 데이터 복사
+  async expireMyRecruitment(center: CenterEntity): Promise<void> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
     });
-    await this.expiredGymRepository.save(expiredGym);
-    await this.deleteMyGym(center);
+    if (!myRecruitment) {
+      throw new NotFoundException('There is no hring recruitment');
+    }
+    const { id, ...recruitmentData } = myRecruitment;
+    const expiredRecruitment = this.expiredRecruitmentRepository.create({
+      ...recruitmentData, // 기존 데이터 복사
+    });
+    await this.expiredRecruitmentRepository.save(expiredRecruitment);
+    await this.deleteHiring(center);
   }
 
   // method9: 내 채용 중 공고 삭제하기
-  async deleteMyGym(center: CenterEntity): Promise<void> {
-    const myGym = await this.gymRepository.findOneBy({ center });
-    if (!myGym) {
+  async deleteHiring(center: CenterEntity): Promise<void> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
-
-    // 디비 업데이트용
-    await this.gym2Repository.delete({ center });
-
-    await this.gymRepository.delete({ center });
+    await this.recruitmentRepository.delete({ center });
   }
 
   // method10: 내 만료된 공고 삭제하기
-  async deleteMyExpiredGym(id: number): Promise<void> {
-    const myGym = await this.expiredGymRepository.findOneBy({ id });
-    if (!myGym) {
+  async deleteExpired(id: number): Promise<void> {
+    const myRecruitment = await this.expiredRecruitmentRepository.findOneBy({
+      id,
+    });
+    if (!myRecruitment) {
       throw new NotFoundException(
         'There is no expired recruitment for selected id',
       );
     }
-    await this.expiredGymRepository.delete({ id });
+    await this.expiredRecruitmentRepository.delete({ id });
   }
 
   // method11: 내 채용 중 공고 수정하기
-  async modifyMyGym(
+  async modifyRecruitment(
     center: CenterEntity,
-    registerRequestDto: GymRegisterRequestDto,
-  ): Promise<GymResponseDto> {
-    const myGym = await this.gymRepository.findOneBy({ center });
-    if (!myGym) {
+    registerRequestDto: RecruitmentRegisterRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
-    await this.gymRepository.update(myGym.id, {
+
+    const weekendDutyMap = {
+      [TWeekendDuty.YES]: 1,
+      [TWeekendDuty.NO]: 2,
+    };
+    const transformedWeekendDuty = weekendDutyMap[myRecruitment.weekendDuty];
+
+    const genderMap = {
+      [TGender.BOTH]: 1,
+      [TGender.MALE]: 2,
+      [TGender.FEMALE]: 3,
+    };
+    const transformedGender = genderMap[myRecruitment.gender];
+
+    await this.recruitmentRepository.update(myRecruitment.id, {
       ...registerRequestDto,
+      weekendDuty: transformedWeekendDuty,
+      gender: transformedGender,
     });
 
-    // 디비 업데이트용
-    const myGym2 = await this.gym2Repository.findOneBy({ center });
-    await this.gym2Repository.update(myGym2.id, {
-      ...registerRequestDto,
+    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
+      id: myRecruitment.id,
     });
 
-    const updatedGym = await this.gymRepository.findOne({
-      where: { id: myGym.id },
-    });
-
-    return new GymResponseDto(updatedGym);
+    return new RecruitmentResponseDto(updatedRecruitment);
   }
 
   // method12: 다중 이미지 S3 업로드

@@ -11,14 +11,12 @@ export class AuthorityEntity {
 
   @OneToMany(() => UserEntity, (user) => user.authority, {
     nullable: true,
-    eager: true,
     cascade: true,
   })
   users: UserEntity[];
 
   @OneToMany(() => CenterEntity, (center) => center.authority, {
     nullable: true,
-    eager: true,
     cascade: true,
   })
   centers: CenterEntity[];

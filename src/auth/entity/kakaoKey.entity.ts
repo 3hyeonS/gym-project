@@ -13,11 +13,10 @@ export class KakaoKeyEntity {
   id: number;
 
   @Column({ type: 'int', name: 'key', nullable: false, unique: true })
-  key: number;
+  kakaoId: number;
 
   @OneToOne(() => UserEntity, (user) => user.kakaoKey, {
     nullable: false,
-    eager: true,
     cascade: true,
   })
   @JoinColumn({ name: 'userId' })

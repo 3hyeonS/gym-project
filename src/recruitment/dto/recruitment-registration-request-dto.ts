@@ -9,13 +9,23 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { TApply } from '../entity/gyms.entity';
 
-export class GymRegisterRequestDto {
+export enum TWeekendDuty {
+  YES = '있음',
+  NO = '없음',
+}
+
+export enum TGender {
+  BOTH = '성별 무관',
+  MALE = '남성',
+  FEMALE = '여성',
+}
+
+export class RecruitmentRegisterRequestDto {
   @ApiProperty({
     type: [String],
     description: '근무 형태',
-    example: ['정규직'],
+    example: ['정규직', '프리랜서'],
   })
   @IsNotEmpty()
   @IsArray()
@@ -25,7 +35,7 @@ export class GymRegisterRequestDto {
   @ApiProperty({
     type: [String],
     description: '근무 시간',
-    example: ['오후'],
+    example: ['오전~오후 풀타임', '자유 근무'],
   })
   @IsNotEmpty()
   @IsArray()
@@ -33,29 +43,31 @@ export class GymRegisterRequestDto {
   workTime: string[];
 
   @ApiProperty({
-    type: [String],
-    description: '근무일 수',
-    example: ['주5일'],
+    enum: TWeekendDuty,
+    description: '주말 당직(있음 or 없음)',
+    example: TWeekendDuty.YES,
   })
   @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  workDays: string[];
+  @IsEnum(TWeekendDuty, {
+    message: 'weekendDuty must be 있음 or 없음 only',
+  })
+  weekendDuty: TWeekendDuty;
 
   @ApiProperty({
-    type: [String],
-    description: '주말 당직',
-    example: ['명시 안 됨'],
+    enum: TGender,
+    description: '성별(성별 무관 or 남성 or 여성)',
+    example: TGender.BOTH,
   })
   @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  weekendDuty: string[];
+  @IsEnum(TGender, {
+    message: 'gender must be 성별 무관, 남성 or 여성 only',
+  })
+  gender: TGender;
 
   @ApiProperty({
     type: [String],
     description: '급여 조건',
-    example: ['기본급', '수업료', '인센티브', '퇴직금', '4대 보험'],
+    example: ['기본급', '수업료', '인센티브'],
   })
   @IsNotEmpty()
   @IsArray()
@@ -100,18 +112,6 @@ export class GymRegisterRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '시급 (단위: 만 원), [최저, 최대]',
-    example: [2, 3],
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(2) // 최소 크기 2
-  @ArrayMaxSize(2) // 최대 크기 2
-  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  hourly: number[];
-
-  @ApiProperty({
-    type: [Number],
     description: '월급 (단위: 만 원), [최저, 최대]',
     example: [200, 250],
   })
@@ -123,24 +123,36 @@ export class GymRegisterRequestDto {
   monthly: number[];
 
   @ApiProperty({
+    type: [Number],
+    description: '시급 (단위: 만 원), [최저, 최대]',
+    example: [2, 3],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2) // 최소 크기 2
+  @ArrayMaxSize(2) // 최대 크기 2
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
+  hourly: number[];
+
+  @ApiProperty({
     type: [String],
-    description: '성별',
-    example: ['명시 안 됨'],
+    description: '4대 보험, 퇴직금',
+    example: ['4대 보험'],
   })
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  gender: string[];
+  welfare: string[];
 
   @ApiProperty({
     type: [String],
     description: '지원자격',
-    example: ['명시 안 됨'],
+    example: ['신입 지원 가능'],
   })
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  qualifications: string[];
+  qualification: string[];
 
   @ApiProperty({
     type: [String],
@@ -179,18 +191,4 @@ export class GymRegisterRequestDto {
   @IsArray()
   @IsString({ each: true })
   image: string[];
-
-  @ApiProperty({
-    type: [String],
-    enum: ['EMAIL', 'PHONE', 'BOTH'],
-    description:
-      '지원 방법  \n이메일 지원: EMAIL  \n문자 지원: PHONE  \n이메일 지원 후 문자 방송: BOTH',
-    example: ['EMAIL', 'PHONE'],
-  })
-  @IsNotEmpty()
-  @IsEnum(['EMAIL', 'PHONE', 'BOTH'], {
-    each: true,
-    message: 'apply element must be EMAIL, PHONE or BOTH only',
-  })
-  apply: TApply[];
 }

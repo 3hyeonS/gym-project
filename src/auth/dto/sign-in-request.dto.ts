@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SignInRequestDto {
+export class CenterSignInRequestDto {
   @ApiProperty({
     type: String,
     description: '아이디',

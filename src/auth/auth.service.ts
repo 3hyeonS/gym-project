@@ -16,22 +16,23 @@ import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
-import { v4 as uuidv4 } from 'uuid';
 import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
-import { SignInRequestDto } from './dto/sign-in-request.dto';
+import { CenterSignInRequestDto } from './dto/sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
-import { GymEntity } from 'src/gyms/entity/gyms.entity';
-import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
+import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
+import { ExpiredRecruitmentEntity } from 'src/recruitment/entity/expiredRecruitment.entity';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
-import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 import appleSignin from 'apple-signin-auth';
 import { SignWithEntity } from './entity/signWith.entity';
 import { AuthorityEntity } from './entity/authority.entity';
+import { KakaoKeyEntity } from './entity/kakaoKey.entity';
+import { AppleKeyEntity } from './entity/appleKey.entity';
+import { RecruitmentService } from 'src/recruitment/recruitment.service';
 
 @Injectable()
 export class AuthService {
@@ -44,21 +45,24 @@ export class AuthService {
     private centerRepository: Repository<CenterEntity>,
     @InjectRepository(RefreshTokenEntity)
     private refreshTokenRepository: Repository<RefreshTokenEntity>,
-    @InjectRepository(GymEntity)
-    private gymRepository: Repository<GymEntity>,
-    @InjectRepository(Gym2Entity)
-    private gym2Repository: Repository<Gym2Entity>,
-    @InjectRepository(ExpiredGymEntity)
-    private expiredGymRepository: Repository<ExpiredGymEntity>,
+    @InjectRepository(RecruitmentEntity)
+    private recruitmentRepository: Repository<RecruitmentEntity>,
+    @InjectRepository(ExpiredRecruitmentEntity)
+    private expiredRecruitmentRepository: Repository<ExpiredRecruitmentEntity>,
     @InjectRepository(EmailCodeEntity)
     private emailCodeRepository: Repository<EmailCodeEntity>,
     @InjectRepository(SignWithEntity)
     private signWithRepository: Repository<SignWithEntity>,
     @InjectRepository(AuthorityEntity)
     private authorityRepository: Repository<AuthorityEntity>,
+    @InjectRepository(KakaoKeyEntity)
+    private kakaoKeyRepository: Repository<KakaoKeyEntity>,
+    @InjectRepository(AppleKeyEntity)
+    private appleKeyRepository: Repository<AppleKeyEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
     private emailService: EmailService,
+    private recruitmentService: RecruitmentService,
   ) {}
 
   // 문자 출력
@@ -186,9 +190,25 @@ export class AuthService {
       });
     }
 
-    const modifiedCenter = await this.centerRepository.findOne({
-      where: { id },
-    });
+    // 채용공고의 정보도 바꾸기
+    if (center.recruitment) {
+      if (centerModifyRequestDto.address) {
+        const hiringRecruitment = await this.recruitmentRepository.findOneBy({
+          center,
+        });
+
+        const seperatedAddress = await this.recruitmentService.extractLocation(
+          centerModifyRequestDto.address,
+        );
+        hiringRecruitment.city = seperatedAddress.city;
+        hiringRecruitment.location = seperatedAddress.location;
+        hiringRecruitment.address = centerModifyRequestDto.address;
+
+        await this.recruitmentRepository.save(hiringRecruitment);
+      }
+    }
+
+    const modifiedCenter = await this.centerRepository.findOneBy({ id });
     return modifiedCenter;
   }
 
@@ -198,18 +218,16 @@ export class AuthService {
   ): Promise<UserEntity> {
     const { nickname, email } = userSignUpRequestDto;
 
-    const kakao = await this.signWithRepository.findOne({
-      where: { platform: 'LOCAL' },
+    const local = await this.signWithRepository.findOneBy({
+      platform: 'LOCAL',
     });
 
-    const admin = await this.authorityRepository.findOne({
-      where: { role: 'ADMIN' },
-    });
+    const admin = await this.authorityRepository.findOneBy({ role: 'ADMIN' });
 
     const newAdmin = this.userRepository.create({
       nickname,
       email,
-      signWith: kakao,
+      signWith: local,
       authority: admin,
     });
 
@@ -235,9 +253,7 @@ export class AuthService {
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
 
-    const center = await this.authorityRepository.findOne({
-      where: { role: 'CENTER' },
-    });
+    const center = await this.authorityRepository.findOneBy({ role: 'CENTER' });
 
     const newCenter = this.centerRepository.create({
       signId,
@@ -255,60 +271,60 @@ export class AuthService {
     return savedCenter;
   }
 
-  // 통합 로그인 메서드
-  async signIn(signInRequestDto: SignInRequestDto): Promise<{
+  // 센터 로그인 메서드
+  async centerSignIn(signInRequestDto: CenterSignInRequestDto): Promise<{
     accessToken: string;
     refreshToken: string;
-    member: UserEntity | CenterEntity;
+    center: CenterEntity;
   }> {
     const { signId, password } = signInRequestDto;
 
     // [1] 회원 정보 조회
-    const existingMember = await this.findMemberBySignId(signId);
+    const existingCenter = await this.findCenterBySignId(signId);
 
     if (
-      !existingMember ||
-      !(await bcrypt.compare(password, existingMember.password))
+      !existingCenter ||
+      !(await bcrypt.compare(password, existingCenter.password))
     ) {
       throw new UnauthorizedException('Incorrect signId or password');
     }
 
     // [2] 회원 유형 판별 및 토큰 생성
-    const accessToken = await this.generateAccessToken(existingMember);
-    const refreshToken = await this.generateRefreshToken(existingMember);
+    const accessToken = await this.generateAccessToken(existingCenter);
+    const refreshToken = await this.generateRefreshToken(existingCenter);
 
     // [3] 사용자 정보 반환
-    return { accessToken, refreshToken, member: existingMember };
+    return { accessToken, refreshToken, center: existingCenter };
   }
 
   // signId 중복 확인 메서드
   async checkSignIdExists(signId: string): Promise<void> {
-    const existingCenter = await this.findMemberBySignId(signId);
+    const existingCenter = await this.findCenterBySignId(signId);
     if (existingCenter) {
       throw new ConflictException('signId already exists');
     }
   }
 
   // signId로 센터 찾기 메서드
-  async findMemberBySignId(signId: string): Promise<CenterEntity> {
-    const center: CenterEntity = await this.centerRepository.findOne({
-      where: { signId },
+  async findCenterBySignId(signId: string): Promise<CenterEntity> {
+    const center: CenterEntity = await this.centerRepository.findOneBy({
+      signId,
     });
     return center;
   }
 
   // 이메일 중복 확인 메서드
   async checkEmailExists(email: string): Promise<void> {
-    const existingCenter = await this.findMemberByEmail(email);
+    const existingCenter = await this.findCenterByEmail(email);
     if (existingCenter) {
       throw new ConflictException('email already exists');
     }
   }
 
   // 이메일로 센터 찾기 메서드
-  private async findMemberByEmail(email: string): Promise<CenterEntity> {
-    const center: CenterEntity = await this.centerRepository.findOne({
-      where: { email },
+  private async findCenterByEmail(email: string): Promise<CenterEntity> {
+    const center: CenterEntity = await this.centerRepository.findOneBy({
+      email,
     });
     return center;
   }
@@ -328,31 +344,33 @@ export class AuthService {
 
     const kakaoUserNickname = kakaoAccount.profile.nickname;
     const kakaoEmail = kakaoAccount.email;
-    const kakaoStringId = kakaoUserId.toString();
 
     // 카카오 프로필 데이터를 기반으로 사용자 찾기 또는 생성 로직을 구현
-    const existingUser = await this.userRepository.findOne({
-      where: { signWith: 'KAKAO', signId: kakaoStringId },
+    const existingUser = await this.userRepository.findOneBy({
+      email: kakaoEmail,
     });
-    if (existingUser) {
+    if (existingUser.kakaoKey.kakaoId == kakaoUserId) {
       return existingUser;
     }
 
-    // password 필드에 랜덤 문자열 생성
-    const temporaryPassword = uuidv4(); // 랜덤 문자열 생성
-    const hashedPassword = await this.hashPassword(temporaryPassword);
-
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
-      signId: kakaoStringId,
       nickname: kakaoUserNickname,
       email: kakaoEmail,
-      password: hashedPassword, // 해싱된 임시 비밀번호 사용
-      signWith: 'KAKAO',
-      // 기타 필요한 필드 설정
-      role: 'USER',
+      signWith: await this.signWithRepository.findOneBy({ platform: 'KAKAO' }),
+      authority: await this.authorityRepository.findOneBy({ role: 'USER' }),
     });
-    return await this.userRepository.save(newUser);
+
+    const savedUser = await this.userRepository.save(newUser);
+
+    const newKakaoKey = this.kakaoKeyRepository.create({
+      kakaoId: kakaoUserId,
+      user: savedUser,
+    });
+    const savedKakaoKey = await this.kakaoKeyRepository.save(newKakaoKey);
+
+    savedUser.kakaoKey = savedKakaoKey;
+    return await this.userRepository.save(savedUser);
   }
 
   // 카카오 로그인
@@ -430,10 +448,9 @@ export class AuthService {
   ): Promise<string> {
     // [1] JWT 토큰 생성 (Secret + Payload)
     const payload = {
-      signId: member.signId,
+      id: member.id,
       email: member.email,
-      userId: member.id,
-      role: member.role,
+      role: member.authority.role,
     };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_SECRET,
@@ -443,8 +460,14 @@ export class AuthService {
   }
 
   // Refresh Token 생성 및 저장
-  async generateRefreshToken(member: MemberEntity): Promise<string> {
-    const payload = { signId: member.signId };
+  async generateRefreshToken(
+    member: UserEntity | CenterEntity,
+  ): Promise<string> {
+    const payload = {
+      id: member.id,
+      email: member.email,
+      role: member.authority.role,
+    };
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.REFRESH_SECRET,
       expiresIn: process.env.REFRESH_EXPIRATION,
@@ -455,7 +478,6 @@ export class AuthService {
 
     const refreshTokenEntity = this.refreshTokenRepository.create({
       token: refreshToken,
-      signId: member.signId,
       expiresAt,
       user: member instanceof UserEntity ? member : null,
       center: member instanceof CenterEntity ? member : null,
@@ -467,12 +489,10 @@ export class AuthService {
 
   // Refresh Token 검증
   async validateRefreshToken(
-    signId: string,
     refreshToken: string,
   ): Promise<UserEntity | CenterEntity> {
     const tokenEntity = await this.refreshTokenRepository.findOne({
-      where: { token: refreshToken, signId },
-      relations: ['user', 'center'],
+      where: { token: refreshToken },
     });
 
     if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
@@ -484,8 +504,8 @@ export class AuthService {
 
   // 해당 refresh Token 삭제 (로그아웃 시)
   async revokeRefreshToken(refreshToken: string): Promise<void> {
-    const tokenEntity = await this.refreshTokenRepository.findOne({
-      where: { token: refreshToken },
+    const tokenEntity = await this.refreshTokenRepository.findOneBy({
+      token: refreshToken,
     });
     if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refreshToken');
@@ -495,8 +515,14 @@ export class AuthService {
   }
 
   // 해당 아이디의 모든 refresh token 삭제 (회원 탈퇴 시)
-  async revokeRefreshTokenBySignId(signId: string): Promise<void> {
-    await this.refreshTokenRepository.delete({ signId: signId });
+  async revokeRefreshTokenBySignId(
+    member: UserEntity | CenterEntity,
+  ): Promise<void> {
+    if (member instanceof UserEntity) {
+      await this.refreshTokenRepository.delete({ user: member });
+    } else {
+      await this.refreshTokenRepository.delete({ center: member });
+    }
   }
 
   // 만료된 refresh token 삭제
@@ -506,15 +532,12 @@ export class AuthService {
   }
 
   // Access Token 갱신
-  async refreshAccessToken(
-    signId: string,
-    refreshToken: string,
-  ): Promise<{
+  async refreshAccessToken(refreshToken: string): Promise<{
     accessToken: string;
     refreshToken: string;
     member: UserEntity | CenterEntity;
   }> {
-    const member = await this.validateRefreshToken(signId, refreshToken);
+    const member = await this.validateRefreshToken(refreshToken);
 
     // 새 Access Token 생성
     const newAccessToken = await this.generateAccessToken(member);
@@ -565,11 +588,11 @@ export class AuthService {
   }
 
   // 앱 어드민 키, Kakao 회원번호로 Kakao 연결 끊기
-  async unlinkKakao(signId: string): Promise<void> {
+  async unlinkKakao(kakaoId: number): Promise<void> {
     const unlinkUrl = 'https://kapi.kakao.com/v1/user/unlink';
     const payload = {
       target_id_type: 'user_id',
-      target_id: Number(signId),
+      target_id: kakaoId,
     };
     const response = await firstValueFrom(
       this.httpService.post(unlinkUrl, null, {
@@ -585,33 +608,20 @@ export class AuthService {
 
   // 회원 탈퇴 기능
   async deleteUser(member: UserEntity | CenterEntity): Promise<void> {
-    const signId = member.signId;
     //해당 signId의 모든 refreshToken 삭제
-    await this.revokeRefreshTokenBySignId(signId);
+    await this.revokeRefreshTokenBySignId(member);
 
     // 탈퇴 처리
     if (member instanceof UserEntity) {
-      if (member.signWith == 'KAKAO') {
-        await this.unlinkKakao(member.signId);
+      if (member.signWith.platform == 'KAKAO') {
+        await this.unlinkKakao(member.kakaoKey.kakaoId);
       }
-      if (member.signWith == 'APPLE') {
-        await this.revokeAppleTokens(member.password);
+      if (member.signWith.platform == 'APPLE') {
+        await this.revokeAppleTokens(member.appleKey.appleRefreshToken);
       }
-      await this.userRepository.delete({ signId: signId });
+      await this.userRepository.delete({ id: member.id });
     } else {
-      await this.gymRepository.update(
-        { center: member },
-        { center: null, apply: null },
-      );
-
-      // 디비 업데이트용
-      await this.gym2Repository.update(
-        { center: member },
-        { center: null, apply: null },
-      );
-
-      await this.expiredGymRepository.delete({ center: member });
-      await this.centerRepository.delete({ signId: signId });
+      await this.centerRepository.delete({ id: member.id });
     }
   }
 
@@ -661,7 +671,7 @@ export class AuthService {
     payload: any,
   ): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
     try {
-      const { sub: userAppleId } = await appleSignin.verifyIdToken(
+      const { sub: appleId } = await appleSignin.verifyIdToken(
         payload.id_token,
       );
 
@@ -693,15 +703,16 @@ export class AuthService {
         const { refresh_token: appleRefreshToken } =
           await appleSignin.getAuthorizationToken(payload.code, options);
         user = await this.signUpWithApple(
-          userAppleId,
-          appleRefreshToken,
-          email,
           name,
+          email,
+          appleId,
+          appleRefreshToken,
         );
       } else {
         // 기존 애플 사용자 정보 불러오기
-        user = await this.userRepository.findOne({
-          where: { signId: userAppleId },
+        const appleKey = await this.appleKeyRepository.findOneBy({ appleId });
+        user = await this.userRepository.findOneBy({
+          appleKey,
         });
       }
 
@@ -718,23 +729,30 @@ export class AuthService {
 
   // 애플 정보 기반 회원가입 또는 로그인 처리
   async signUpWithApple(
-    userAppleId: string,
-    appleRefreshToken: string,
-    email: string,
     name: string,
+    email: string,
+    appleId: string,
+    appleRefreshToken: string,
   ): Promise<UserEntity> {
     // 새 사용자 생성 로직
     const newUser = this.userRepository.create({
-      signId: userAppleId, // apple 계정별 고유 아이디
       nickname: name,
       email: email,
-      password: appleRefreshToken, // apple refresh token 사용
-      signWith: 'APPLE',
-      // 기타 필요한 필드 설정
-      role: 'USER',
+      signWith: await this.signWithRepository.findOneBy({ platform: 'APPLE' }),
+      authority: await this.authorityRepository.findOneBy({ role: 'USER' }),
     });
 
-    return await this.userRepository.save(newUser);
+    const savedUser = await this.userRepository.save(newUser);
+
+    const newAppleKey = this.appleKeyRepository.create({
+      appleId,
+      appleRefreshToken,
+      user: savedUser,
+    });
+    const savedAppleKey = await this.appleKeyRepository.save(newAppleKey);
+
+    savedUser.appleKey = savedAppleKey;
+    return await this.userRepository.save(savedUser);
   }
 
   async revokeAppleTokens(appleRefreshToken: string): Promise<void> {

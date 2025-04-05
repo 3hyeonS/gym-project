@@ -10,17 +10,17 @@ import { KakaoStrategy } from './kakao.strategy';
 import { HttpModule } from '@nestjs/axios';
 import { CenterEntity } from './entity/center.entity';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
-import { GymEntity } from 'src/gyms/entity/gyms.entity';
+import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 import { EmailService } from './email.service';
-import { ExpiredGymEntity } from 'src/gyms/entity/expiredGyms.entity';
+import { ExpiredRecruitmentEntity } from 'src/recruitment/entity/expiredRecruitment.entity';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { JwtModule } from '@nestjs/jwt';
-import { Gym2Entity } from 'src/gyms/entity/gyms2.entity';
 import { AppleStrategy } from './apple.strategy';
 import { AuthorityEntity } from './entity/authority.entity';
 import { KakaoKeyEntity } from './entity/kakaoKey.entity';
 import { AppleKeyEntity } from './entity/appleKey.entity';
 import { SignWithEntity } from './entity/signWith.entity';
+import { RecruitmentModule } from 'src/recruitment/recruitment.module';
 
 // .env 파일 로드
 dotenv.config();
@@ -35,14 +35,14 @@ dotenv.config();
       AppleKeyEntity,
       SignWithEntity,
       RefreshTokenEntity,
-      GymEntity,
-      Gym2Entity,
-      ExpiredGymEntity,
+      RecruitmentEntity,
+      ExpiredRecruitmentEntity,
       EmailCodeEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule,
     HttpModule,
+    RecruitmentModule,
   ],
   controllers: [AuthController],
   providers: [

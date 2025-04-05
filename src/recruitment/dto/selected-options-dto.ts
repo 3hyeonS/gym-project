@@ -13,7 +13,7 @@ export class SelectedOptionsDto {
   @ApiProperty({
     type: [Number],
     description:
-      '명시 안 됨, 채용공고 참고, 성별 무관에 대한 옵션 체크 여부  \n순서: 근무 형태, 근무 시간, 근무일 수 , 주말 당직, 급여 조건, 최대 수업료, 성별, 지원자격, 우대사항  \n0 : 포함하지 않음  \n1: 모두 포함',
+      '명시 안 됨, 채용공고 참고, 성별 무관에 대한 옵션 체크 여부  \n순서: 근무 형태, 근무 시간, 주말 당직, 성별, 급여 조건, 최대 수업료, 복리후생, 지원자격, 우대사항  \n0 : 포함하지 않음  \n1: 모두 포함',
     example: [0, 1, 0, 1, 1, 0, 1, 1, 1],
     default: [1, 1, 1, 1, 1, 1, 1, 1, 1],
   })
@@ -63,22 +63,12 @@ export class SelectedOptionsDto {
   @ApiProperty({
     type: [String],
     description: '근무 시간',
-    example: ['오전', '오후'],
+    example: ['오전~오후 풀타임', '오전 파트타임'],
   })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   selectedWorkTime?: string[];
-
-  @ApiProperty({
-    type: [String],
-    description: '근무일 수',
-    example: ['주5일', '주3일'],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  selectedWorkDays?: string[];
 
   @ApiProperty({
     type: [String],
@@ -89,6 +79,16 @@ export class SelectedOptionsDto {
   @IsString({ each: true })
   @IsOptional()
   selectedWeekendDuty?: string[];
+
+  @ApiProperty({
+    type: [String],
+    description: '성별',
+    example: ['성별 무관', '여성'],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  selectedGender?: string[];
 
   @ApiProperty({
     type: [String],
@@ -111,13 +111,13 @@ export class SelectedOptionsDto {
 
   @ApiProperty({
     type: [String],
-    description: '성별',
-    example: ['성별무관', '여성'],
+    description: '복리후생',
+    example: ['4대 보험', '퇴직금'],
   })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  selectedGender?: string[];
+  selectedWelfare?: string[];
 
   @ApiProperty({
     type: [String],
@@ -127,7 +127,7 @@ export class SelectedOptionsDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  selectedQualifications?: string[];
+  selectedQualification?: string[];
 
   @ApiProperty({
     type: [String],

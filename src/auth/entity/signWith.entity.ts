@@ -10,7 +10,6 @@ export class SignWithEntity {
 
   @OneToMany(() => UserEntity, (user) => user.signWith, {
     nullable: true,
-    eager: true,
     cascade: true,
   })
   users: UserEntity[];

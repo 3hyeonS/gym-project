@@ -13,7 +13,7 @@ export class AppleKeyEntity {
   id: number;
 
   @Column({ type: 'varchar', name: 'key', nullable: false, unique: true })
-  key: string;
+  appleId: string;
 
   @Column({
     type: 'varchar',
@@ -25,7 +25,6 @@ export class AppleKeyEntity {
 
   @OneToOne(() => UserEntity, (user) => user.kakaoKey, {
     nullable: false,
-    eager: true,
     cascade: true,
   })
   @JoinColumn({ name: 'userId' })

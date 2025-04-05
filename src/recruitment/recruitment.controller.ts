@@ -8,7 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { GymsService } from './gyms.service';
+import { RecruitmentService } from './recruitment.service';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -17,7 +17,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { GymResponseDto } from './dto/gym-response-dto';
+import { RecruitmentResponseDto } from './dto/recruitment-response-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
 import { ResponseDto } from '../response-dto';
@@ -25,41 +25,40 @@ import { GenericApiResponse } from 'src/decorators/generic-api-response-decorato
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
-import { GymRegisterRequestDto } from './dto/gym-registration-request-dto';
+import { RecruitmentRegisterRequestDto } from './dto/recruitment-registration-request-dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
-import { MemberRole } from 'src/auth/entity/member.entity';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { GymPageResponseDto } from './dto/gym-page-response-dto';
+import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
-import { GetMyGymResponseDto } from './dto/get-my-gym-response-dto';
+import { GetMyRecruitmentsResponseDto } from './dto/get-my-recruitments-response-dto';
 import { IdRequestDto } from './dto/id-request-dto';
 
-@ApiTags('GymsList')
+@ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
 @ApiExtraModels(ResponseDto)
-@Controller('gyms')
-export class GymsController {
-  constructor(private readonly gymsService: GymsService) {}
+@Controller('recruitment')
+export class RecruitmentController {
+  constructor(private readonly recruitmentService: RecruitmentService) {}
 
   //문자 출력
   @ApiOperation({
-    summary: 'Welcome Gyms 출력',
+    summary: 'Welcome Recruitment 출력',
   })
   @PrimitiveApiResponse({
     status: 200,
     description: '문자 출력 성공',
     message: 'String printed successfully',
     type: 'string',
-    example: 'Welcome Gyms',
+    example: 'Welcome Recruitment',
   })
   @ResponseMsg('String printed successfully')
   @Get()
   getHello(): string {
-    return this.gymsService.getHello();
+    return this.recruitmentService.getHello();
   }
 
   // 공고 총 개수 출력
@@ -76,7 +75,7 @@ export class GymsController {
   @ResponseMsg('Total number of recruitments printed successfully')
   @Get('getTotalNumber')
   async getTotalNumber(): Promise<number> {
-    return await this.gymsService.getTotalNumber();
+    return await this.recruitmentService.getTotalNumber();
   }
 
   // 모든 헬스장 불러오기
@@ -87,7 +86,7 @@ export class GymsController {
     status: 200,
     description: '모든 채용 공고 불러오기 성공',
     message: 'All recruitments returned successfully',
-    model: GymPageResponseDto,
+    model: RecruitmentsPageResponseDto,
   })
   @ResponseMsg('All recruitments returned successfully')
   @Get('getAll')
@@ -95,13 +94,13 @@ export class GymsController {
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
   ): Promise<{
-    gymList: GymResponseDto[];
-    totalGyms: number;
-    totalPages: number;
+    recruitmentsList: RecruitmentResponseDto[];
     page: number;
+    totalRecruitments: number;
+    totalPages: number;
   }> {
-    const allGyms = await this.gymsService.getAll(page, limit);
-    return allGyms;
+    const allRecruitments = await this.recruitmentService.getAll(page, limit);
+    return allRecruitments;
   }
 
   // 선택 조건에 맞는 채용 공고 불러오기
@@ -113,7 +112,7 @@ export class GymsController {
     status: 201,
     description: '해당 조건의 채용 공고 불러오기 성공',
     message: 'Recruitments with selected conditions returned successfully',
-    model: GymPageResponseDto,
+    model: RecruitmentsPageResponseDto,
     isArray: true,
   })
   @ErrorApiResponse({
@@ -130,17 +129,17 @@ export class GymsController {
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
   ): Promise<{
-    gymList: GymResponseDto[];
-    totalGyms: number;
-    totalPages: number;
+    recruitmentsList: RecruitmentResponseDto[];
     page: number;
+    totalRecruitments: number;
+    totalPages: number;
   }> {
-    const searchedGyms = await this.gymsService.searchSelected(
+    const searchedRecruitments = await this.recruitmentService.searchSelected(
       selectedOptionsDto,
       page,
       limit,
     );
-    return searchedGyms;
+    return searchedRecruitments;
   }
 
   // 채용 공고 등록 가능 여부 확인
@@ -165,10 +164,10 @@ export class GymsController {
   })
   @ResponseMsg('Recruitment register availability confirmed successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Post('canRegister')
   async canRegister(@GetUser() center: CenterEntity): Promise<boolean> {
-    return await this.gymsService.canRegister(center);
+    return await this.recruitmentService.canRegister(center);
   }
 
   // 채용 공고 이미지 등록하기
@@ -206,14 +205,14 @@ export class GymsController {
     },
   })
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @UseInterceptors(FilesInterceptor('images', 10))
   @Post('uploadImages')
   async registerImages(
     @GetUser() center: CenterEntity,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<string[]> {
-    return await this.gymsService.uploadImages(center.centerName, files);
+    return await this.recruitmentService.uploadImages(center.centerName, files);
   }
 
   //채용 공고 등록하기
@@ -226,7 +225,7 @@ export class GymsController {
     status: 201,
     description: '채용 공고 등록 성공',
     message: 'Hiring recruitment registered successfully',
-    model: GymResponseDto,
+    model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
@@ -255,17 +254,17 @@ export class GymsController {
   })
   @ResponseMsg('Hiring recruitment registered successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Post('register')
   async register(
     @GetUser() center: CenterEntity,
-    @Body() gymRegisterRequestDto: GymRegisterRequestDto,
-  ): Promise<GymResponseDto> {
-    const registeredGym = await this.gymsService.register(
+    @Body() registerRequestDto: RecruitmentRegisterRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const registeredRecruitment = await this.recruitmentService.register(
       center,
-      gymRegisterRequestDto,
+      registerRequestDto,
     );
-    return registeredGym;
+    return registeredRecruitment;
   }
 
   // 내 공고 불러오기
@@ -277,8 +276,8 @@ export class GymsController {
   @GenericApiResponse({
     status: 200,
     description: '내 공고 불러오기 성공',
-    message: 'Recruitments returned successfully',
-    model: GetMyGymResponseDto,
+    message: 'Recruitment returned successfully',
+    model: GetMyRecruitmentsResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -292,16 +291,21 @@ export class GymsController {
     message: 'Not a member of the CENTER (only CENTER can call this api)',
     error: 'ForbiddenException',
   })
-  @ResponseMsg('Recruitments returned successfully')
+  @ResponseMsg('Recruitment returned successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
-  @Get('getMyGym')
-  async getMyGym(
+  @Roles('CENTER')
+  @Get('getMyRecruitment')
+  async getMyRecruitment(
     @GetUser() center: CenterEntity,
-  ): Promise<GetMyGymResponseDto> {
-    const myGym = await this.gymsService.getMyGym(center);
-    const myExpiredGyms = await this.gymsService.getMyExpiredGyms(center);
-    return new GetMyGymResponseDto(myGym, myExpiredGyms);
+  ): Promise<GetMyRecruitmentsResponseDto> {
+    const myRecruitment =
+      await this.recruitmentService.getMyRecruitment(center);
+    const myExpiredRecruitments =
+      await this.recruitmentService.getMyExpiredRecruitments(center);
+    return new GetMyRecruitmentsResponseDto(
+      myRecruitment,
+      myExpiredRecruitments,
+    );
   }
 
   // 내 채용 중 공고 수정하기
@@ -313,7 +317,7 @@ export class GymsController {
     status: 201,
     description: '내 공고 수정하기 성공',
     message: 'Hiring recruitment modified successfully',
-    model: GymResponseDto,
+    model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
@@ -342,17 +346,17 @@ export class GymsController {
   })
   @ResponseMsg('Hiring recruitment modified successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Post('modify')
-  async modifyMyGym(
+  async modifyMyRecruitment(
     @GetUser() center: CenterEntity,
-    @Body() gymRegisterRequestDto: GymRegisterRequestDto,
-  ): Promise<GymResponseDto> {
-    const modifiedMyGym = await this.gymsService.modifyMyGym(
+    @Body() registerRequestDto: RecruitmentRegisterRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const modifiedRecruitment = await this.recruitmentService.modifyRecruitment(
       center,
-      gymRegisterRequestDto,
+      registerRequestDto,
     );
-    return modifiedMyGym;
+    return modifiedRecruitment;
   }
 
   // 내 채용 중 공고 끌어올리기
@@ -392,10 +396,10 @@ export class GymsController {
   })
   @ResponseMsg('Hiring recruitment refreshed successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Get('refresh')
-  async refreshMyGym(@GetUser() center: CenterEntity): Promise<void> {
-    await this.gymsService.refreshMyGym(center);
+  async refreshMyRecruitment(@GetUser() center: CenterEntity): Promise<void> {
+    await this.recruitmentService.refreshMyRecruitment(center);
   }
 
   // 내 채용 중 공고 만료시키기
@@ -428,10 +432,10 @@ export class GymsController {
   })
   @ResponseMsg('Hiring recruitment expired successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Get('expire')
-  async expireMyGym(@GetUser() center: CenterEntity): Promise<void> {
-    await this.gymsService.expireMyGym(center);
+  async expireMyRecruitment(@GetUser() center: CenterEntity): Promise<void> {
+    await this.recruitmentService.expireMyRecruitment(center);
   }
 
   // 채용 중 공고 삭제하기
@@ -464,10 +468,10 @@ export class GymsController {
   })
   @ResponseMsg('Hiring recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Get('deleteHiring')
-  async deleteMyGym(@GetUser() center: CenterEntity): Promise<void> {
-    await this.gymsService.deleteMyGym(center);
+  async deleteHiring(@GetUser() center: CenterEntity): Promise<void> {
+    await this.recruitmentService.deleteHiring(center);
   }
 
   // 내 만료된 중 공고 삭제하기
@@ -500,9 +504,9 @@ export class GymsController {
   })
   @ResponseMsg('Selected expired recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(MemberRole.CENTER)
+  @Roles('CENTER')
   @Post('deleteExpired')
-  async deleteMyExpiredGym(@Body() idRequestDto: IdRequestDto): Promise<void> {
-    await this.gymsService.deleteMyExpiredGym(idRequestDto.id);
+  async deleteExpired(@Body() idRequestDto: IdRequestDto): Promise<void> {
+    await this.recruitmentService.deleteExpired(idRequestDto.id);
   }
 }

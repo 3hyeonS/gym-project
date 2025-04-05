@@ -1,25 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
-import { GymResponseDto } from './gym-response-dto';
+import { RecruitmentResponseDto } from './recruitment-response-dto';
 
-export class GymPageResponseDto {
+export class RecruitmentsPageResponseDto {
   @ValidateNested()
   @ApiProperty({
-    type: [GymResponseDto],
+    type: [RecruitmentResponseDto],
     description: '공고 리스트',
   })
-  @Type(() => GymResponseDto)
-  gymList: GymResponseDto[];
+  @Type(() => RecruitmentResponseDto)
+  gymList: RecruitmentResponseDto[];
 
   @ApiProperty({
     type: Number,
-    description: '전체 공고 수',
+    description: '총 공고 수',
     example: 100,
   })
   @IsNotEmpty()
   @IsNumber()
-  totalGyms: number;
+  totalRecruitments: number;
 
   @ApiProperty({
     type: Number,

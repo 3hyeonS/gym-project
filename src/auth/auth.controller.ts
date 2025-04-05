@@ -19,7 +19,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { CenterResponseDto } from './dto/center-response.dto';
 import { CenterEntity } from './entity/center.entity';
-import { SignInRequestDto } from './dto/sign-in-request.dto';
+import { CenterSignInRequestDto } from './dto/sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,
@@ -136,7 +136,7 @@ export class AuthController {
     message: 'email must be an email',
     error: 'BadRequestException',
   })
-  @ResponseMsg('signId duplicate checked successfully')
+  @ResponseMsg('email duplicate checked successfully')
   @Post('/signup/checkEmail')
   async checkEmailExists(
     @Body() emailRequestDto: EmailRequestDto,
@@ -532,15 +532,14 @@ export class AuthController {
     return centerResponseDto;
   }
 
-  // 통합 로그인 엔드포인트
+  // 센터 로그인 엔드포인트
   @ApiOperation({
-    summary: '통합 로그인',
-    description: '유저, 관리자, 센터 통합 로그인',
+    summary: '센터 로그인',
   })
   @GenericApiResponse({
     status: 201,
     description: '로그인 성공',
-    message: 'Signed in successfully',
+    message: 'Center signed in successfully',
     model: tokenResponseDto,
   })
   @ErrorApiResponse({
@@ -555,25 +554,24 @@ export class AuthController {
     message: 'Incorrect signId or password',
     error: 'UnauthorizedException',
   })
-  @ResponseMsg('Signed in successfully')
-  @Post('/signin')
-  async signIn(@Body() signInRequestDto: SignInRequestDto): Promise<{
-    member: UserResponseDto | CenterResponseDto;
+  @ResponseMsg('Center signed in successfully')
+  @Post('/centerSignin')
+  async centerSignIn(
+    @Body() centerSignInRequestDto: CenterSignInRequestDto,
+  ): Promise<{
+    center: CenterResponseDto;
     accessToken: string;
     refreshToken: string;
   }> {
     // [1] 로그인 처리
-    const { accessToken, refreshToken, member } =
-      await this.authService.signIn(signInRequestDto);
+    const { accessToken, refreshToken, center } =
+      await this.authService.centerSignIn(centerSignInRequestDto);
 
-    const responseDto =
-      member instanceof UserEntity
-        ? new UserResponseDto(member)
-        : new CenterResponseDto(member);
+    const centerResponseDto = new CenterResponseDto(center);
 
     // [2] 응답 반환 JSON으로 토큰 전송
     return {
-      member: responseDto,
+      center: centerResponseDto,
       accessToken: accessToken,
       refreshToken: refreshToken,
     };
@@ -687,8 +685,8 @@ export class AuthController {
     const decodedToken = (await this.jwtService.decode(
       refreshTokenRequestDto.refreshToken,
     )) as any;
-    const signId = decodedToken?.signId;
-    if (!signId) {
+    const email = decodedToken?.email;
+    if (!email) {
       throw new UnauthorizedException('Invalid or expired refreshToken');
     }
     const {
@@ -696,7 +694,6 @@ export class AuthController {
       refreshToken: newRefreshToken,
       member,
     } = await this.authService.refreshAccessToken(
-      signId,
       refreshTokenRequestDto.refreshToken,
     );
     const responseDto =

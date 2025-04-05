@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GymsModule } from './gyms/gyms.module';
+import { RecruitmentModule } from './recruitment/recruitment.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { typeOrmConfig } from './config/typeorm.config';
@@ -13,7 +13,7 @@ import { typeOrmConfig } from './config/typeorm.config';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(typeOrmConfig),
-    GymsModule,
+    RecruitmentModule,
     AuthModule,
   ],
   controllers: [AppController],

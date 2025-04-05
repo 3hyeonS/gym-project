@@ -24,6 +24,7 @@ export class UserEntity {
   email: string;
 
   @ManyToOne(() => SignWithEntity, (signWith) => signWith.platform, {
+    eager: true,
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -31,6 +32,7 @@ export class UserEntity {
   signWith: SignWithEntity;
 
   @OneToOne(() => KakaoKeyEntity, (kakaoKey) => kakaoKey.user, {
+    eager: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -38,6 +40,7 @@ export class UserEntity {
   kakaoKey: KakaoKeyEntity;
 
   @OneToOne(() => AppleKeyEntity, (appleKey) => appleKey.user, {
+    eager: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -45,6 +48,7 @@ export class UserEntity {
   appleKey: AppleKeyEntity;
 
   @ManyToOne(() => AuthorityEntity, (authority) => authority.role, {
+    eager: true,
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -53,7 +57,6 @@ export class UserEntity {
 
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.user, {
     nullable: true,
-    eager: true,
     cascade: true,
   })
   refreshTokens: RefreshTokenEntity[];
