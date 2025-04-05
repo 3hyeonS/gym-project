@@ -12,14 +12,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { UserEntity } from './entity/user.entity';
-import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
+import { AdminSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
-import { CenterSignInRequestDto } from './dto/sign-in-request.dto';
+import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
@@ -33,6 +33,7 @@ import { AuthorityEntity } from './entity/authority.entity';
 import { KakaoKeyEntity } from './entity/kakaoKey.entity';
 import { AppleKeyEntity } from './entity/appleKey.entity';
 import { RecruitmentService } from 'src/recruitment/recruitment.service';
+import { AdminSignInRequestDto } from './dto/admin-sign-in-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -214,9 +215,9 @@ export class AuthService {
 
   // 관리자 회원 가입
   async adminSignUp(
-    userSignUpRequestDto: UserSignUpRequestDto,
+    adminSignUpRequestDto: AdminSignUpRequestDto,
   ): Promise<UserEntity> {
-    const { nickname, email } = userSignUpRequestDto;
+    const { adminId, email } = adminSignUpRequestDto;
 
     const local = await this.signWithRepository.findOneBy({
       platform: 'LOCAL',
@@ -225,7 +226,7 @@ export class AuthService {
     const admin = await this.authorityRepository.findOneBy({ role: 'ADMIN' });
 
     const newAdmin = this.userRepository.create({
-      nickname,
+      nickname: adminId,
       email,
       signWith: local,
       authority: admin,
@@ -271,13 +272,40 @@ export class AuthService {
     return savedCenter;
   }
 
+  // 관리자 로그인 메서드
+  async adminSignIn(adminSignInRequestDto: AdminSignInRequestDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    admin: UserEntity;
+  }> {
+    const { adminId, email } = adminSignInRequestDto;
+
+    const existingAdmin = await this.userRepository.findOneBy({
+      nickname: adminId,
+      email,
+    });
+
+    if (
+      !existingAdmin ||
+      existingAdmin.signWith.platform != 'LOCAL' ||
+      existingAdmin.authority.role != 'ADMIN'
+    ) {
+      throw new UnauthorizedException('Incorrect adminId or email');
+    }
+
+    const accessToken = await this.generateAccessToken(existingAdmin);
+    const refreshToken = await this.generateRefreshToken(existingAdmin);
+
+    return { accessToken, refreshToken, admin: existingAdmin };
+  }
+
   // 센터 로그인 메서드
-  async centerSignIn(signInRequestDto: CenterSignInRequestDto): Promise<{
+  async centerSignIn(centerSignInRequestDto: CenterSignInRequestDto): Promise<{
     accessToken: string;
     refreshToken: string;
     center: CenterEntity;
   }> {
-    const { signId, password } = signInRequestDto;
+    const { signId, password } = centerSignInRequestDto;
 
     // [1] 회원 정보 조회
     const existingCenter = await this.findCenterBySignId(signId);

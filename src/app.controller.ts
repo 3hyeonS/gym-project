@@ -18,7 +18,7 @@ export class AppController {
     description: '문자 출력 성공',
     message: 'String printed successfully',
     type: 'string',
-    example: 'Welcome',
+    example: 'Welcome Village',
   })
   @ResponseMsg('String printed successfully')
   @Get()

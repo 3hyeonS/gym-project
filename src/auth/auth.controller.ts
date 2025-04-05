@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserSignUpRequestDto } from './dto/user-sign-up-request.dto';
+import { AdminSignUpRequestDto } from './dto/user-sign-up-request.dto';
 import { UserEntity } from './entity/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/get-user-decorator';
@@ -19,7 +19,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { CenterResponseDto } from './dto/center-response.dto';
 import { CenterEntity } from './entity/center.entity';
-import { CenterSignInRequestDto } from './dto/sign-in-request.dto';
+import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,
@@ -226,7 +226,7 @@ export class AuthController {
   @ResponseMsg('Administer signed up successfully')
   @Post('/signup/admin')
   async adminSignUp(
-    @Body() userSignUpRequestDto: UserSignUpRequestDto,
+    @Body() userSignUpRequestDto: AdminSignUpRequestDto,
   ): Promise<UserResponseDto> {
     const admin = await this.authService.adminSignUp(userSignUpRequestDto);
     const userResponseDto = new UserResponseDto(admin);
@@ -530,6 +530,51 @@ export class AuthController {
     );
     const centerResponseDto = new CenterResponseDto(modifiedCenter);
     return centerResponseDto;
+  }
+
+  // 관리자 로그인 엔드포인트
+  @ApiOperation({
+    summary: '관리자 로그인',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '로그인 성공',
+    message: 'Admin signed in successfully',
+    model: tokenResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'adminId should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '잘못된 adminId 혹은 email',
+    message: 'Incorrect adminId or email',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Admin signed in successfully')
+  @Post('/adminSignin')
+  async adminSignIn(
+    @Body() adminSignInRequestDto: AdminSignUpRequestDto,
+  ): Promise<{
+    admin: UserResponseDto;
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    // [1] 로그인 처리
+    const { accessToken, refreshToken, admin } =
+      await this.authService.adminSignIn(adminSignInRequestDto);
+
+    const userResponseDto = new UserResponseDto(admin);
+
+    // [2] 응답 반환 JSON으로 토큰 전송
+    return {
+      admin: userResponseDto,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    };
   }
 
   // 센터 로그인 엔드포인트
