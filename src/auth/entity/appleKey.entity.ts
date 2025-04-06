@@ -12,7 +12,7 @@ export class AppleKeyEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'key', nullable: false, unique: true })
+  @Column({ type: 'varchar', name: 'appleid', nullable: false, unique: true })
   appleId: string;
 
   @Column({

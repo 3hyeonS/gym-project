@@ -12,8 +12,8 @@ export class KakaoKeyEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'int', name: 'key', nullable: false, unique: true })
-  kakaoId: number;
+  @Column({ type: 'varchar', name: 'kakaoId', nullable: false, unique: true })
+  kakaoId: string;
 
   @OneToOne(() => UserEntity, (user) => user.kakaoKey, {
     nullable: false,

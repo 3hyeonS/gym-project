@@ -366,7 +366,7 @@ export class AuthService {
   // 카카오 정보 회원 가입
   async signUpWithKakao(
     profile: any,
-    kakaoUserId: number,
+    kakaoUserId: string,
   ): Promise<UserEntity> {
     const kakaoAccount = profile.kakao_account;
 
@@ -380,6 +380,8 @@ export class AuthService {
         signWith: { platform: 'KAKAO' },
       },
     });
+    console.log('DB:', JSON.stringify(existingUser.kakaoKey.kakaoId));
+    console.log('API:', JSON.stringify(kakaoUserId));
     if (existingUser?.kakaoKey?.kakaoId === kakaoUserId) {
       return existingUser;
     }
@@ -464,14 +466,14 @@ export class AuthService {
   }
 
   // Kakao Access Token 으로 Kakao 회원 번호 요청
-  async getKakaoUserId(accessToken: string): Promise<number> {
+  async getKakaoUserId(accessToken: string): Promise<string> {
     const tokenInfoUrl = 'https://kapi.kakao.com/v1/user/access_token_info';
     const response = await firstValueFrom(
       this.httpService.get(tokenInfoUrl, {
         headers: { Authorization: `Bearer ${accessToken}` },
       }),
     );
-    return response.data.id;
+    return response.data.id.toString();
   }
 
   // accessToken 생성 공통 메서드
@@ -646,7 +648,7 @@ export class AuthService {
     // 탈퇴 처리
     if (member instanceof UserEntity) {
       if (member.signWith.platform == 'KAKAO') {
-        await this.unlinkKakao(member.kakaoKey.kakaoId);
+        await this.unlinkKakao(Number(member.kakaoKey.kakaoId));
       }
       if (member.signWith.platform == 'APPLE') {
         await this.revokeAppleTokens(member.appleKey.appleRefreshToken);
