@@ -22,9 +22,9 @@ export class EmailService {
         user: 'villageapp2025@gmail.com',
         pass: 'qcsm rxji fvlo iipr',
       },
-      // tls: {
-      //   rejectUnauthorized: false, // SSL 인증서 검증 무시
-      // },
+      tls: {
+        rejectUnauthorized: false, // SSL 인증서 검증 무시
+      },
     });
   }
 

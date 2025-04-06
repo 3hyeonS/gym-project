@@ -72,7 +72,7 @@ export class AuthService {
   }
 
   // 이메일 인증 코드 전송
-  async sendVerificationCode(email): Promise<void> {
+  async sendVerificationCode(email: string): Promise<void> {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     await this.emailService.sendVerificationToEmail(email, code);
     const expiresAt = new Date();
