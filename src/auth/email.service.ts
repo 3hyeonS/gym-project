@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import * as dotenv from 'dotenv';
-import { ProcessCredentials } from 'aws-sdk';
 
-dotenv.config();
 // Email 인터페이스. 타입을 지정해줍니다.
 interface EmailOptions {
   from: string;
