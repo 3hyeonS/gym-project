@@ -380,8 +380,6 @@ export class AuthService {
         signWith: { platform: 'KAKAO' },
       },
     });
-    console.log('DB:', JSON.stringify(existingUser.kakaoKey.kakaoId));
-    console.log('API:', JSON.stringify(kakaoUserId));
     if (existingUser?.kakaoKey?.kakaoId === kakaoUserId) {
       return existingUser;
     }
@@ -427,8 +425,7 @@ export class AuthService {
       // [2] 사용자 정보 반환
       return { accessToken, refreshToken, user };
     } catch (error) {
-      throw error;
-      // throw new UnauthorizedException('Authorization code is Invalid');
+      throw new UnauthorizedException('Authorization code is Invalid');
     }
   }
 
