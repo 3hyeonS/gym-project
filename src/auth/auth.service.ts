@@ -425,8 +425,7 @@ export class AuthService {
       // [2] 사용자 정보 반환
       return { accessToken, refreshToken, user };
     } catch (error) {
-      throw error;
-      // throw new UnauthorizedException('Authorization code is Invalid');
+      throw new UnauthorizedException('Authorization code is Invalid');
     }
   }
 
