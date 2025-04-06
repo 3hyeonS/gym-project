@@ -33,6 +33,7 @@ export class UserEntity {
 
   @OneToOne(() => KakaoKeyEntity, (kakaoKey) => kakaoKey.user, {
     eager: true,
+    cascade: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -41,6 +42,7 @@ export class UserEntity {
 
   @OneToOne(() => AppleKeyEntity, (appleKey) => appleKey.user, {
     eager: true,
+    cascade: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
