@@ -23,7 +23,7 @@ export class AppleKeyEntity {
   })
   appleRefreshToken: string;
 
-  @OneToOne(() => UserEntity, (user) => user.kakaoKey, {
+  @OneToOne(() => UserEntity, (user) => user.appleKey, {
     nullable: false,
   })
   @JoinColumn({ name: 'userId' })
