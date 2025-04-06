@@ -377,7 +377,7 @@ export class AuthService {
     const existingUser = await this.userRepository.findOneBy({
       email: kakaoEmail,
     });
-    if (existingUser.kakaoKey.kakaoId == kakaoUserId) {
+    if (existingUser?.kakaoKey.kakaoId == kakaoUserId) {
       return existingUser;
     }
 
