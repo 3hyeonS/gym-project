@@ -177,6 +177,14 @@ export class RecruitmentResponseDto {
   view: number;
 
   @ApiProperty({
+    type: Number,
+    description:
+      '지원 방법  \n0: 앱 내 지원  \n1: 앱 내 지원 & 이메일+문자 지원',
+    example: 1,
+  })
+  apply: number;
+
+  @ApiProperty({
     type: 'object',
     additionalProperties: {
       type: 'string',
@@ -230,6 +238,7 @@ export class RecruitmentResponseDto {
     this.image = recruitment.image;
 
     if (recruitment.center) {
+      this.apply = recruitment.apply;
       this.contact = {
         email: recruitment.center.email,
         phone: recruitment.center.phone,

@@ -81,6 +81,9 @@ export class RecruitmentEntity {
   @Column({ type: 'int', name: 'view', nullable: false, default: 0 })
   view: number;
 
+  @Column({ type: 'tinyint', name: 'apply', nullable: true })
+  apply: number;
+
   @OneToOne(() => CenterEntity, (center) => center.recruitment, {
     eager: true,
     nullable: true,

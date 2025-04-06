@@ -380,6 +380,7 @@ export class RecruitmentService {
       preference,
       description,
       image,
+      apply,
     } = registerRequestDto;
 
     const seperatedAddress = await this.extractLocation(center.address);
@@ -423,6 +424,7 @@ export class RecruitmentService {
       center: center,
       image, // 이미지 URL 저장
       view: 0,
+      apply,
     });
 
     const savedRecruitment =
