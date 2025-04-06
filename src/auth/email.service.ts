@@ -19,8 +19,8 @@ export class EmailService {
       port: 587, // TLS 전용 포트
       secure: false, // 연결 후 STARTTLS로 암호화
       auth: {
-        user: 'villageapp2025@gmail.com',
-        pass: 'qcsm rxji fvlo iipr',
+        user: process.env.USER,
+        pass: process.env.PASS,
       },
       tls: {
         rejectUnauthorized: false, // SSL 인증서 검증 무시
@@ -30,7 +30,7 @@ export class EmailService {
 
   async sendVerificationToEmail(email: string, code: string): Promise<void> {
     const emailOptions: EmailOptions = {
-      from: '"빌리지" <villageapp2025@gmail.com>', // 보내는 사람 이메일 주소
+      from: 'villageapp2025@gmail.com', // 보내는 사람 이메일 주소
       to: email, // 받는 사람의 이메일 주소
       subject: '가입 인증 메일',
       html: `
