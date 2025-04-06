@@ -25,7 +25,6 @@ export class AppleKeyEntity {
 
   @OneToOne(() => UserEntity, (user) => user.kakaoKey, {
     nullable: false,
-    cascade: true,
   })
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
