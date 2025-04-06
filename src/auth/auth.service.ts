@@ -374,11 +374,13 @@ export class AuthService {
     const kakaoEmail = kakaoAccount.email;
 
     // 카카오 프로필 데이터를 기반으로 사용자 찾기 또는 생성 로직을 구현
-    const existingUser = await this.userRepository.findOneBy({
-      email: kakaoEmail,
-      signWith: await this.signWithRepository.findOneBy({ platform: 'KAKAO' }),
+    const existingUser = await this.userRepository.findOne({
+      where: {
+        email: kakaoEmail,
+        signWith: { platform: 'KAKAO' },
+      },
     });
-    if (existingUser?.kakaoKey?.kakaoId == kakaoUserId) {
+    if (existingUser?.kakaoKey?.kakaoId === kakaoUserId) {
       return existingUser;
     }
 
