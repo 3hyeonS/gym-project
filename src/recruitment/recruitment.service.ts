@@ -183,28 +183,44 @@ export class RecruitmentService {
     // weekendDuty 조건 처리
     if (selectedOptionsDto.selectedWeekendDuty?.length) {
       if (selectedOptionsDto.flexibleOptions[2] == 1) {
-        conditions.push({
-          condition:
-            '(recruitment.weekendDuty = 0 or recruitment.weekendDuty = 3)',
-        });
-      } else {
-        conditions.push({
-          condition: '(recruitment.weekendDuty = wd)',
-          parameters: { wd: selectedOptionsDto.selectedWeekendDuty },
-        });
+        selectedOptionsDto.selectedWeekendDuty.push('명시 안 됨');
+        selectedOptionsDto.selectedWeekendDuty.push('채용공고참고');
       }
+      const weekendDutyMap = {
+        ['명시 안 됨']: 0,
+        ['있음']: 1,
+        ['없음']: 2,
+        ['채용 공고 참고']: 3,
+      };
+      const transformedWeekendDuty: number[] = [];
+      selectedOptionsDto.selectedWeekendDuty.forEach((option) => {
+        transformedWeekendDuty.push(weekendDutyMap[option]);
+      });
+      conditions.push({
+        condition: 'recruitment.weekendDuty IN (:...wd)',
+        parameters: { wd: transformedWeekendDuty },
+      });
     }
 
     // gender 조건 처리
     if (selectedOptionsDto.selectedGender?.length) {
       if (selectedOptionsDto.flexibleOptions[3] == 1) {
-        conditions.push({
-          condition: '(recruitment.gender <= 1)',
-        });
+        selectedOptionsDto.selectedGender.push('명시 안 됨');
+        selectedOptionsDto.selectedGender.push('성별 무관');
       }
+      const genderMap = {
+        ['명시 안 됨']: 0,
+        ['성별 무관']: 1,
+        ['남성']: 2,
+        ['여성']: 3,
+      };
+      const transformedGender: number[] = [];
+      selectedOptionsDto.selectedGender.forEach((option) => {
+        transformedGender.push(genderMap[option]);
+      });
       conditions.push({
-        condition: '(recruitment.gender = gd)',
-        parameters: { gd: selectedOptionsDto.selectedWeekendDuty },
+        condition: 'recruitment.gender IN (:...gd)',
+        parameters: { gd: transformedGender },
       });
     }
 
