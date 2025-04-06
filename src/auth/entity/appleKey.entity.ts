@@ -25,6 +25,8 @@ export class AppleKeyEntity {
 
   @OneToOne(() => UserEntity, (user) => user.appleKey, {
     nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
   user: UserEntity;

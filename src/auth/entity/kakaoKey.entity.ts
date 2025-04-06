@@ -17,6 +17,8 @@ export class KakaoKeyEntity {
 
   @OneToOne(() => UserEntity, (user) => user.kakaoKey, {
     nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
   user: UserEntity;

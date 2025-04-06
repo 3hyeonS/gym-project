@@ -35,8 +35,6 @@ export class UserEntity {
     eager: true,
     cascade: true,
     nullable: true,
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE',
   })
   kakaoKey: KakaoKeyEntity;
 
@@ -44,8 +42,6 @@ export class UserEntity {
     eager: true,
     cascade: true,
     nullable: true,
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE',
   })
   appleKey: AppleKeyEntity;
 
