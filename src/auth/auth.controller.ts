@@ -32,7 +32,7 @@ import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseDto } from 'src/response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
 import { addressResponseDto } from './dto/address-response.dto';
-import { tokenResponseDto } from './dto/token-response-dto';
+import { TokenResponseDto } from './dto/token-response-dto';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
 import { SignIdRequestDto } from './dto/signId-request-dto';
@@ -50,6 +50,8 @@ import { PasswordRequestDto } from './dto/password-request-dto';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
 import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
 import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request.dto';
+import { UserTokenResponseDto } from './dto/user-token-response-dto';
+import { CenterTokenResponseDto } from './dto/center-token-response-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -540,7 +542,7 @@ export class AuthController {
     status: 201,
     description: '로그인 성공',
     message: 'Admin signed in successfully',
-    model: tokenResponseDto,
+    model: UserTokenResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
@@ -559,9 +561,9 @@ export class AuthController {
   async adminSignIn(
     @Body() adminSignInRequestDto: AdminSignUpRequestDto,
   ): Promise<{
-    admin: UserResponseDto;
     accessToken: string;
     refreshToken: string;
+    user: UserResponseDto;
   }> {
     // [1] 로그인 처리
     const { accessToken, refreshToken, admin } =
@@ -571,9 +573,9 @@ export class AuthController {
 
     // [2] 응답 반환 JSON으로 토큰 전송
     return {
-      admin: userResponseDto,
       accessToken: accessToken,
       refreshToken: refreshToken,
+      user: userResponseDto,
     };
   }
 
@@ -585,7 +587,7 @@ export class AuthController {
     status: 201,
     description: '로그인 성공',
     message: 'Center signed in successfully',
-    model: tokenResponseDto,
+    model: CenterTokenResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
@@ -604,9 +606,9 @@ export class AuthController {
   async centerSignIn(
     @Body() centerSignInRequestDto: CenterSignInRequestDto,
   ): Promise<{
-    center: CenterResponseDto;
     accessToken: string;
     refreshToken: string;
+    center: CenterResponseDto;
   }> {
     // [1] 로그인 처리
     const { accessToken, refreshToken, center } =
@@ -616,9 +618,9 @@ export class AuthController {
 
     // [2] 응답 반환 JSON으로 토큰 전송
     return {
-      center: centerResponseDto,
       accessToken: accessToken,
       refreshToken: refreshToken,
+      center: centerResponseDto,
     };
   }
 
@@ -643,7 +645,7 @@ export class AuthController {
     status: 201,
     description: '카카오 로그인에 성공',
     message: 'Signed in successfully with KaKao Account',
-    model: tokenResponseDto,
+    model: UserTokenResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -656,7 +658,7 @@ export class AuthController {
   async kakaoCallback(@Query('code') kakaoAuthResCode: string): Promise<{
     accessToken: string;
     refreshToken: string;
-    member: UserResponseDto;
+    user: UserResponseDto;
   }> {
     const { accessToken, refreshToken, user } =
       await this.authService.signInWithKakao(kakaoAuthResCode);
@@ -665,7 +667,7 @@ export class AuthController {
     return {
       accessToken: accessToken, // 헤더로 사용할 Access Token
       refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-      member: userResponseDto,
+      user: userResponseDto,
     };
   }
 
@@ -703,7 +705,7 @@ export class AuthController {
     status: 201,
     description: '토큰 재발급 성공',
     message: 'Token refreshed successfully',
-    model: tokenResponseDto,
+    model: TokenResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -773,7 +775,7 @@ export class AuthController {
     status: 201,
     description: '애플 로그인에 성공',
     message: 'Signed in successfully with Apple Account',
-    model: tokenResponseDto,
+    model: UserTokenResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -786,7 +788,7 @@ export class AuthController {
   async appleCallback(@Body() payload): Promise<{
     accessToken: string;
     refreshToken: string;
-    member: UserResponseDto;
+    user: UserResponseDto;
   }> {
     const { accessToken, refreshToken, user } =
       await this.authService.signInWithApple(payload);
@@ -795,7 +797,7 @@ export class AuthController {
     return {
       accessToken: accessToken, // 헤더로 사용할 Access Token
       refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
-      member: userResponseDto,
+      user: userResponseDto,
     };
   }
 }

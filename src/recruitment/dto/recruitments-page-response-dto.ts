@@ -10,7 +10,7 @@ export class RecruitmentsPageResponseDto {
     description: '공고 리스트',
   })
   @Type(() => RecruitmentResponseDto)
-  gymList: RecruitmentResponseDto[];
+  recruitmentList: RecruitmentResponseDto[];
 
   @ApiProperty({
     type: Number,
