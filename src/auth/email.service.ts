@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import * as dotenv from 'dotenv';
+import { ProcessCredentials } from 'aws-sdk';
 
+dotenv.config();
 // Email 인터페이스. 타입을 지정해줍니다.
 interface EmailOptions {
   from: string;
@@ -19,8 +22,8 @@ export class EmailService {
       port: 587, // TLS 전용 포트
       secure: false, // 연결 후 STARTTLS로 암호화
       auth: {
-        user: process.env.USER,
-        pass: process.env.PASS,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false, // SSL 인증서 검증 무시
