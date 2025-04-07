@@ -37,6 +37,11 @@ import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dt
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
 import { GetMyRecruitmentsResponseDto } from './dto/get-my-recruitments-response-dto';
 import { IdRequestDto } from './dto/id-request-dto';
+import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
+import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
+import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
+import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
+import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -392,22 +397,21 @@ export class RecruitmentController {
     );
   }
 
-  // 내 채용 중 공고 수정하기
+  // 근무조건 수정하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '내 공고 수정하기',
+    summary: '근무조건 수정하기',
   })
   @GenericApiResponse({
     status: 201,
-    description: '내 공고 수정하기 성공',
-    message: 'Hiring recruitment modified successfully',
+    description: '근무조건 수정하기 성공',
+    message: 'Work condition modified successfully',
     model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
     description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message:
-      'maxClassFee must be a number conforming to the specified constraints',
+    message: 'weekendDuty must be 있음 or 없음 only',
     error: 'BadRequestException',
   })
   @ErrorApiResponse({
@@ -428,17 +432,220 @@ export class RecruitmentController {
     message: 'There is no hring recruitment',
     error: 'NotFoundException',
   })
-  @ResponseMsg('Hiring recruitment modified successfully')
+  @ResponseMsg('Work condition modified successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Post('modify')
-  async modifyMyRecruitment(
+  @Post('workConditionModify')
+  async modifyWorkCondition(
     @GetUser() center: CenterEntity,
-    @Body() registerRequestDto: RecruitmentRegisterRequestDto,
+    @Body() workConditionModifyRequestDto: WorkConditionModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const modifiedRecruitment = await this.recruitmentService.modifyRecruitment(
+    const modifiedRecruitment =
+      await this.recruitmentService.modifyWorkCondition(
+        center,
+        workConditionModifyRequestDto,
+      );
+    return modifiedRecruitment;
+  }
+
+  // 지원조건 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '지원조건 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '지원조건 수정하기 성공',
+    message: 'Apply condition modified successfully',
+    model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'gender must be 성별 무관, 남성 or 여성 only',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 수정 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '채용 중인 공고가 없음',
+    message: 'There is no hring recruitment',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Apply condition modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('applyConditionModify')
+  async modifyApplyCondition(
+    @GetUser() center: CenterEntity,
+    @Body() applyConditionModifyRequestDto: ApplyConditionModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const modifiedRecruitment =
+      await this.recruitmentService.modifyApplyCondition(
+        center,
+        applyConditionModifyRequestDto,
+      );
+    return modifiedRecruitment;
+  }
+
+  // 급여조건 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '급여조건 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '급여조건 수정하기 성공',
+    message: 'Salary condition modified successfully',
+    model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'salary should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 수정 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '채용 중인 공고가 없음',
+    message: 'There is no hring recruitment',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Salary condition modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('salaryConditionModify')
+  async modifySalaryCondition(
+    @GetUser() center: CenterEntity,
+    @Body() salaryCondtionModifyRequestDto: SalaryCondtionModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const modifiedRecruitment =
+      await this.recruitmentService.modifySalaryCondition(
+        center,
+        salaryCondtionModifyRequestDto,
+      );
+    return modifiedRecruitment;
+  }
+
+  // 지원방법 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '지원방법 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '지원방법 수정하기 성공',
+    message: 'Apply modified successfully',
+    model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'apply must be 0 or 1',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 수정 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '채용 중인 공고가 없음',
+    message: 'There is no hring recruitment',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Apply condition modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('applyModify')
+  async modifyApply(
+    @GetUser() center: CenterEntity,
+    @Body() applyModifyRequestDto: ApplyModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const modifiedRecruitment = await this.recruitmentService.modifyApply(
       center,
-      registerRequestDto,
+      applyModifyRequestDto,
+    );
+    return modifiedRecruitment;
+  }
+
+  // 상세요강 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '상세요강 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '상세요강 수정하기 성공',
+    message: 'Detail modified successfully',
+    model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'description must be a string',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 수정 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '채용 중인 공고가 없음',
+    message: 'There is no hring recruitment',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Detail condition modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('detailModify')
+  async modifyDetail(
+    @GetUser() center: CenterEntity,
+    @Body() detailModifyRequestDto: DetailModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const modifiedRecruitment = await this.recruitmentService.modifyDetail(
+      center,
+      detailModifyRequestDto,
     );
     return modifiedRecruitment;
   }

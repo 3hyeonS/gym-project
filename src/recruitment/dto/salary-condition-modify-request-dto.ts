@@ -1,0 +1,92 @@
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+export class SalaryCondtionModifyRequestDto {
+  @ApiProperty({
+    type: [String],
+    description: '급여 조건',
+    example: ['기본급', '수업료', '인센티브'],
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  salary: string[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '기본급 (단위: 만 원), [최저, 최대]',
+    example: [80, 100],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2) // 최소 크기 2
+  @ArrayMaxSize(2) // 최대 크기 2
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
+  basePay: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '수업 단가 (단위: 만 원), [최저, 최대]',
+    example: [5, 6.5],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2) // 최소 크기 2
+  @ArrayMaxSize(2) // 최대 크기 2
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
+  classPay: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '수업료 분배(단위: %), [최저, 최대]',
+    example: [40, 50],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2) // 최소 크기 2
+  @ArrayMaxSize(2) // 최대 크기 2
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
+  classFee: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '월급 (단위: 만 원), [최저, 최대]',
+    example: [200, 250],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2) // 최소 크기 2
+  @ArrayMaxSize(2) // 최대 크기 2
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
+  monthly: number[];
+
+  @ApiProperty({
+    type: [Number],
+    description: '시급 (단위: 만 원), [최저, 최대]',
+    example: [2, 3],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2) // 최소 크기 2
+  @ArrayMaxSize(2) // 최대 크기 2
+  @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
+  hourly: number[];
+
+  @ApiProperty({
+    type: [String],
+    description: '4대 보험, 퇴직금',
+    example: ['4대 보험'],
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  welfare: string[];
+}

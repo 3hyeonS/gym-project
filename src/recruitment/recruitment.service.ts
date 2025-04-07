@@ -17,6 +17,11 @@ import {
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
+import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
+import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
+import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
+import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
+import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
 
 @Injectable()
 export class RecruitmentService {
@@ -569,10 +574,10 @@ export class RecruitmentService {
     await this.expiredRecruitmentRepository.delete({ id });
   }
 
-  // method11: 내 채용 중 공고 수정하기
-  async modifyRecruitment(
+  // 근무조건 수정하기
+  async modifyWorkCondition(
     center: CenterEntity,
-    registerRequestDto: RecruitmentRegisterRequestDto,
+    workConditionModifyRequestDto: WorkConditionModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
@@ -585,19 +590,117 @@ export class RecruitmentService {
       [TWeekendDuty.YES]: 1,
       [TWeekendDuty.NO]: 2,
     };
-    const transformedWeekendDuty = weekendDutyMap[myRecruitment.weekendDuty];
+    const transformedWeekendDuty =
+      weekendDutyMap[workConditionModifyRequestDto.weekendDuty];
+
+    await this.recruitmentRepository.update(myRecruitment.id, {
+      ...workConditionModifyRequestDto,
+      weekendDuty: transformedWeekendDuty,
+    });
+
+    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
+      id: myRecruitment.id,
+    });
+
+    return new RecruitmentResponseDto(updatedRecruitment);
+  }
+
+  // 지원조건 수정하기
+  async modifyApplyCondition(
+    center: CenterEntity,
+    applyConditionModifyRequestDto: ApplyConditionModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
 
     const genderMap = {
       [TGender.BOTH]: 1,
       [TGender.MALE]: 2,
       [TGender.FEMALE]: 3,
     };
-    const transformedGender = genderMap[myRecruitment.gender];
+    const transformedGender = genderMap[applyConditionModifyRequestDto.gender];
 
     await this.recruitmentRepository.update(myRecruitment.id, {
-      ...registerRequestDto,
-      weekendDuty: transformedWeekendDuty,
+      ...applyConditionModifyRequestDto,
       gender: transformedGender,
+    });
+
+    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
+      id: myRecruitment.id,
+    });
+
+    return new RecruitmentResponseDto(updatedRecruitment);
+  }
+
+  // 급여조건 수정하기
+  async modifySalaryCondition(
+    center: CenterEntity,
+    salaryCondtionModifyRequestDto: SalaryCondtionModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    const maxClassFee = salaryCondtionModifyRequestDto.classFee
+      ? salaryCondtionModifyRequestDto.classFee[1]
+      : -2;
+
+    await this.recruitmentRepository.update(myRecruitment.id, {
+      ...salaryCondtionModifyRequestDto,
+      maxClassFee: maxClassFee,
+    });
+
+    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
+      id: myRecruitment.id,
+    });
+
+    return new RecruitmentResponseDto(updatedRecruitment);
+  }
+
+  // 지원방법 수정하기
+  async modifyApply(
+    center: CenterEntity,
+    applyModifyRequestDto: ApplyModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    await this.recruitmentRepository.update(myRecruitment.id, {
+      ...applyModifyRequestDto,
+    });
+
+    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
+      id: myRecruitment.id,
+    });
+
+    return new RecruitmentResponseDto(updatedRecruitment);
+  }
+
+  // 상세요강 수정하기
+  async modifyDetail(
+    center: CenterEntity,
+    detailModifyRequestDto: DetailModifyRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      center,
+    });
+    if (!myRecruitment) {
+      throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    await this.recruitmentRepository.update(myRecruitment.id, {
+      ...detailModifyRequestDto,
     });
 
     const updatedRecruitment = await this.recruitmentRepository.findOneBy({
