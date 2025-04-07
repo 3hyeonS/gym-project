@@ -331,18 +331,15 @@ export class RecruitmentService {
     };
   }
 
-  // 채용 공고 조회 수 증가
-  async viewed(id: number): Promise<void> {
-    const viewedRecruitment = await this.recruitmentRepository.findOneBy({
-      id,
-    });
-
-    if (!viewedRecruitment) {
-      throw new NotFoundException('There is no hiring recruitment');
+  // 채용 공고 1개 조회
+  async getOne(id: number): Promise<RecruitmentResponseDto> {
+    const recruitment = await this.recruitmentRepository.findOneBy({ id });
+    if (!recruitment) {
+      throw new NotFoundException('There is no recruitment');
     }
-
-    viewedRecruitment.view = viewedRecruitment.view + 1;
-    await this.recruitmentRepository.save(viewedRecruitment);
+    recruitment.view = recruitment.view + 1;
+    const savedRecruitment = await this.recruitmentRepository.save(recruitment);
+    return new RecruitmentResponseDto(savedRecruitment);
   }
 
   // 채용 공고 등록 가능 여부 확인
@@ -488,6 +485,30 @@ export class RecruitmentService {
     return myExpiredRecruitments.map(
       (recruitment) => new RecruitmentResponseDto(recruitment),
     );
+  }
+
+  // 내 공고 1개 불러오기
+  async getMyOneRecruitment(
+    center: CenterEntity,
+    id: number,
+    ishiring: number,
+  ): Promise<RecruitmentResponseDto> {
+    let myRecruitment: RecruitmentEntity | ExpiredRecruitmentEntity;
+    if (ishiring == 0) {
+      myRecruitment = await this.recruitmentRepository.findOneBy({
+        id,
+        center,
+      });
+    } else {
+      myRecruitment = await this.expiredRecruitmentRepository.findOneBy({
+        id,
+        center,
+      });
+    }
+    if (!myRecruitment) {
+      throw new NotFoundException('There is no recruitment');
+    }
+    return new RecruitmentResponseDto(myRecruitment);
   }
 
   // method7: 내 채용 중 공고 끌어올리기

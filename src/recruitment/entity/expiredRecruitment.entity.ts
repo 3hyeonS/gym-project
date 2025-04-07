@@ -1,7 +1,7 @@
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({ name: 'expiredGymList' })
+@Entity({ name: 'expiredRecruitmentList' })
 export class ExpiredRecruitmentEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;

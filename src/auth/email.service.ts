@@ -32,7 +32,7 @@ export class EmailService {
     const emailOptions: EmailOptions = {
       from: 'villageapp2025@gmail.com', // 보내는 사람 이메일 주소
       to: email, // 받는 사람의 이메일 주소
-      subject: '가입 인증 메일',
+      subject: '빌리지 인증 메일',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
           <h2 style="text-align: center; color: #333;">Village 인증 메일</h2>

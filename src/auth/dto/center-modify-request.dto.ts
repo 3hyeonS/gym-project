@@ -27,18 +27,6 @@ export class CenterModifyRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '대표자 이름',
-    example: '홍길동',
-  })
-  @IsNotEmpty() // null 값 체크
-  @IsString()
-  @Length(1, 20) // 문자 수
-  // // @IsAlphanumeric() // 영문 알파벳만 허용일 경우
-  // @Matches(/^[가-힣]+$/, { message: 'ceoName 은 한글로 입력되어야 합니다.' })
-  ceoName: string;
-
-  @ApiProperty({
-    type: String,
     description: '대표 전화번호',
     example: '010-0000-0000',
   })
@@ -58,14 +46,4 @@ export class CenterModifyRequestDto {
   @IsEmail()
   @Length(1, 100)
   email: string;
-
-  @ApiProperty({
-    type: String,
-    description: '주소',
-    example: '서울특별시 00구 00로 00',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @Length(1, 100) // 주소는 최대 100자
-  address: string;
 }

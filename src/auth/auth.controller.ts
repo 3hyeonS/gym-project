@@ -156,7 +156,7 @@ export class AuthController {
 
   // 이메일 인증코드 전송
   @ApiOperation({
-    summary: '회원가입 이메일 인증코드 전송',
+    summary: '이메일 인증코드 전송',
   })
   @NullApiResponse({
     status: 201,

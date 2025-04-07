@@ -143,7 +143,7 @@ export class RecruitmentRegisterRequestDto {
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  welfare: string[];
+  welfare: string[] = ['없음'];
 
   @ApiProperty({
     type: [String],
@@ -153,7 +153,7 @@ export class RecruitmentRegisterRequestDto {
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  qualification: string[];
+  qualification: string[] = ['없음'];
 
   @ApiProperty({
     type: [String],
@@ -163,7 +163,7 @@ export class RecruitmentRegisterRequestDto {
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  preference: string[];
+  preference: string[] = ['없음'];
 
   @ApiProperty({
     type: String,

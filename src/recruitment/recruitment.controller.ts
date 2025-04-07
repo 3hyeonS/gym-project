@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -78,7 +79,37 @@ export class RecruitmentController {
     return await this.recruitmentService.getTotalNumber();
   }
 
-  // 모든 헬스장 불러오기
+  // 채용 공고 1개 불러오기(조회수 증가)
+  @ApiOperation({
+    summary: '채용 공고 1개 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '채용 공고 불러오기 성공',
+    message: 'Recruitment returned successfully',
+    model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '해당 id의 채용 공고가 없음',
+    message: 'There is no recruitment',
+    error: 'NotFoundException',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'id must be a number conforming to the specified constraints',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('Recruitment returned successfully')
+  @Post('getOne')
+  async getOne(
+    @Body() idRequestDto: IdRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    return await this.recruitmentService.getOne(idRequestDto.id);
+  }
+
+  // 모든 공고 불러오기
   @ApiOperation({
     summary: '모든 채용 공고 불러오기',
   })
@@ -267,16 +298,16 @@ export class RecruitmentController {
     return registeredRecruitment;
   }
 
-  // 내 공고 불러오기
+  // 내 모든 공고 불러오기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '공고 불러오기',
+    summary: '내 모든 공고 불러오기',
     description: 'hiring: 채용 중 공고  \nexpired: 만료된 공고',
   })
   @GenericApiResponse({
     status: 200,
-    description: '내 공고 불러오기 성공',
-    message: 'Recruitment returned successfully',
+    description: '내 모든 공고 불러오기 성공',
+    message: 'My all recruitments returned successfully',
     model: GetMyRecruitmentsResponseDto,
   })
   @ErrorApiResponse({
@@ -291,11 +322,11 @@ export class RecruitmentController {
     message: 'Not a member of the CENTER (only CENTER can call this api)',
     error: 'ForbiddenException',
   })
-  @ResponseMsg('Recruitment returned successfully')
+  @ResponseMsg('My all recruitments returned successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Get('getMyRecruitment')
-  async getMyRecruitment(
+  @Get('getMyAll')
+  async getMyAll(
     @GetUser() center: CenterEntity,
   ): Promise<GetMyRecruitmentsResponseDto> {
     const myRecruitment =
@@ -305,6 +336,59 @@ export class RecruitmentController {
     return new GetMyRecruitmentsResponseDto(
       myRecruitment,
       myExpiredRecruitments,
+    );
+  }
+
+  // 내 공고 1개 불러오기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 공고 1개 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '내 공고 1개 불러오기 성공',
+    message: 'My Recruitment returned successfully',
+    model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'id must be a number conforming to the specified constraints',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 공고 불러오기 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '해당 id의 공고가 없음',
+    message: 'There is no recruitment',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('My Recruitment returned successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('getMyOne')
+  async getMyOne(
+    @GetUser() center: CenterEntity,
+    @Body() idRequestDto: IdRequestDto,
+  ): Promise<RecruitmentResponseDto> {
+    if (!idRequestDto.ishiring) {
+      throw new BadRequestException('ishiring cannot be empty');
+    }
+    return await this.recruitmentService.getMyOneRecruitment(
+      center,
+      idRequestDto.id,
+      idRequestDto.ishiring,
     );
   }
 

@@ -191,23 +191,24 @@ export class AuthService {
       });
     }
 
-    // 채용공고의 정보도 바꾸기
-    if (center.recruitment) {
-      if (centerModifyRequestDto.address) {
-        const hiringRecruitment = await this.recruitmentRepository.findOneBy({
-          center,
-        });
+    // // 채용공고의 주소 정보도 바꾸기
+    // if (center.recruitment) {
+    //   if (centerModifyRequestDto.address) {
+    //     const hiringRecruitment = await this.recruitmentRepository.findOneBy({
+    //       center,
+    //     });
+    //     if (hiringRecruitment) {
+    //       const seperatedAddress = await this.recruitmentService.extractLocation(
+    //         centerModifyRequestDto.address,
+    //       );
+    //       hiringRecruitment.city = seperatedAddress.city;
+    //       hiringRecruitment.location = seperatedAddress.location;
+    //       hiringRecruitment.address = centerModifyRequestDto.address;
 
-        const seperatedAddress = await this.recruitmentService.extractLocation(
-          centerModifyRequestDto.address,
-        );
-        hiringRecruitment.city = seperatedAddress.city;
-        hiringRecruitment.location = seperatedAddress.location;
-        hiringRecruitment.address = centerModifyRequestDto.address;
-
-        await this.recruitmentRepository.save(hiringRecruitment);
-      }
-    }
+    //       await this.recruitmentRepository.save(hiringRecruitment);
+    //     }
+    //   }
+    // }
 
     const modifiedCenter = await this.centerRepository.findOneBy({ id });
     return modifiedCenter;
