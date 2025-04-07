@@ -387,7 +387,7 @@ export class RecruitmentController {
     @GetUser() center: CenterEntity,
     @Body() idRequestDto: IdRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    if (!idRequestDto.ishiring) {
+    if (!idRequestDto.ishiring && idRequestDto.ishiring != 0) {
       throw new BadRequestException('ishiring cannot be empty');
     }
     return await this.recruitmentService.getMyOneRecruitment(
