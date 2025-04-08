@@ -502,7 +502,6 @@ export class RecruitmentController {
   @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '급여조건 수정하기',
-    description: '있는 값을 없애고 싶으면 해당 값에 null을 채워서 보내야 함',
   })
   @GenericApiResponse({
     status: 201,
