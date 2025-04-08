@@ -17,7 +17,7 @@ import {
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
-import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
+import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
@@ -574,10 +574,10 @@ export class RecruitmentService {
     await this.expiredRecruitmentRepository.delete({ id });
   }
 
-  // 근무조건 수정하기
-  async modifyWorkCondition(
+  // 주말당직 수정하기
+  async modifyWeekendDuty(
     center: CenterEntity,
-    workConditionModifyRequestDto: WorkConditionModifyRequestDto,
+    weekendDutyModifyRequestDto: WeekendDutyModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
@@ -591,17 +591,12 @@ export class RecruitmentService {
       [TWeekendDuty.NO]: 2,
     };
     const transformedWeekendDuty =
-      weekendDutyMap[workConditionModifyRequestDto.weekendDuty];
+      weekendDutyMap[weekendDutyModifyRequestDto.weekendDuty];
 
-    await this.recruitmentRepository.update(myRecruitment.id, {
-      ...workConditionModifyRequestDto,
-      weekendDuty: transformedWeekendDuty,
-    });
+    myRecruitment.weekendDuty = transformedWeekendDuty;
 
-    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
-      id: myRecruitment.id,
-    });
-
+    const updatedRecruitment =
+      await this.recruitmentRepository.save(myRecruitment);
     return new RecruitmentResponseDto(updatedRecruitment);
   }
 
@@ -676,14 +671,10 @@ export class RecruitmentService {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
-    await this.recruitmentRepository.update(myRecruitment.id, {
-      ...applyModifyRequestDto,
-    });
+    myRecruitment.apply = applyModifyRequestDto.apply;
 
-    const updatedRecruitment = await this.recruitmentRepository.findOneBy({
-      id: myRecruitment.id,
-    });
-
+    const updatedRecruitment =
+      await this.recruitmentRepository.save(myRecruitment);
     return new RecruitmentResponseDto(updatedRecruitment);
   }
 

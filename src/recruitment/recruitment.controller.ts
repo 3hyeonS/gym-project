@@ -37,7 +37,7 @@ import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dt
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
 import { GetMyRecruitmentsResponseDto } from './dto/get-my-recruitments-response-dto';
 import { IdRequestDto } from './dto/id-request-dto';
-import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
+import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
@@ -397,15 +397,15 @@ export class RecruitmentController {
     );
   }
 
-  // 근무조건 수정하기
+  // 주말당직 수정하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '근무조건 수정하기',
+    summary: '주말당직 수정하기',
   })
   @GenericApiResponse({
     status: 201,
-    description: '근무조건 수정하기 성공',
-    message: 'Work condition modified successfully',
+    description: '주말당직 수정하기 성공',
+    message: 'Weekend duty modified successfully',
     model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
@@ -432,19 +432,18 @@ export class RecruitmentController {
     message: 'There is no hring recruitment',
     error: 'NotFoundException',
   })
-  @ResponseMsg('Work condition modified successfully')
+  @ResponseMsg('Weekend duty modified successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Post('workConditionModify')
-  async modifyWorkCondition(
+  @Post('weekendDutyModify')
+  async modifyWeekendDuty(
     @GetUser() center: CenterEntity,
-    @Body() workConditionModifyRequestDto: WorkConditionModifyRequestDto,
+    @Body() weekendDutyModifyRequestDto: WeekendDutyModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const modifiedRecruitment =
-      await this.recruitmentService.modifyWorkCondition(
-        center,
-        workConditionModifyRequestDto,
-      );
+    const modifiedRecruitment = await this.recruitmentService.modifyWeekendDuty(
+      center,
+      weekendDutyModifyRequestDto,
+    );
     return modifiedRecruitment;
   }
 
@@ -503,6 +502,7 @@ export class RecruitmentController {
   @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '급여조건 수정하기',
+    description: '있는 값을 없애고 싶으면 해당 값에 null을 채워서 보내야 함',
   })
   @GenericApiResponse({
     status: 201,

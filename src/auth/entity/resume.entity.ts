@@ -1,16 +1,15 @@
-import { CenterEntity } from 'src/auth/entity/center.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({ name: 'expiredRecruitment' })
-export class ExpiredRecruitmentEntity {
+@Entity({ name: 'resume' })
+export class ResumeEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'centerName', nullable: false })
-  centerName: string;
+  @Column({ type: 'varchar', name: 'name', nullable: false })
+  name: string;
 
-  @Column({ type: 'varchar', name: 'city', nullable: false })
-  city: string;
+  @Column({ type: 'date', name: 'birth', nullable: false })
+  birth: Date;
 
   @Column({ type: 'varchar', name: 'location', nullable: true })
   location: string;
@@ -77,12 +76,4 @@ export class ExpiredRecruitmentEntity {
 
   @Column({ type: 'tinyint', name: 'apply', nullable: true })
   apply: number;
-
-  @ManyToOne(() => CenterEntity, (center) => center.recruitment, {
-    eager: true,
-    nullable: true,
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE',
-  })
-  center: CenterEntity;
 }

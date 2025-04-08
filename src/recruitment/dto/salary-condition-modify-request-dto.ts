@@ -22,27 +22,27 @@ export class SalaryCondtionModifyRequestDto {
 
   @ApiProperty({
     type: [Number],
-    description: '기본급 (단위: 만 원), [최저, 최대]',
-    example: [80, 100],
+    description: '기본급 (단위: 원), [최저, 최대]',
+    example: [800000, 1000000],
   })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  basePay: number[];
+  basePay: number[] = null;
 
   @ApiProperty({
     type: [Number],
-    description: '수업 단가 (단위: 만 원), [최저, 최대]',
-    example: [5, 6.5],
+    description: '수업 단가 (단위: 원), [최저, 최대]',
+    example: [50000, 65000],
   })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  classPay: number[];
+  classPay: number[] = null;
 
   @ApiProperty({
     type: [Number],
@@ -54,31 +54,31 @@ export class SalaryCondtionModifyRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  classFee: number[];
+  classFee: number[] = null;
 
   @ApiProperty({
     type: [Number],
-    description: '월급 (단위: 만 원), [최저, 최대]',
-    example: [200, 250],
+    description: '월급 (단위: 원), [최저, 최대]',
+    example: [2000000, 2500000],
   })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  monthly: number[];
+  monthly: number[] = null;
 
   @ApiProperty({
     type: [Number],
-    description: '시급 (단위: 만 원), [최저, 최대]',
-    example: [2, 3],
+    description: '시급 (단위: 원), [최저, 최대]',
+    example: [20000, 30000],
   })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  hourly: number[];
+  hourly: number[] = null;
 
   @ApiProperty({
     type: [String],

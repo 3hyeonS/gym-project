@@ -82,15 +82,15 @@ export class RecruitmentResponseDto {
 
   @ApiProperty({
     type: [Number],
-    description: '기본급 (단위: 만 원)',
-    example: [80, 100],
+    description: '기본급 (단위: 원)',
+    example: [800000, 1000000],
   })
   basePay: number[];
 
   @ApiProperty({
     type: [Number],
-    description: '수업 단가 (단위: 만 원)',
-    example: [5, 6.5],
+    description: '수업 단가 (단위: 원)',
+    example: [50000, 65000],
   })
   classPay: number[];
 
@@ -103,15 +103,15 @@ export class RecruitmentResponseDto {
 
   @ApiProperty({
     type: [Number],
-    description: '월급 (단위: 만 원)',
-    example: [200, 250],
+    description: '월급 (단위: 원)',
+    example: [2000000, 2500000],
   })
   monthly: number[];
 
   @ApiProperty({
     type: [Number],
-    description: '시급 (단위: 만 원)',
-    example: [2, 3],
+    description: '시급 (단위: 원)',
+    example: [20000, 30000],
   })
   hourly: number[];
 

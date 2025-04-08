@@ -11,6 +11,7 @@ import { SignWithEntity } from './signWith.entity';
 import { AuthorityEntity } from './authority.entity';
 import { KakaoKeyEntity } from './kakaoKey.entity';
 import { AppleKeyEntity } from './appleKey.entity';
+import { BookmarkEntity } from 'src/recruitment/entity/bookmark.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -52,6 +53,12 @@ export class UserEntity {
     onDelete: 'CASCADE',
   })
   authority: AuthorityEntity;
+
+  @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.recruitment, {
+    nullable: true,
+    cascade: true,
+  })
+  bookmarks: BookmarkEntity[];
 
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.user, {
     nullable: true,

@@ -3,9 +3,11 @@ import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BookmarkEntity } from './bookmark.entity';
 
 @Entity({ name: 'recruitment' })
 export class RecruitmentEntity {
@@ -92,4 +94,10 @@ export class RecruitmentEntity {
   })
   @JoinColumn({ name: 'centerId' }) // GymEntity 테이블에 FK가 생성됨
   center: CenterEntity;
+
+  @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.recruitment, {
+    nullable: true,
+    cascade: true,
+  })
+  bookmarks: BookmarkEntity[];
 }
