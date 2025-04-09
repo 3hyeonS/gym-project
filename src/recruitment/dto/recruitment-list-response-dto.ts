@@ -10,9 +10,9 @@ export class RecruitmentListResponseDto {
     description: '공고 리스트',
   })
   @Type(() => RecruitmentResponseDto)
-  recruitmentLsit: RecruitmentResponseDto[];
+  recruitmentList: RecruitmentResponseDto[];
 
   constructor(recruitmentList: RecruitmentResponseDto[]) {
-    this.recruitmentLsit = recruitmentList;
+    this.recruitmentList = recruitmentList;
   }
 }
