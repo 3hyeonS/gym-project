@@ -35,13 +35,15 @@ import { CenterEntity } from 'src/auth/entity/center.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
-import { GetMyRecruitmentsResponseDto } from './dto/get-my-recruitments-response-dto';
+import { MyRecruitmentsResponseDto } from './dto/my-recruitments-response-dto';
 import { IdRequestDto } from './dto/id-request-dto';
 import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
+import { PopularRecruitmentsResponseDto } from './dto/popular-recruitment-response-dto';
+import { NumRequestDto } from './dto/num-request-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -89,7 +91,7 @@ export class RecruitmentController {
     summary: '채용 공고 1개 불러오기',
   })
   @GenericApiResponse({
-    status: 200,
+    status: 201,
     description: '채용 공고 불러오기 성공',
     message: 'Recruitment returned successfully',
     model: RecruitmentResponseDto,
@@ -112,6 +114,24 @@ export class RecruitmentController {
     @Body() idRequestDto: IdRequestDto,
   ): Promise<RecruitmentResponseDto> {
     return await this.recruitmentService.getOne(idRequestDto.id);
+  }
+
+  // 인기공고 불러오기(3개)
+  @ApiOperation({
+    summary: '인기 공고 불러오기(n개)',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '인기 공고 불러오기 성공',
+    message: 'Popular recruitments returned successfully',
+    model: PopularRecruitmentsResponseDto,
+  })
+  @ResponseMsg('Popular recruitments returned successfully')
+  @Post('poplular')
+  async getPopular(
+    @Body() numRequestDto: NumRequestDto,
+  ): Promise<RecruitmentResponseDto[]> {
+    return await this.recruitmentService.getPopular(numRequestDto.num);
   }
 
   // 모든 공고 불러오기
@@ -313,7 +333,7 @@ export class RecruitmentController {
     status: 200,
     description: '내 모든 공고 불러오기 성공',
     message: 'My all recruitments returned successfully',
-    model: GetMyRecruitmentsResponseDto,
+    model: MyRecruitmentsResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -333,15 +353,12 @@ export class RecruitmentController {
   @Get('getMyAll')
   async getMyAll(
     @GetUser() center: CenterEntity,
-  ): Promise<GetMyRecruitmentsResponseDto> {
+  ): Promise<MyRecruitmentsResponseDto> {
     const myRecruitment =
       await this.recruitmentService.getMyRecruitment(center);
     const myExpiredRecruitments =
       await this.recruitmentService.getMyExpiredRecruitments(center);
-    return new GetMyRecruitmentsResponseDto(
-      myRecruitment,
-      myExpiredRecruitments,
-    );
+    return new MyRecruitmentsResponseDto(myRecruitment, myExpiredRecruitments);
   }
 
   // 내 공고 1개 불러오기

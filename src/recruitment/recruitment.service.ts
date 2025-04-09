@@ -347,6 +347,20 @@ export class RecruitmentService {
     return new RecruitmentResponseDto(savedRecruitment);
   }
 
+  // 인기 공고 조회
+  async getPopular(num: number): Promise<RecruitmentResponseDto[]> {
+    const popularRecruitments = await this.recruitmentRepository.find({
+      order: {
+        view: 'DESC',
+      },
+      take: num,
+    });
+    const recruitmentList = popularRecruitments.map(
+      (recruitment) => new RecruitmentResponseDto(recruitment),
+    );
+    return recruitmentList;
+  }
+
   // 채용 공고 등록 가능 여부 확인
   async canRegister(center: CenterEntity): Promise<boolean> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({

@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { RecruitmentResponseDto } from './recruitment-response-dto';
 
-export class GetMyRecruitmentsResponseDto {
+export class MyRecruitmentsResponseDto {
   @ValidateNested()
   @ApiProperty({
     type: RecruitmentResponseDto,
