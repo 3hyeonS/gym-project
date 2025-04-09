@@ -21,6 +21,8 @@ import { KakaoKeyEntity } from './entity/kakaoKey.entity';
 import { AppleKeyEntity } from './entity/appleKey.entity';
 import { SignWithEntity } from './entity/signWith.entity';
 import { RecruitmentModule } from 'src/recruitment/recruitment.module';
+import { BookmarkEntity } from 'src/recruitment/entity/bookmark.entity';
+import { ResumeEntity } from './entity/resume.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -38,6 +40,8 @@ dotenv.config();
       RecruitmentEntity,
       ExpiredRecruitmentEntity,
       EmailCodeEntity,
+      BookmarkEntity,
+      ResumeEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule,

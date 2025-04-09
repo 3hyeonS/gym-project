@@ -14,6 +14,8 @@ import { KakaoStrategy } from 'src/auth/kakao.strategy';
 import { AuthModule } from 'src/auth/auth.module';
 import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
 import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
+import { BookmarkEntity } from './entity/bookmark.entity';
+import { ResumeEntity } from 'src/auth/entity/resume.entity';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
       RefreshTokenEntity,
       ExpiredRecruitmentEntity,
       EmailCodeEntity,
+      BookmarkEntity,
+      ResumeEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
