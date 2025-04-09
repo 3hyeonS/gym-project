@@ -36,7 +36,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
 import { MyRecruitmentsResponseDto } from './dto/my-recruitments-response-dto';
-import { IdRequestDto } from './dto/id-request-dto';
+import { IdIsHiringRequestDto } from './dto/id-isHiring-request-dto';
 import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
@@ -45,6 +45,7 @@ import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
 import { RecruitmentListResponseDto } from './dto/recruitment-list-response-dto';
 import { NumRequestDto } from './dto/num-request-dto';
 import { UserEntity } from 'src/auth/entity/user.entity';
+import { IdRequestDto } from './dto/id-request-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -410,15 +411,15 @@ export class RecruitmentController {
   @Post('getMyOne')
   async getMyOne(
     @GetUser() center: CenterEntity,
-    @Body() idRequestDto: IdRequestDto,
+    @Body() idRequestDto: IdIsHiringRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    if (!idRequestDto.ishiring && idRequestDto.ishiring != 0) {
-      throw new BadRequestException('ishiring cannot be empty');
+    if (!idRequestDto.isHiring && idRequestDto.isHiring != 0) {
+      throw new BadRequestException('isHiring cannot be empty');
     }
     return await this.recruitmentService.getMyOneRecruitment(
       center,
       idRequestDto.id,
-      idRequestDto.ishiring,
+      idRequestDto.isHiring,
     );
   }
 

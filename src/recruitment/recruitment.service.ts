@@ -551,10 +551,10 @@ export class RecruitmentService {
   async getMyOneRecruitment(
     center: CenterEntity,
     id: number,
-    ishiring: number,
+    isHiring: number,
   ): Promise<RecruitmentResponseDto> {
     let myRecruitment: RecruitmentEntity | ExpiredRecruitmentEntity;
-    if (ishiring == 0) {
+    if (isHiring == 0) {
       myRecruitment = await this.recruitmentRepository.findOneBy({
         id,
         center,
