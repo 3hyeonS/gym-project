@@ -54,7 +54,7 @@ export class UserEntity {
   })
   authority: AuthorityEntity;
 
-  @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.recruitment, {
+  @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.user, {
     nullable: true,
     cascade: true,
   })

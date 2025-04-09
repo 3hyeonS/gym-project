@@ -42,8 +42,9 @@ import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-req
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
-import { PopularRecruitmentsResponseDto } from './dto/popular-recruitment-response-dto';
+import { RecruitmentListResponseDto } from './dto/popular-recruitment-response-dto';
 import { NumRequestDto } from './dto/num-request-dto';
+import { UserEntity } from 'src/auth/entity/user.entity';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -124,7 +125,7 @@ export class RecruitmentController {
     status: 201,
     description: '인기 공고 불러오기 성공',
     message: 'Popular recruitments returned successfully',
-    model: PopularRecruitmentsResponseDto,
+    model: RecruitmentListResponseDto,
   })
   @ResponseMsg('Popular recruitments returned successfully')
   @Post('poplular')
@@ -221,9 +222,11 @@ export class RecruitmentController {
   @ResponseMsg('Recruitment register availability confirmed successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Post('canRegister')
-  async canRegister(@GetUser() center: CenterEntity): Promise<boolean> {
-    return await this.recruitmentService.canRegister(center);
+  @Post('canRegisterRecruitment')
+  async canRegisterRecruitment(
+    @GetUser() center: CenterEntity,
+  ): Promise<boolean> {
+    return await this.recruitmentService.canRegisterRecruitment(center);
   }
 
   // 채용 공고 이미지 등록하기
@@ -264,7 +267,7 @@ export class RecruitmentController {
   @Roles('CENTER')
   @UseInterceptors(FilesInterceptor('images', 10))
   @Post('uploadImages')
-  async registerImages(
+  async uploadImages(
     @GetUser() center: CenterEntity,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<string[]> {
@@ -311,15 +314,16 @@ export class RecruitmentController {
   @ResponseMsg('Hiring recruitment registered successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Post('register')
-  async register(
+  @Post('registerRecruitment')
+  async registerRecruitment(
     @GetUser() center: CenterEntity,
-    @Body() registerRequestDto: RecruitmentRegisterRequestDto,
+    @Body() recruitmentRegisterRequestDto: RecruitmentRegisterRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const registeredRecruitment = await this.recruitmentService.register(
-      center,
-      registerRequestDto,
-    );
+    const registeredRecruitment =
+      await this.recruitmentService.registerRecruitment(
+        center,
+        recruitmentRegisterRequestDto,
+      );
     return registeredRecruitment;
   }
 
@@ -787,9 +791,15 @@ export class RecruitmentController {
     summary: '내 만료된 중 공고 삭제하기',
   })
   @NullApiResponse({
-    status: 200,
+    status: 201,
     description: '공고 삭제 성공',
     message: 'Selected expired recruitment deleted successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'id should not be empty',
+    error: 'BadRequestException',
   })
   @ErrorApiResponse({
     status: 401,
@@ -815,5 +825,80 @@ export class RecruitmentController {
   @Post('deleteExpired')
   async deleteExpired(@Body() idRequestDto: IdRequestDto): Promise<void> {
     await this.recruitmentService.deleteExpired(idRequestDto.id);
+  }
+
+  // 채용공고 저장 or 해제
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '채용공고 저장/해제',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '채용공고 저장/해제 성공',
+    message: 'Bookmark (de-)registered successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'id should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 채용공고 저장/해제 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '해당 공고를 찾을 수 없음',
+    message: 'There is no recruitment for selected id',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Bookmark (de-)registered successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('registerBookmark')
+  async registerBookmark(
+    @GetUser() user: UserEntity,
+    @Body() idRequestDto: IdRequestDto,
+  ): Promise<void> {
+    await this.recruitmentService.registerBookmark(user, idRequestDto.id);
+  }
+
+  // 저장한 공고 불러오기
+  @ApiOperation({
+    summary: '저장한 공고 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '저장한 공고 불러오기 성공',
+    message: 'Bookmarked recruitments returned successfully',
+    model: RecruitmentListResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 저장한 공고 불러오기 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Bookmarked recruitments returned successfully')
+  @Get('getBookmared')
+  async getBookmarked(
+    @GetUser() user: UserEntity,
+  ): Promise<RecruitmentResponseDto[]> {
+    return await this.recruitmentService.getBookmarked(user);
   }
 }

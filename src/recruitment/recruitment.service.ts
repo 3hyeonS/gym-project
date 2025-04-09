@@ -22,6 +22,8 @@ import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-req
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
+import { UserEntity } from 'src/auth/entity/user.entity';
+import { BookmarkEntity } from './entity/bookmark.entity';
 
 @Injectable()
 export class RecruitmentService {
@@ -38,8 +40,12 @@ export class RecruitmentService {
     private recruitmentRepository: Repository<RecruitmentEntity>,
     @InjectRepository(ExpiredRecruitmentEntity)
     private expiredRecruitmentRepository: Repository<ExpiredRecruitmentEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
     @InjectRepository(CenterEntity)
     private centerRepository: Repository<CenterEntity>,
+    @InjectRepository(BookmarkEntity)
+    private bookmarkRepository: Repository<BookmarkEntity>,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -361,8 +367,43 @@ export class RecruitmentService {
     return recruitmentList;
   }
 
+  // 즐겨찾기 등록 or 해제
+  async registerBookmark(user: UserEntity, id: number): Promise<void> {
+    const existBookmark = await this.bookmarkRepository.findOne({
+      where: {
+        user: { id: user.id },
+        recruitment: { id },
+      },
+    });
+    if (existBookmark) {
+      await this.bookmarkRepository.delete({ id: existBookmark.id });
+    } else {
+      const recruitmentForBookmark = await this.recruitmentRepository.findOneBy(
+        { id },
+      );
+      if (!recruitmentForBookmark) {
+        throw new NotFoundException('There is no recruitment for selected id');
+      }
+      const newBookmark = this.bookmarkRepository.create({
+        user,
+        recruitment: recruitmentForBookmark,
+      });
+      await this.bookmarkRepository.save(newBookmark);
+    }
+  }
+
+  // 즐겨찾기 공고 불러오기
+  async getBookmarked(user: UserEntity): Promise<RecruitmentResponseDto[]> {
+    const bookmarks = await this.bookmarkRepository.findBy({ user });
+
+    const recruitmentList = bookmarks.map(
+      (recruitment) => new RecruitmentResponseDto(recruitment.recruitment),
+    );
+    return recruitmentList;
+  }
+
   // 채용 공고 등록 가능 여부 확인
-  async canRegister(center: CenterEntity): Promise<boolean> {
+  async canRegisterRecruitment(center: CenterEntity): Promise<boolean> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
     });
@@ -372,12 +413,12 @@ export class RecruitmentService {
     return true;
   }
 
-  // method3: 헬스장 공고 등록하기
-  async register(
+  // method3: 공고 등록하기
+  async registerRecruitment(
     center: CenterEntity,
-    registerRequestDto: RecruitmentRegisterRequestDto,
+    recruitmentRegisterRequestDto: RecruitmentRegisterRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    if (!(await this.canRegister(center))) {
+    if (!(await this.canRegisterRecruitment(center))) {
       throw new ForbiddenException('Your hiring recruitment already exists');
     }
     const {
@@ -397,7 +438,7 @@ export class RecruitmentService {
       description,
       image,
       apply,
-    } = registerRequestDto;
+    } = recruitmentRegisterRequestDto;
 
     const seperatedAddress = await this.extractLocation(center.address);
     const maxClassFee = classFee ? classFee[1] : -2;

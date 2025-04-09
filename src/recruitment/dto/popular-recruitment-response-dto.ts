@@ -3,16 +3,16 @@ import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { RecruitmentResponseDto } from './recruitment-response-dto';
 
-export class PopularRecruitmentsResponseDto {
+export class RecruitmentListResponseDto {
   @ValidateNested()
   @ApiProperty({
     type: [RecruitmentResponseDto],
-    description: '인기 공고',
+    description: '공고 리스트',
   })
   @Type(() => RecruitmentResponseDto)
-  popularRecruitments: RecruitmentResponseDto[];
+  recruitments: RecruitmentResponseDto[];
 
-  constructor(popularRecruitments: RecruitmentResponseDto[]) {
-    this.popularRecruitments = popularRecruitments;
+  constructor(recruitments: RecruitmentResponseDto[]) {
+    this.recruitments = recruitments;
   }
 }
