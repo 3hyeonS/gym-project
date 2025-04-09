@@ -42,7 +42,7 @@ import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-req
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
-import { RecruitmentListResponseDto } from './dto/popular-recruitment-response-dto';
+import { RecruitmentListResponseDto } from './dto/recruitment-list-response-dto';
 import { NumRequestDto } from './dto/num-request-dto';
 import { UserEntity } from 'src/auth/entity/user.entity';
 
@@ -117,7 +117,7 @@ export class RecruitmentController {
     return await this.recruitmentService.getOne(idRequestDto.id);
   }
 
-  // 인기공고 불러오기(3개)
+  // 인기공고 불러오기(n개)
   @ApiOperation({
     summary: '인기 공고 불러오기(n개)',
   })
@@ -131,8 +131,12 @@ export class RecruitmentController {
   @Post('poplular')
   async getPopular(
     @Body() numRequestDto: NumRequestDto,
-  ): Promise<RecruitmentResponseDto[]> {
-    return await this.recruitmentService.getPopular(numRequestDto.num);
+  ): Promise<{ recruitmentList: RecruitmentResponseDto[] }> {
+    return {
+      recruitmentList: await this.recruitmentService.getPopular(
+        numRequestDto.num,
+      ),
+    };
   }
 
   // 모든 공고 불러오기
