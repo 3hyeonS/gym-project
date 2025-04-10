@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RecruitmentEntity } from '../entity/recruitment.entity';
 import { ExpiredRecruitmentEntity } from '../entity/expiredRecruitment.entity';
+import { UserEntity } from 'src/auth/entity/user.entity';
 
 export class RecruitmentResponseDto {
   @ApiProperty({
@@ -141,7 +142,7 @@ export class RecruitmentResponseDto {
     description: '채용 사이트',
     example: ['잡코리아'],
   })
-  site: string[];
+  site: Record<string, string[]>;
 
   @ApiProperty({
     type: Date,
@@ -197,7 +198,17 @@ export class RecruitmentResponseDto {
   })
   contact: Record<string, string>;
 
-  constructor(recruitment: RecruitmentEntity | ExpiredRecruitmentEntity) {
+  @ApiProperty({
+    type: Boolean,
+    description: '즐겨찾기 등록 여부',
+    example: true,
+  })
+  bookmarked: boolean = false;
+
+  constructor(
+    recruitment: RecruitmentEntity | ExpiredRecruitmentEntity,
+    bookmarked?: boolean,
+  ) {
     this.id = recruitment.id;
     this.centerName = recruitment.centerName;
     this.city = recruitment.city;
@@ -243,6 +254,10 @@ export class RecruitmentResponseDto {
         email: recruitment.center.email,
         phone: recruitment.center.phone,
       };
+    }
+
+    if (bookmarked) {
+      this.bookmarked = true;
     }
   }
 }

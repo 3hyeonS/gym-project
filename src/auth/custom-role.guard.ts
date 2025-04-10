@@ -30,6 +30,12 @@ export class RolesGuard implements CanActivate {
     const { user }: { user: UserEntity | CenterEntity } = context
       .switchToHttp()
       .getRequest();
+
+    // 사용자가 없을 경우 true 반환 (optionalUser 비로그인 처리)
+    if (!user) {
+      return true;
+    }
+
     // 사용자의 역할이 필요한 역할 목록에 포함되는지 권한 확인
     const hasRole = requiredRoles.some((role) => user.authority.role === role);
     if (!hasRole) {

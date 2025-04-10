@@ -1,5 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { CareerEntity } from './career.entity';
+import { AcademyEntity } from './academy.entity';
+import { QualificationEntity } from './qualification.entity';
 
 @Entity({ name: 'resume' })
 export class ResumeEntity {
@@ -51,4 +53,22 @@ export class ResumeEntity {
     cascade: true,
   })
   careers: CareerEntity[];
+
+  @OneToMany(() => AcademyEntity, (academy) => academy.resume, {
+    eager: true,
+    nullable: true,
+    cascade: true,
+  })
+  academies: AcademyEntity[];
+
+  @OneToMany(
+    () => QualificationEntity,
+    (qualification) => qualification.resume,
+    {
+      eager: true,
+      nullable: true,
+      cascade: true,
+    },
+  )
+  qualifications: QualificationEntity[];
 }

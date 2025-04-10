@@ -63,10 +63,29 @@ export class RecruitmentService {
     return await this.recruitmentRepository.count();
   }
 
+  // 즐겨찾기 여부 확인
+  async isBookmarked(
+    user: UserEntity,
+    recruitment: RecruitmentEntity,
+  ): Promise<boolean> {
+    const existBookmark = await this.bookmarkRepository.findOne({
+      where: {
+        user: { id: user.id },
+        recruitment: { id: recruitment.id },
+      },
+    });
+    if (existBookmark) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   // method1 : 모든 공고 가져오기
   async getAll(
     page: number,
     limit: number,
+    user?: UserEntity,
   ): Promise<{
     recruitmentsList: RecruitmentResponseDto[];
     page: number;
@@ -80,13 +99,31 @@ export class RecruitmentService {
         skip: (page - 1) * limit, // 페이지 계산
         relations: ['center'],
       });
+    // 비회원 처리
+    if (!user) {
+      return {
+        recruitmentsList: recruitmentsList.map(
+          (recruitment) => new RecruitmentResponseDto(recruitment),
+        ),
+        page,
+        totalRecruitments: totalCount, // 전체 헬스장 수
+        totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+      };
+    }
+    // 즐겨찾기 처리
+    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
+
+    const mappedRecruitmentList = recruitmentsList.map((recruitment) => {
+      const isBookmarked = bookmarkedIds.has(recruitment.id);
+      return new RecruitmentResponseDto(recruitment, isBookmarked);
+    });
+
     return {
-      recruitmentsList: recruitmentsList.map(
-        (recruitment) => new RecruitmentResponseDto(recruitment),
-      ),
+      recruitmentsList: mappedRecruitmentList,
       page,
-      totalRecruitments: totalCount, // 전체 헬스장 수
-      totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+      totalRecruitments: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
     };
   }
 
@@ -95,6 +132,7 @@ export class RecruitmentService {
     selectedOptionsDto: SelectedOptionsDto,
     page: number,
     limit: number,
+    user?: UserEntity,
   ): Promise<{
     recruitmentsList: RecruitmentResponseDto[];
     page: number;
@@ -332,38 +370,80 @@ export class RecruitmentService {
     // 최종 데이터 가져오기
     const objectList = await queryBuilder.getMany();
 
+    // 비회원 처리
+    if (!user) {
+      return {
+        recruitmentsList: objectList.map(
+          (recruitment) => new RecruitmentResponseDto(recruitment),
+        ),
+        page,
+        totalRecruitments: totalCount, // 전체 헬스장 수
+        totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+      };
+    }
+
+    // 즐겨찾기 처리
+    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
+
+    const mappedRecruitmentList = objectList.map((recruitment) => {
+      const isBookmarked = bookmarkedIds.has(recruitment.id);
+      return new RecruitmentResponseDto(recruitment, isBookmarked);
+    });
+
     return {
-      recruitmentsList: objectList.map(
-        (recruitment) => new RecruitmentResponseDto(recruitment),
-      ),
+      recruitmentsList: mappedRecruitmentList,
       page,
-      totalRecruitments: totalCount, // 전체 헬스장 수
-      totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+      totalRecruitments: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
     };
   }
 
   // 채용 공고 1개 조회
-  async getOne(id: number): Promise<RecruitmentResponseDto> {
+  async getOne(id: number, user?: UserEntity): Promise<RecruitmentResponseDto> {
     const recruitment = await this.recruitmentRepository.findOneBy({ id });
     if (!recruitment) {
       throw new NotFoundException('There is no recruitment');
     }
     recruitment.view = recruitment.view + 1;
     const savedRecruitment = await this.recruitmentRepository.save(recruitment);
+
+    // 즐겨찾기 처리
+    if (user) {
+      if (await this.isBookmarked(user, savedRecruitment)) {
+        return new RecruitmentResponseDto(savedRecruitment, true);
+      }
+    }
     return new RecruitmentResponseDto(savedRecruitment);
   }
 
   // 인기 공고 조회
-  async getPopular(num: number): Promise<RecruitmentResponseDto[]> {
+  async getPopular(
+    num: number,
+    user?: UserEntity,
+  ): Promise<RecruitmentResponseDto[]> {
     const popularRecruitments = await this.recruitmentRepository.find({
       order: {
         view: 'DESC',
       },
       take: num,
     });
-    const recruitmentList = popularRecruitments.map(
-      (recruitment) => new RecruitmentResponseDto(recruitment),
-    );
+
+    // 비회원 처리
+    if (!user) {
+      const recruitmentList = popularRecruitments.map(
+        (recruitment) => new RecruitmentResponseDto(recruitment),
+      );
+      return recruitmentList;
+    }
+    // 즐겨찾기 처리
+    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
+
+    const recruitmentList = popularRecruitments.map((recruitment) => {
+      const isBookmarked = bookmarkedIds.has(recruitment.id);
+      return new RecruitmentResponseDto(recruitment, isBookmarked);
+    });
     return recruitmentList;
   }
 
@@ -397,7 +477,7 @@ export class RecruitmentService {
     const bookmarks = await this.bookmarkRepository.findBy({ user });
 
     const recruitmentList = bookmarks.map(
-      (recruitment) => new RecruitmentResponseDto(recruitment.recruitment),
+      (bookmark) => new RecruitmentResponseDto(bookmark.recruitment, true),
     );
     return recruitmentList;
   }
@@ -475,7 +555,7 @@ export class RecruitmentService {
       welfare,
       qualification,
       preference,
-      site: ['직접 등록'],
+      site: { 빌리지: ['직접 등록'] },
       date: new Date(),
       description,
       center: center,

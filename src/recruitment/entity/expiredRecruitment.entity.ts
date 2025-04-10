@@ -61,7 +61,7 @@ export class ExpiredRecruitmentEntity {
   preference: string[];
 
   @Column({ type: 'json', name: 'site', nullable: false })
-  site: string[];
+  site: Record<string, string[]>;
 
   @Column({ type: 'date', name: 'date', nullable: false })
   date: Date;

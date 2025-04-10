@@ -12,6 +12,7 @@ import { AuthorityEntity } from './authority.entity';
 import { KakaoKeyEntity } from './kakaoKey.entity';
 import { AppleKeyEntity } from './appleKey.entity';
 import { BookmarkEntity } from 'src/recruitment/entity/bookmark.entity';
+import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -65,4 +66,10 @@ export class UserEntity {
     cascade: true,
   })
   refreshTokens: RefreshTokenEntity[];
+
+  @OneToMany(() => VillyEntity, (villy) => villy.user, {
+    nullable: true,
+    cascade: true,
+  })
+  villies: VillyEntity[];
 }

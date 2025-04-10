@@ -9,7 +9,7 @@ export class BookmarkEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.bookmarks, {
     eager: true,
-    nullable: true,
+    nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
@@ -17,7 +17,7 @@ export class BookmarkEntity {
 
   @ManyToOne(() => RecruitmentEntity, (recruitment) => recruitment.bookmarks, {
     eager: true,
-    nullable: true,
+    nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })

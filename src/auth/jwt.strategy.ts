@@ -21,16 +21,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       secretOrKey: process.env.ACCESS_SECRET || 'default-secret', // 검증하기 위한 Secret Key
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization 헤더에서 토큰 추출
-      // // [3] Cookie에 있는 JWT 토큰을 추출
-      // jwtFromRequest: ExtractJwt.fromExtractors([
-      //   (req: Request) => {
-      //     let token = null;
-      //     if (req && req.cookies) {
-      //       token = req.cookies['Authorization']; // 쿠키에서 JWT 추출
-      //     }
-      //     return token;
-      //   },
-      // ]),
     });
   } // [4] Secret Key로 검증 - 인스턴스 생성 자체가 Secret Key로 JWT 토큰 검증과정
 

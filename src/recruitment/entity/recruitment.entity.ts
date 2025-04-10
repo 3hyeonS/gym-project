@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BookmarkEntity } from './bookmark.entity';
+import { VillyEntity } from './villy.entity';
 
 @Entity({ name: 'recruitment' })
 export class RecruitmentEntity {
@@ -69,7 +70,7 @@ export class RecruitmentEntity {
   preference: string[];
 
   @Column({ type: 'json', name: 'site', nullable: false })
-  site: string[];
+  site: Record<string, string[]>;
 
   @Column({ type: 'date', name: 'date', nullable: false })
   date: Date;
@@ -100,4 +101,10 @@ export class RecruitmentEntity {
     cascade: true,
   })
   bookmarks: BookmarkEntity[];
+
+  @OneToMany(() => VillyEntity, (villy) => villy.recruitment, {
+    nullable: true,
+    cascade: true,
+  })
+  villies: VillyEntity[];
 }

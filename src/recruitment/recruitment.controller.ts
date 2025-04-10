@@ -46,6 +46,8 @@ import { RecruitmentListResponseDto } from './dto/recruitment-list-response-dto'
 import { NumRequestDto } from './dto/num-request-dto';
 import { UserEntity } from 'src/auth/entity/user.entity';
 import { IdRequestDto } from './dto/id-request-dto';
+import { GetOptionalUser } from 'src/decorators/get-optional-user-decorator';
+import { OptionalAuthGuard } from 'src/auth/custom-option.guard';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -89,14 +91,22 @@ export class RecruitmentController {
   }
 
   // 채용 공고 1개 불러오기(조회수 증가)
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '채용 공고 1개 불러오기',
+    description: '로그인 시 즐겨찾기 여부 반영',
   })
   @GenericApiResponse({
     status: 201,
     description: '채용 공고 불러오기 성공',
     message: 'Recruitment returned successfully',
     model: RecruitmentResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
   })
   @ErrorApiResponse({
     status: 404,
@@ -111,16 +121,23 @@ export class RecruitmentController {
     error: 'BadRequestException',
   })
   @ResponseMsg('Recruitment returned successfully')
+  @UseGuards(OptionalAuthGuard)
   @Post('getOne')
   async getOne(
+    @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Body() idRequestDto: IdRequestDto,
   ): Promise<RecruitmentResponseDto> {
+    if (user instanceof UserEntity) {
+      return await this.recruitmentService.getOne(idRequestDto.id, user);
+    }
     return await this.recruitmentService.getOne(idRequestDto.id);
   }
 
   // 인기공고 불러오기(n개)
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '인기 공고 불러오기(n개)',
+    description: '로그인 시 즐겨찾기 여부 반영',
   })
   @GenericApiResponse({
     status: 201,
@@ -128,11 +145,27 @@ export class RecruitmentController {
     message: 'Popular recruitments returned successfully',
     model: RecruitmentListResponseDto,
   })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
   @ResponseMsg('Popular recruitments returned successfully')
+  @UseGuards(OptionalAuthGuard)
   @Post('poplular')
   async getPopular(
+    @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Body() numRequestDto: NumRequestDto,
   ): Promise<{ recruitmentList: RecruitmentResponseDto[] }> {
+    if (user instanceof UserEntity) {
+      return {
+        recruitmentList: await this.recruitmentService.getPopular(
+          numRequestDto.num,
+          user,
+        ),
+      };
+    }
     return {
       recruitmentList: await this.recruitmentService.getPopular(
         numRequestDto.num,
@@ -141,8 +174,10 @@ export class RecruitmentController {
   }
 
   // 모든 공고 불러오기
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '모든 채용 공고 불러오기',
+    description: '로그인 시 즐겨찾기 여부 반영',
   })
   @GenericApiResponse({
     status: 200,
@@ -150,9 +185,17 @@ export class RecruitmentController {
     message: 'All recruitments returned successfully',
     model: RecruitmentsPageResponseDto,
   })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
   @ResponseMsg('All recruitments returned successfully')
+  @UseGuards(OptionalAuthGuard)
   @Get('getAll')
   async getAll(
+    @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
   ): Promise<{
@@ -161,14 +204,17 @@ export class RecruitmentController {
     totalRecruitments: number;
     totalPages: number;
   }> {
-    const allRecruitments = await this.recruitmentService.getAll(page, limit);
-    return allRecruitments;
+    if (user instanceof UserEntity) {
+      return this.recruitmentService.getAll(page, limit, user);
+    }
+    return this.recruitmentService.getAll(page, limit);
   }
 
   // 선택 조건에 맞는 채용 공고 불러오기
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '조건에 맞는 채용 공고 불러오기',
-    description: 'body 조건 Schema 클릭해서 각 필드별로 확인',
+    description: '로그인 시 즐겨찾기 여부 반영',
   })
   @GenericApiResponse({
     status: 201,
@@ -185,8 +231,10 @@ export class RecruitmentController {
     error: 'BadRequestException',
   })
   @ResponseMsg('Recruitments with selected conditions returned successfully')
+  @UseGuards(OptionalAuthGuard)
   @Post('selected')
   async searchSelected(
+    @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Body() selectedOptionsDto: SelectedOptionsDto,
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
@@ -196,12 +244,19 @@ export class RecruitmentController {
     totalRecruitments: number;
     totalPages: number;
   }> {
-    const searchedRecruitments = await this.recruitmentService.searchSelected(
+    if (user instanceof UserEntity) {
+      return await this.recruitmentService.searchSelected(
+        selectedOptionsDto,
+        page,
+        limit,
+        user,
+      );
+    }
+    return await this.recruitmentService.searchSelected(
       selectedOptionsDto,
       page,
       limit,
     );
-    return searchedRecruitments;
   }
 
   // 채용 공고 등록 가능 여부 확인
@@ -217,6 +272,12 @@ export class RecruitmentController {
     message: 'Recruitment register availability confirmed successfully',
     type: 'boolean',
     example: true,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
   })
   @ErrorApiResponse({
     status: 403,
@@ -246,6 +307,12 @@ export class RecruitmentController {
     type: 'string',
     isArray: true,
     example: 'urlexample',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
   })
   @ErrorApiResponse({
     status: 403,
@@ -878,6 +945,7 @@ export class RecruitmentController {
   }
 
   // 저장한 공고 불러오기
+  @ApiBearerAuth('accessToken')
   @ApiOperation({
     summary: '저장한 공고 불러오기',
   })
@@ -900,6 +968,8 @@ export class RecruitmentController {
     error: 'ForbiddenException',
   })
   @ResponseMsg('Bookmarked recruitments returned successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
   @Get('getBookmared')
   async getBookmarked(
     @GetUser() user: UserEntity,
