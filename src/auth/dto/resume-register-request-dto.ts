@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDate,
@@ -11,7 +12,11 @@ import {
   IsString,
   Length,
   Matches,
+  ValidateNested,
 } from 'class-validator';
+import { CareerRequestDto } from './career-request-dto';
+import { AcademyRequestDto } from './academy-request-dto';
+import { QualificationRequestDto } from './qualification-request-dto';
 
 export class ResumeRegisterRequestDto {
   @ApiProperty({
@@ -30,6 +35,7 @@ export class ResumeRegisterRequestDto {
     example: '1999-03-17',
   })
   @IsNotEmpty()
+  @Type(() => Date)
   @IsDate()
   birth: Date;
 
@@ -95,6 +101,28 @@ export class ResumeRegisterRequestDto {
   isNew: number;
 
   @ApiProperty({
+    type: [CareerRequestDto],
+    description: '경력 사항',
+    example: [
+      {
+        where: '헬스짐 강남점',
+        start: '2020-01-01',
+        end: '2022-12-31',
+      },
+      {
+        where: 'PT 전문센터 분당점',
+        start: '2023-01-01',
+        end: '2024-03-01',
+      },
+    ],
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CareerRequestDto)
+  careers?: CareerRequestDto[];
+
+  @ApiProperty({
     type: [String],
     description: '근무 형태',
     example: ['정규직', '프리랜서'],
@@ -113,6 +141,35 @@ export class ResumeRegisterRequestDto {
   @IsArray()
   @IsString({ each: true })
   workTime?: string[];
+
+  @ApiProperty({
+    type: AcademyRequestDto,
+    description: '학력 정보',
+    example: {
+      level: '대학교(4년제)',
+      status: '졸업',
+      detail: '서울대학교 체육교육과',
+    },
+  })
+  @IsOptional()
+  @Type(() => AcademyRequestDto)
+  academy?: AcademyRequestDto;
+
+  @ApiProperty({
+    type: [QualificationRequestDto],
+    description: '자격증 정보',
+    example: [
+      {
+        certificate: '생활스포츠지도사',
+        level: '2급',
+      },
+    ],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QualificationRequestDto)
+  qualifications?: QualificationRequestDto[];
 
   @ApiProperty({
     type: Number,
