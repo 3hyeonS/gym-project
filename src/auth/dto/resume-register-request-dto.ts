@@ -189,7 +189,7 @@ export class ResumeRegisterRequestDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  salary?: string[];
+  award?: string[];
 
   @ApiProperty({
     type: [String],
