@@ -10,7 +10,7 @@ export class DetailModifyRequestDto {
   })
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     type: [String],
@@ -28,5 +28,5 @@ export class DetailModifyRequestDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  image: string[];
+  image?: string[];
 }

@@ -85,7 +85,7 @@ export class RecruitmentRegisterRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  basePay: number[];
+  basePay?: number[];
 
   @ApiProperty({
     type: [Number],
@@ -97,7 +97,7 @@ export class RecruitmentRegisterRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  classPay: number[];
+  classPay?: number[];
 
   @ApiProperty({
     type: [Number],
@@ -109,7 +109,7 @@ export class RecruitmentRegisterRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  classFee: number[];
+  classFee?: number[];
 
   @ApiProperty({
     type: [Number],
@@ -121,7 +121,7 @@ export class RecruitmentRegisterRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  monthly: number[];
+  monthly?: number[];
 
   @ApiProperty({
     type: [Number],
@@ -133,7 +133,7 @@ export class RecruitmentRegisterRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  hourly: number[];
+  hourly?: number[];
 
   @ApiProperty({
     type: [String],
@@ -173,7 +173,7 @@ export class RecruitmentRegisterRequestDto {
   })
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     type: [String],
@@ -191,7 +191,7 @@ export class RecruitmentRegisterRequestDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  image: string[];
+  image?: string[];
 
   @ApiProperty({
     type: Number,

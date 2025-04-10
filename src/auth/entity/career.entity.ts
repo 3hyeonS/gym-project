@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { ResumeEntity } from './resume.entity';
 
 @Entity({ name: 'career' })
 export class CareerEntity {
@@ -14,11 +15,10 @@ export class CareerEntity {
   @Column({ type: 'date', name: 'end', nullable: false })
   end: Date;
 
-  @ManyToOne(() => AuthorityEntity, (authority) => authority.role, {
-    eager: true,
+  @ManyToOne(() => ResumeEntity, (resume) => resume.careers, {
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
-  authority: AuthorityEntity;
+  resume: ResumeEntity;
 }
