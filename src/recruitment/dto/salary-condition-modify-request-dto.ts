@@ -30,7 +30,7 @@ export class SalaryCondtionModifyRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  basePay: number[] = null;
+  basePay?: number[] = null;
 
   @ApiProperty({
     type: [Number],
@@ -42,7 +42,7 @@ export class SalaryCondtionModifyRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  classPay: number[] = null;
+  classPay?: number[] = null;
 
   @ApiProperty({
     type: [Number],
@@ -54,7 +54,7 @@ export class SalaryCondtionModifyRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  classFee: number[] = null;
+  classFee?: number[] = null;
 
   @ApiProperty({
     type: [Number],
@@ -66,7 +66,7 @@ export class SalaryCondtionModifyRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  monthly: number[] = null;
+  monthly?: number[] = null;
 
   @ApiProperty({
     type: [Number],
@@ -78,7 +78,7 @@ export class SalaryCondtionModifyRequestDto {
   @ArrayMinSize(2) // 최소 크기 2
   @ArrayMaxSize(2) // 최대 크기 2
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  hourly: number[] = null;
+  hourly?: number[] = null;
 
   @ApiProperty({
     type: [String],

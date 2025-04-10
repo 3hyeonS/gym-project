@@ -13,7 +13,7 @@ import {
   RecruitmentRegisterRequestDto,
   TGender,
   TWeekendDuty,
-} from './dto/recruitment-registration-request-dto';
+} from './dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';

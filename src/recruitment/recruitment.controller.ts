@@ -26,7 +26,7 @@ import { GenericApiResponse } from 'src/decorators/generic-api-response-decorato
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { SelectedOptionsDto } from './dto/selected-options-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
-import { RecruitmentRegisterRequestDto } from './dto/recruitment-registration-request-dto';
+import { RecruitmentRegisterRequestDto } from './dto/recruitment-register-request-dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';

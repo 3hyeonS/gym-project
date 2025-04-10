@@ -61,7 +61,7 @@ export class CenterSignUpRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '사업자 등록 번호(10자리)',
+    description: '사업자 등록 번호(10자리, 000-00-00000 형식만 허용)',
     example: '000-00-00000',
   })
   @IsNotEmpty()
@@ -73,7 +73,7 @@ export class CenterSignUpRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '대표 전화번호',
+    description: '대표 전화번호(000-0000-0000 형식만 허용)',
     example: '010-0000-0000',
   })
   @IsNotEmpty()

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { TWeekendDuty } from './recruitment-registration-request-dto';
+import { TWeekendDuty } from './recruitment-register-request-dto';
 
 export class WeekendDutyModifyRequestDto {
   @ApiProperty({

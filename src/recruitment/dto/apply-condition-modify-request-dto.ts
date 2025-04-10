@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { TGender } from './recruitment-registration-request-dto';
+import { TGender } from './recruitment-register-request-dto';
 
 export class ApplyConditionModifyRequestDto {
   @ApiProperty({

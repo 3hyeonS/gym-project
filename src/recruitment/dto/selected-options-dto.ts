@@ -21,7 +21,8 @@ export class SelectedOptionsDto {
   @ArrayMinSize(9) // 최소 크기 9
   @ArrayMaxSize(9) // 최대 크기 9
   @IsNumber({}, { each: true }) // 배열 내 각 요소가 숫자인지 확인
-  flexibleOptions: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1];
+  @IsOptional()
+  flexibleOptions?: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
   @ApiProperty({
     type: String,

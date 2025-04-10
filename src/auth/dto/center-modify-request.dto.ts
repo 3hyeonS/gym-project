@@ -23,7 +23,7 @@ export class CenterModifyRequestDto {
       message: 'password must contain English, numbers, and special characters',
     },
   ) // 영문, 숫자, 특수문자 포함
-  password: string;
+  password?: string;
 
   @ApiProperty({
     type: String,
