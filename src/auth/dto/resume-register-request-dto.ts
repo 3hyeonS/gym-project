@@ -82,7 +82,7 @@ export class ResumeRegisterRequestDto {
   })
   @IsObject()
   @IsNotEmpty()
-  selectedLocation: Record<string, string[]>;
+  location: Record<string, string[]>;
 
   @ApiProperty({
     type: Number,
