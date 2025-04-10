@@ -16,6 +16,10 @@ import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
 import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
 import { BookmarkEntity } from './entity/bookmark.entity';
 import { ResumeEntity } from 'src/auth/entity/resume.entity';
+import { VillyEntity } from './entity/villy.entity';
+import { CareerEntity } from 'src/auth/entity/career.entity';
+import { AcademyEntity } from 'src/auth/entity/academy.entity';
+import { QualificationEntity } from 'src/auth/entity/qualification.entity';
 
 @Module({
   imports: [
@@ -28,6 +32,10 @@ import { ResumeEntity } from 'src/auth/entity/resume.entity';
       EmailCodeEntity,
       BookmarkEntity,
       ResumeEntity,
+      VillyEntity,
+      CareerEntity,
+      AcademyEntity,
+      QualificationEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({

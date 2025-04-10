@@ -23,6 +23,10 @@ import { SignWithEntity } from './entity/signWith.entity';
 import { RecruitmentModule } from 'src/recruitment/recruitment.module';
 import { BookmarkEntity } from 'src/recruitment/entity/bookmark.entity';
 import { ResumeEntity } from './entity/resume.entity';
+import { CareerEntity } from './entity/career.entity';
+import { AcademyEntity } from './entity/academy.entity';
+import { QualificationEntity } from './entity/qualification.entity';
+import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -42,6 +46,11 @@ dotenv.config();
       EmailCodeEntity,
       BookmarkEntity,
       ResumeEntity,
+      CareerEntity,
+      AcademyEntity,
+      QualificationEntity,
+      BookmarkEntity,
+      VillyEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule,
