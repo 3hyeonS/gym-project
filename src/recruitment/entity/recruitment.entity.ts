@@ -90,7 +90,7 @@ export class RecruitmentEntity {
   @Column({ type: 'tinyint', name: 'isHiring', nullable: false, default: 1 })
   isHiring: number;
 
-  @OneToOne(() => CenterEntity, (center) => center.recruitment, {
+  @OneToOne(() => CenterEntity, (center) => center.recruitments, {
     eager: true,
     nullable: true,
     onUpdate: 'CASCADE',

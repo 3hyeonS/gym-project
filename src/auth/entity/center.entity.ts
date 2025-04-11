@@ -3,12 +3,10 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { RefreshTokenEntity } from './refreshToken.entity';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
-import { ExpiredRecruitmentEntity } from 'src/recruitment/entity/expiredRecruitment.entity';
 import { AuthorityEntity } from './authority.entity';
 
 @Entity({ name: 'center' })
@@ -64,19 +62,9 @@ export class CenterEntity {
   })
   refreshTokens: RefreshTokenEntity[];
 
-  @OneToOne(() => RecruitmentEntity, (gym) => gym.center, {
+  @OneToMany(() => RecruitmentEntity, (recruitment) => recruitment.center, {
     nullable: true,
     cascade: true,
   })
-  recruitment: RecruitmentEntity;
-
-  @OneToMany(
-    () => ExpiredRecruitmentEntity,
-    (expiredGym) => expiredGym.center,
-    {
-      nullable: true,
-      cascade: true,
-    },
-  )
-  expiredRecruitments: ExpiredRecruitmentEntity[];
+  recruitments: RecruitmentEntity[];
 }
