@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CareerRequestDto {
+export class CareerDto {
   @ApiProperty({
     type: String,
     description: '근무지',

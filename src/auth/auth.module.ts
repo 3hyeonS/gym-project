@@ -12,7 +12,6 @@ import { CenterEntity } from './entity/center.entity';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 import { EmailService } from './email.service';
-import { ExpiredRecruitmentEntity } from 'src/recruitment/entity/expiredRecruitment.entity';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { AppleStrategy } from './apple.strategy';
@@ -42,7 +41,6 @@ dotenv.config();
       SignWithEntity,
       RefreshTokenEntity,
       RecruitmentEntity,
-      ExpiredRecruitmentEntity,
       EmailCodeEntity,
       BookmarkEntity,
       ResumeEntity,

@@ -16,7 +16,6 @@ import {
 } from './dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
 import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
@@ -38,12 +37,6 @@ export class RecruitmentService {
   constructor(
     @InjectRepository(RecruitmentEntity)
     private recruitmentRepository: Repository<RecruitmentEntity>,
-    @InjectRepository(ExpiredRecruitmentEntity)
-    private expiredRecruitmentRepository: Repository<ExpiredRecruitmentEntity>,
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
-    @InjectRepository(CenterEntity)
-    private centerRepository: Repository<CenterEntity>,
     @InjectRepository(BookmarkEntity)
     private bookmarkRepository: Repository<BookmarkEntity>,
   ) {
@@ -60,7 +53,7 @@ export class RecruitmentService {
 
   // method0 : 공고 총 개수 가져오기
   async getTotalNumber(): Promise<number> {
-    return await this.recruitmentRepository.count();
+    return await this.recruitmentRepository.countBy({ isHiring: 1 });
   }
 
   // 즐겨찾기 여부 확인
@@ -94,6 +87,7 @@ export class RecruitmentService {
   }> {
     const [recruitmentsList, totalCount] =
       await this.recruitmentRepository.findAndCount({
+        where: { isHiring: 1 },
         order: { date: 'DESC' }, // 최신순 정렬
         take: limit, // 한 페이지에 보여줄 개수
         skip: (page - 1) * limit, // 페이지 계산
@@ -146,6 +140,12 @@ export class RecruitmentService {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
+
+    // 채용 중 여부 처리
+    conditions.push({
+      condition: 'recruitment.isHiring = :isHiring',
+      parameters: { isHiring: 1 },
+    });
 
     // centerName 조건 처리
     if (
@@ -401,9 +401,12 @@ export class RecruitmentService {
 
   // 채용 공고 1개 조회
   async getOne(id: number, user?: UserEntity): Promise<RecruitmentResponseDto> {
-    const recruitment = await this.recruitmentRepository.findOneBy({ id });
+    const recruitment = await this.recruitmentRepository.findOneBy({
+      id,
+      isHiring: 1,
+    });
     if (!recruitment) {
-      throw new NotFoundException('There is no recruitment');
+      throw new NotFoundException('There is no recruitment for selected id');
     }
     recruitment.view = recruitment.view + 1;
     const savedRecruitment = await this.recruitmentRepository.save(recruitment);
@@ -423,6 +426,7 @@ export class RecruitmentService {
     user?: UserEntity,
   ): Promise<RecruitmentResponseDto[]> {
     const popularRecruitments = await this.recruitmentRepository.find({
+      where: { isHiring: 1 },
       order: {
         view: 'DESC',
       },
@@ -459,7 +463,7 @@ export class RecruitmentService {
       await this.bookmarkRepository.delete({ id: existBookmark.id });
     } else {
       const recruitmentForBookmark = await this.recruitmentRepository.findOneBy(
-        { id },
+        { id, isHiring: 1 },
       );
       if (!recruitmentForBookmark) {
         throw new NotFoundException('There is no recruitment for selected id');
@@ -486,6 +490,7 @@ export class RecruitmentService {
   async canRegisterRecruitment(center: CenterEntity): Promise<boolean> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
+      isHiring: 1,
     });
     if (myRecruitment) {
       return false;
@@ -556,12 +561,13 @@ export class RecruitmentService {
       qualification,
       preference,
       site: { 빌리지: ['직접 등록'] },
-      date: new Date(),
       description,
       center: center,
       image, // 이미지 URL 저장
-      view: 0,
       apply,
+      view: 0,
+      date: new Date(),
+      isHiring: 1,
     });
 
     const savedRecruitment =
@@ -609,6 +615,7 @@ export class RecruitmentService {
   ): Promise<RecruitmentResponseDto | null> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
+      isHiring: 1,
     });
     if (!myRecruitment) {
       return null;
@@ -620,8 +627,10 @@ export class RecruitmentService {
   async getMyExpiredRecruitments(
     center: CenterEntity,
   ): Promise<RecruitmentResponseDto[]> {
-    const myExpiredRecruitments =
-      await this.expiredRecruitmentRepository.findBy({ center });
+    const myExpiredRecruitments = await this.recruitmentRepository.findBy({
+      center,
+      isHiring: 0,
+    });
     return myExpiredRecruitments.map(
       (recruitment) => new RecruitmentResponseDto(recruitment),
     );
@@ -631,22 +640,13 @@ export class RecruitmentService {
   async getMyOneRecruitment(
     center: CenterEntity,
     id: number,
-    isHiring: number,
   ): Promise<RecruitmentResponseDto> {
-    let myRecruitment: RecruitmentEntity | ExpiredRecruitmentEntity;
-    if (isHiring == 0) {
-      myRecruitment = await this.recruitmentRepository.findOneBy({
-        id,
-        center,
-      });
-    } else {
-      myRecruitment = await this.expiredRecruitmentRepository.findOneBy({
-        id,
-        center,
-      });
-    }
+    const myRecruitment = await this.recruitmentRepository.findOneBy({
+      id,
+      center,
+    });
     if (!myRecruitment) {
-      throw new NotFoundException('There is no recruitment');
+      throw new NotFoundException('There is no recruitment for selected id');
     }
     return new RecruitmentResponseDto(myRecruitment);
   }
@@ -655,6 +655,7 @@ export class RecruitmentService {
   async refreshMyRecruitment(center: CenterEntity): Promise<void> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
+      isHiring: 1,
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
@@ -673,40 +674,25 @@ export class RecruitmentService {
   async expireMyRecruitment(center: CenterEntity): Promise<void> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
       center,
+      isHiring: 1,
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hring recruitment');
     }
-    const { id, ...recruitmentData } = myRecruitment;
-    const expiredRecruitment = this.expiredRecruitmentRepository.create({
-      ...recruitmentData, // 기존 데이터 복사
-    });
-    await this.expiredRecruitmentRepository.save(expiredRecruitment);
-    await this.deleteHiring(center);
+    myRecruitment.isHiring = 0;
+    await this.recruitmentRepository.save(myRecruitment);
   }
 
-  // method9: 내 채용 중 공고 삭제하기
-  async deleteHiring(center: CenterEntity): Promise<void> {
+  // method9: 내 공고 삭제하기
+  async deleteRecruitment(center: CenterEntity, id: number): Promise<void> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({
+      id,
       center,
     });
     if (!myRecruitment) {
-      throw new NotFoundException('There is no hiring recruitment');
+      throw new NotFoundException('There is no recruitment for selected id');
     }
     await this.recruitmentRepository.delete({ center });
-  }
-
-  // method10: 내 만료된 공고 삭제하기
-  async deleteExpired(id: number): Promise<void> {
-    const myRecruitment = await this.expiredRecruitmentRepository.findOneBy({
-      id,
-    });
-    if (!myRecruitment) {
-      throw new NotFoundException(
-        'There is no expired recruitment for selected id',
-      );
-    }
-    await this.expiredRecruitmentRepository.delete({ id });
   }
 
   // 주말당직 수정하기

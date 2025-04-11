@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RecruitmentEntity } from '../entity/recruitment.entity';
-import { ExpiredRecruitmentEntity } from '../entity/expiredRecruitment.entity';
-import { UserEntity } from 'src/auth/entity/user.entity';
 
 export class RecruitmentResponseDto {
   @ApiProperty({
@@ -145,13 +143,6 @@ export class RecruitmentResponseDto {
   site: Record<string, string[]>;
 
   @ApiProperty({
-    type: Date,
-    description: '최근 공고 게시일',
-    example: '2025-01-09',
-  })
-  date: Date;
-
-  @ApiProperty({
     type: String,
     description: '상세 설명',
     example:
@@ -169,6 +160,20 @@ export class RecruitmentResponseDto {
     ],
   })
   image: string[];
+
+  @ApiProperty({
+    type: Date,
+    description: '최근 공고 게시일',
+    example: '2025-01-09',
+  })
+  date: Date;
+
+  @ApiProperty({
+    type: Boolean,
+    description: '채용 중 여부  \ntrue: 채용 중  \n1: 만료',
+    example: true,
+  })
+  isHiring: boolean;
 
   @ApiProperty({
     type: Number,
@@ -205,10 +210,7 @@ export class RecruitmentResponseDto {
   })
   bookmarked: boolean = false;
 
-  constructor(
-    recruitment: RecruitmentEntity | ExpiredRecruitmentEntity,
-    bookmarked?: boolean,
-  ) {
+  constructor(recruitment: RecruitmentEntity, bookmarked?: boolean) {
     this.id = recruitment.id;
     this.centerName = recruitment.centerName;
     this.city = recruitment.city;
@@ -244,9 +246,15 @@ export class RecruitmentResponseDto {
     this.qualification = recruitment.qualification;
     this.preference = recruitment.preference;
     this.site = recruitment.site;
-    this.date = recruitment.date;
     this.description = recruitment.description;
     this.image = recruitment.image;
+    this.date = recruitment.date;
+
+    if (recruitment.isHiring) {
+      this.isHiring = true;
+    } else {
+      this.isHiring = false;
+    }
 
     if (recruitment.center) {
       this.apply = recruitment.apply;

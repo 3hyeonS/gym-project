@@ -11,8 +11,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { HttpModule } from '@nestjs/axios';
 import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { KakaoStrategy } from 'src/auth/kakao.strategy';
-import { AuthModule } from 'src/auth/auth.module';
-import { ExpiredRecruitmentEntity } from './entity/expiredRecruitment.entity';
 import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
 import { BookmarkEntity } from './entity/bookmark.entity';
 import { ResumeEntity } from 'src/auth/entity/resume.entity';
@@ -28,7 +26,6 @@ import { QualificationEntity } from 'src/auth/entity/qualification.entity';
       CenterEntity,
       UserEntity,
       RefreshTokenEntity,
-      ExpiredRecruitmentEntity,
       EmailCodeEntity,
       BookmarkEntity,
       ResumeEntity,

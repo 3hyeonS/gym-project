@@ -23,7 +23,6 @@ import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
-import { ExpiredRecruitmentEntity } from 'src/recruitment/entity/expiredRecruitment.entity';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
@@ -46,10 +45,6 @@ export class AuthService {
     private centerRepository: Repository<CenterEntity>,
     @InjectRepository(RefreshTokenEntity)
     private refreshTokenRepository: Repository<RefreshTokenEntity>,
-    @InjectRepository(RecruitmentEntity)
-    private recruitmentRepository: Repository<RecruitmentEntity>,
-    @InjectRepository(ExpiredRecruitmentEntity)
-    private expiredRecruitmentRepository: Repository<ExpiredRecruitmentEntity>,
     @InjectRepository(EmailCodeEntity)
     private emailCodeRepository: Repository<EmailCodeEntity>,
     @InjectRepository(SignWithEntity)
@@ -63,7 +58,6 @@ export class AuthService {
     private jwtService: JwtService,
     private httpService: HttpService,
     private emailService: EmailService,
-    private recruitmentService: RecruitmentService,
   ) {}
 
   // 문자 출력

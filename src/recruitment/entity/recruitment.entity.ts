@@ -72,9 +72,6 @@ export class RecruitmentEntity {
   @Column({ type: 'json', name: 'site', nullable: false })
   site: Record<string, string[]>;
 
-  @Column({ type: 'date', name: 'date', nullable: false })
-  date: Date;
-
   @Column({ type: 'text', name: 'description', nullable: true })
   description: string;
 
@@ -86,6 +83,12 @@ export class RecruitmentEntity {
 
   @Column({ type: 'tinyint', name: 'apply', nullable: true })
   apply: number;
+
+  @Column({ type: 'date', name: 'date', nullable: false })
+  date: Date;
+
+  @Column({ type: 'tinyint', name: 'isHiring', nullable: false, default: 1 })
+  isHiring: number;
 
   @OneToOne(() => CenterEntity, (center) => center.recruitment, {
     eager: true,

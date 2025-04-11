@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { CareerEntity } from './career.entity';
 import { AcademyEntity } from './academy.entity';
 import { QualificationEntity } from './qualification.entity';
@@ -36,7 +42,7 @@ export class ResumeEntity {
   workTime: string[];
 
   @Column({ type: 'tinyint', name: 'lisence', nullable: true })
-  lisence: number;
+  license: number;
 
   @Column({ type: 'json', name: 'award', nullable: true })
   award: string[];
@@ -45,7 +51,7 @@ export class ResumeEntity {
   portfolio: string[];
 
   @Column({ type: 'text', name: 'introduction', nullable: true })
-  intruduction: string;
+  introduction: string;
 
   @OneToMany(() => CareerEntity, (career) => career.resume, {
     eager: true,
@@ -54,12 +60,12 @@ export class ResumeEntity {
   })
   careers: CareerEntity[];
 
-  @OneToMany(() => AcademyEntity, (academy) => academy.resume, {
+  @OneToOne(() => AcademyEntity, (academy) => academy.resume, {
     eager: true,
     nullable: true,
     cascade: true,
   })
-  academies: AcademyEntity[];
+  academy: AcademyEntity;
 
   @OneToMany(
     () => QualificationEntity,

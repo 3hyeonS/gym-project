@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ResumeEntity } from './resume.entity';
 
 @Entity({ name: 'academy' })
@@ -15,10 +21,11 @@ export class AcademyEntity {
   @Column({ type: 'varchar', name: 'detail', nullable: false })
   detail: string;
 
-  @ManyToOne(() => ResumeEntity, (resume) => resume.academies, {
+  @OneToOne(() => ResumeEntity, (resume) => resume.academy, {
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'resumeId' })
   resume: ResumeEntity;
 }

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class AcademyRequestDto {
+export class AcademyDto {
   @ApiProperty({
     type: String,
     description: '학력 단계',

@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -36,7 +35,6 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
 import { MyRecruitmentsResponseDto } from './dto/my-recruitments-response-dto';
-import { IdIsHiringRequestDto } from './dto/id-isHiring-request-dto';
 import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
@@ -110,8 +108,8 @@ export class RecruitmentController {
   })
   @ErrorApiResponse({
     status: 404,
-    description: '해당 id의 채용 공고가 없음',
-    message: 'There is no recruitment',
+    description: '해당 id의 공고를 찾을 수 없음',
+    message: 'There is no recruitment for selected id',
     error: 'NotFoundException',
   })
   @ErrorApiResponse({
@@ -468,8 +466,8 @@ export class RecruitmentController {
   })
   @ErrorApiResponse({
     status: 404,
-    description: '해당 id의 공고가 없음',
-    message: 'There is no recruitment',
+    description: '해당 id의 공고를 찾을 수 없음',
+    message: 'There is no recruitment for selected id',
     error: 'NotFoundException',
   })
   @ResponseMsg('My Recruitment returned successfully')
@@ -478,15 +476,11 @@ export class RecruitmentController {
   @Post('getMyOne')
   async getMyOne(
     @GetUser() center: CenterEntity,
-    @Body() idRequestDto: IdIsHiringRequestDto,
+    @Body() idRequestDto: IdRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    if (!idRequestDto.isHiring && idRequestDto.isHiring != 0) {
-      throw new BadRequestException('isHiring cannot be empty');
-    }
     return await this.recruitmentService.getMyOneRecruitment(
       center,
       idRequestDto.id,
-      idRequestDto.isHiring,
     );
   }
 
@@ -821,15 +815,15 @@ export class RecruitmentController {
     await this.recruitmentService.expireMyRecruitment(center);
   }
 
-  // 채용 중 공고 삭제하기
+  // 공고 삭제하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '채용 중 공고 삭제하기',
+    summary: '공고 삭제하기',
   })
   @NullApiResponse({
     status: 200,
     description: '공고 삭제 성공',
-    message: 'Hiring recruitment deleted successfully',
+    message: 'Recruitment deleted successfully',
   })
   @ErrorApiResponse({
     status: 401,
@@ -845,58 +839,19 @@ export class RecruitmentController {
   })
   @ErrorApiResponse({
     status: 404,
-    description: '채용 중 공고가 없음',
-    message: 'There is no hiring recruitment',
+    description: '해당 id의 공고를 찾을 수 없음',
+    message: 'There is no recruitment for selected id',
     error: 'NotFoundException',
   })
   @ResponseMsg('Hiring recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Get('deleteHiring')
-  async deleteHiring(@GetUser() center: CenterEntity): Promise<void> {
-    await this.recruitmentService.deleteHiring(center);
-  }
-
-  // 내 만료된 중 공고 삭제하기
-  @ApiBearerAuth('accessToken')
-  @ApiOperation({
-    summary: '내 만료된 중 공고 삭제하기',
-  })
-  @NullApiResponse({
-    status: 201,
-    description: '공고 삭제 성공',
-    message: 'Selected expired recruitment deleted successfully',
-  })
-  @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: 'id should not be empty',
-    error: 'BadRequestException',
-  })
-  @ErrorApiResponse({
-    status: 401,
-    description: '유효하지 않거나 기간이 만료된 acccessToken',
-    message: 'Invalid or expired accessToken',
-    error: 'UnauthorizedException',
-  })
-  @ErrorApiResponse({
-    status: 403,
-    description: '센터 회원이 아님 (센터 회원만 공고 삭제 가능)',
-    message: 'Not a member of the CENTER (only CENTER can call this api)',
-    error: 'ForbiddenException',
-  })
-  @ErrorApiResponse({
-    status: 404,
-    description: '해당 공고를 찾을 수 없음',
-    message: 'There is no expired recruitment for selected id',
-    error: 'NotFoundException',
-  })
-  @ResponseMsg('Selected expired recruitment deleted successfully')
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles('CENTER')
-  @Post('deleteExpired')
-  async deleteExpired(@Body() idRequestDto: IdRequestDto): Promise<void> {
-    await this.recruitmentService.deleteExpired(idRequestDto.id);
+  @Get('delete')
+  async deleteRecruitment(
+    @GetUser() center: CenterEntity,
+    idRequestDto: IdRequestDto,
+  ): Promise<void> {
+    await this.recruitmentService.deleteRecruitment(center, idRequestDto.id);
   }
 
   // 채용공고 저장 or 해제
@@ -929,7 +884,7 @@ export class RecruitmentController {
   })
   @ErrorApiResponse({
     status: 404,
-    description: '해당 공고를 찾을 수 없음',
+    description: '해당 id의 공고를 찾을 수 없음',
     message: 'There is no recruitment for selected id',
     error: 'NotFoundException',
   })

@@ -1,32 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsDate,
-  IsEmail,
-  IsIn,
-  IsNotEmpty,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  Length,
-  Matches,
-  ValidateNested,
-} from 'class-validator';
 import { CareerDto } from './career-dto';
 import { AcademyDto } from './academy-dto';
 import { QualificationDto } from './qualification-dto';
+import { ResumeEntity } from '../entity/resume.entity';
 
-export class ResumeRegisterRequestDto {
+export class ResumeResponseDto {
+  @ApiProperty({
+    type: Number,
+    description: 'id',
+    example: 1,
+  })
+  id: number;
+
   @ApiProperty({
     type: String,
     description: '이름',
     example: '홍길동',
   })
-  @IsNotEmpty() // null 값 체크
-  @IsString()
-  @Length(1, 20) // 문자 수
   name: string;
 
   @ApiProperty({
@@ -34,32 +24,20 @@ export class ResumeRegisterRequestDto {
     description: '생년월일',
     example: '1999-03-17',
   })
-  @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
   birth: Date;
 
   @ApiProperty({
     type: String,
-    description: '전화번호(000-0000-0000 형식만 허용)',
+    description: '전화번호',
     example: '010-0000-0000',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @Matches(/^\d{3}-\d{4}-\d{4}$/, {
-    message: 'phone format must be 000-0000-0000',
   })
   phone: string;
 
   @ApiProperty({
     type: String,
-    description: '이메일(이메일 형식만 허용)',
+    description: '이메일',
     example: 'sample@email.com',
   })
-  @IsNotEmpty()
-  @IsString()
-  @IsEmail() // 이메일 형식
-  @Length(1, 100)
   email: string;
 
   @ApiProperty({
@@ -67,9 +45,6 @@ export class ResumeRegisterRequestDto {
     description: '성별  \n0: 남성  \n1: 여성',
     example: 1,
   })
-  @IsNotEmpty()
-  @IsNumber()
-  @IsIn([0, 1], { message: 'apply must be 0 or 1' })
   gender: number;
 
   @ApiProperty({
@@ -86,8 +61,6 @@ export class ResumeRegisterRequestDto {
       경기: ['성남시 분당구', '고양시 덕양구'],
     },
   })
-  @IsObject()
-  @IsNotEmpty()
   location: Record<string, string[]>;
 
   @ApiProperty({
@@ -95,9 +68,6 @@ export class ResumeRegisterRequestDto {
     description: '신입/경력 여부  \n0: 신입  \n1: 경력',
     example: 1,
   })
-  @IsNotEmpty()
-  @IsNumber()
-  @IsIn([0, 1], { message: 'apply must be 0 or 1' })
   isNew: number;
 
   @ApiProperty({
@@ -116,31 +86,21 @@ export class ResumeRegisterRequestDto {
       },
     ],
   })
-  @IsArray()
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => CareerDto)
-  careers?: CareerDto[];
+  careers?: CareerDto[] = null;
 
   @ApiProperty({
     type: [String],
     description: '근무 형태',
     example: ['정규직', '프리랜서'],
   })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  workType?: string[];
+  workType?: string[] = null;
 
   @ApiProperty({
     type: [String],
     description: '근무 시간',
     example: ['오전~오후 풀타임', '자유 근무'],
   })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  workTime?: string[];
+  workTime?: string[] = null;
 
   @ApiProperty({
     type: AcademyDto,
@@ -151,9 +111,7 @@ export class ResumeRegisterRequestDto {
       detail: '서울대학교 체육교육과',
     },
   })
-  @IsOptional()
-  @Type(() => AcademyDto)
-  academy?: AcademyDto;
+  academy?: AcademyDto = null;
 
   @ApiProperty({
     type: [QualificationDto],
@@ -165,39 +123,45 @@ export class ResumeRegisterRequestDto {
       },
     ],
   })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => QualificationDto)
-  qualifications?: QualificationDto[];
+  qualifications?: QualificationDto[] = null;
 
   @ApiProperty({
     type: [String],
     description: '수상 내역',
     example: ['2026 ABCD 피지크 2위'],
   })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  award?: string[];
+  award?: string[] = null;
 
   @ApiProperty({
     type: [String],
     description: '포트폴리오',
     example: ['url'],
   })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  portfolio?: string[];
+  portfolio?: string[] = null;
 
   @ApiProperty({
     type: String,
     description: '자기소개(500자 이내)',
     example: '안녕하세요, 홍길동입니다.',
   })
-  @IsOptional()
-  @IsString()
-  @Length(1, 500)
-  introduction?: string;
+  introduction?: string = null;
+
+  constructor(resume: ResumeEntity) {
+    this.id = resume.id;
+    this.name = resume.name;
+    this.birth = resume.birth;
+    this.phone = resume.phone;
+    this.email = resume.email;
+    this.gender = resume.gender;
+    this.location = resume.location;
+    this.isNew = resume.isNew;
+    this.careers = resume.careers;
+    this.workType = resume.workType;
+    this.workTime = resume.workTime;
+    this.academy = resume.academy;
+    this.qualifications = resume.qualifications;
+    this.award = resume.award;
+    this.portfolio = resume.portfolio;
+    this.introduction = resume.introduction;
+  }
 }
