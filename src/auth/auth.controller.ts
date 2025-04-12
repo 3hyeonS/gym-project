@@ -52,6 +52,8 @@ import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto
 import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request.dto';
 import { UserTokenResponseDto } from './dto/user-token-response-dto';
 import { CenterTokenResponseDto } from './dto/center-token-response-dto';
+import { ResumeResponseDto } from './dto/resume-response-dto';
+import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -799,5 +801,91 @@ export class AuthController {
       refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
       user: userResponseDto,
     };
+  }
+
+  // 이력서 등록
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '이력서 등록',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '이력서 등록 성공',
+    message: 'Resume registered successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'phone format must be 000-0000-0000',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 refreshToken',
+    message: 'Invalid or expired refreshToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 등록 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '이미 등록된 이력서가 있음',
+    message: 'Your resume already exists',
+    error: 'ConflictException',
+  })
+  @ResponseMsg('Resume registered successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('registerResume')
+  async registerResume(
+    @GetUser() user: UserEntity,
+    @Body() resumeRegisterRequestDto: ResumeRegisterRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.registerResume(
+      user,
+      resumeRegisterRequestDto,
+    );
+  }
+
+  // 내 이력서 불러오기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 이력서 불러오기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '내 이력서 불러오기 성공',
+    message: 'My resume returned successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 refreshToken',
+    message: 'Invalid or expired refreshToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 등록 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '이력서를 등록하지 않았음',
+    message: 'You did not register your resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('My resume returned successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Get('getMyResume')
+  async getMyResume(@GetUser() user: UserEntity): Promise<ResumeResponseDto> {
+    return await this.authService.getMyResume(user);
   }
 }

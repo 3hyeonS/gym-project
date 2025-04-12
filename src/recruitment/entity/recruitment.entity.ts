@@ -90,13 +90,12 @@ export class RecruitmentEntity {
   @Column({ type: 'tinyint', name: 'isHiring', nullable: false, default: 1 })
   isHiring: number;
 
-  @OneToOne(() => CenterEntity, (center) => center.recruitments, {
+  @OneToMany(() => CenterEntity, (center) => center.recruitments, {
     eager: true,
     nullable: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'centerId' }) // GymEntity 테이블에 FK가 생성됨
   center: CenterEntity;
 
   @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.recruitment, {

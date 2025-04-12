@@ -22,7 +22,6 @@ import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
 import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/address-response.dto';
-import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
 import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
@@ -31,8 +30,13 @@ import { SignWithEntity } from './entity/signWith.entity';
 import { AuthorityEntity } from './entity/authority.entity';
 import { KakaoKeyEntity } from './entity/kakaoKey.entity';
 import { AppleKeyEntity } from './entity/appleKey.entity';
-import { RecruitmentService } from 'src/recruitment/recruitment.service';
 import { AdminSignInRequestDto } from './dto/admin-sign-in-request.dto';
+import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
+import { ResumeResponseDto } from './dto/resume-response-dto';
+import { ResumeEntity } from './entity/resume.entity';
+import { CareerEntity } from './entity/career.entity';
+import { AcademyEntity } from './entity/academy.entity';
+import { QualificationEntity } from './entity/qualification.entity';
 
 @Injectable()
 export class AuthService {
@@ -55,6 +59,14 @@ export class AuthService {
     private kakaoKeyRepository: Repository<KakaoKeyEntity>,
     @InjectRepository(AppleKeyEntity)
     private appleKeyRepository: Repository<AppleKeyEntity>,
+    @InjectRepository(ResumeEntity)
+    private resumeRepository: Repository<ResumeEntity>,
+    @InjectRepository(CareerEntity)
+    private careerRepository: Repository<CareerEntity>,
+    @InjectRepository(AcademyEntity)
+    private academyRepository: Repository<AcademyEntity>,
+    @InjectRepository(QualificationEntity)
+    private qualificationRepository: Repository<QualificationEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
     private emailService: EmailService,
@@ -797,5 +809,78 @@ export class AuthService {
       tokenTypeHint: 'refresh_token' as 'refresh_token',
     };
     await appleSignin.revokeAuthorizationToken(appleRefreshToken, options);
+  }
+
+  // 이력서 보유 여부 확인
+  async hasResume(user: UserEntity): Promise<boolean> {
+    if (user.resume) {
+      return true;
+    }
+    return false;
+  }
+
+  // 내 이력서 불러오기
+  async getMyResume(user: UserEntity): Promise<ResumeResponseDto> {
+    if (!(await this.hasResume(user))) {
+      throw new NotFoundException('You did not register your resume');
+    }
+    return new ResumeResponseDto(user.resume);
+  }
+
+  // 이력서 등록
+  async registerResume(
+    user: UserEntity,
+    resumeRegisterRequestDto: ResumeRegisterRequestDto,
+  ): Promise<ResumeResponseDto> {
+    if (await this.hasResume(user)) {
+      throw new ConflictException('Your resume already exists');
+    }
+
+    const newResume = this.resumeRepository.create({
+      name: resumeRegisterRequestDto.name,
+      birth: resumeRegisterRequestDto.birth,
+      phone: resumeRegisterRequestDto.phone,
+      email: resumeRegisterRequestDto.email,
+      gender: resumeRegisterRequestDto.gender,
+      location: resumeRegisterRequestDto.location,
+      isNew: resumeRegisterRequestDto.isNew,
+      workType: resumeRegisterRequestDto.workType,
+      workTime: resumeRegisterRequestDto.workTime,
+      license: 0,
+      award: resumeRegisterRequestDto.award,
+      portfolio: resumeRegisterRequestDto.portfolio,
+      introduction: resumeRegisterRequestDto.introduction,
+      user,
+    });
+
+    for (const career of resumeRegisterRequestDto.careers ?? []) {
+      const newCareer = this.careerRepository.create({
+        ...career,
+        resume: newResume,
+      });
+      await this.careerRepository.save(newCareer);
+    }
+
+    if (resumeRegisterRequestDto.academy) {
+      const newAcademy = this.academyRepository.create({
+        ...resumeRegisterRequestDto.academy,
+        resume: newResume,
+      });
+      await this.academyRepository.save(newAcademy);
+    }
+
+    for (const qualifiaction of resumeRegisterRequestDto.qualifications ?? []) {
+      if (qualifiaction.certificate == '생활체육지도자') {
+        newResume.license = 1;
+      }
+      const newQualification = this.qualificationRepository.create({
+        ...qualifiaction,
+        resume: newResume,
+      });
+      await this.qualificationRepository.save(newQualification);
+    }
+
+    const savedResume = await this.resumeRepository.save(newResume);
+    return new ResumeResponseDto(savedResume);
   }
 }

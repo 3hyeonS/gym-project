@@ -133,11 +133,11 @@ export class ResumeResponseDto {
   award?: string[] = null;
 
   @ApiProperty({
-    type: [String],
+    type: String,
     description: '포트폴리오',
-    example: ['url'],
+    example: 'url',
   })
-  portfolio?: string[] = null;
+  portfolio?: string = null;
 
   @ApiProperty({
     type: String,

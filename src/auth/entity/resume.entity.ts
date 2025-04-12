@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -8,6 +9,7 @@ import {
 import { CareerEntity } from './career.entity';
 import { AcademyEntity } from './academy.entity';
 import { QualificationEntity } from './qualification.entity';
+import { UserEntity } from './user.entity';
 
 @Entity({ name: 'resume' })
 export class ResumeEntity {
@@ -47,8 +49,8 @@ export class ResumeEntity {
   @Column({ type: 'json', name: 'award', nullable: true })
   award: string[];
 
-  @Column({ type: 'json', name: 'portfolio', nullable: true })
-  portfolio: string[];
+  @Column({ type: 'varchar', name: 'portfolio', nullable: true })
+  portfolio: string;
 
   @Column({ type: 'text', name: 'introduction', nullable: true })
   introduction: string;
@@ -77,4 +79,12 @@ export class ResumeEntity {
     },
   )
   qualifications: QualificationEntity[];
+
+  @OneToOne(() => UserEntity, (user) => user.resume, {
+    nullable: false,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'userId' })
+  user: UserEntity;
 }

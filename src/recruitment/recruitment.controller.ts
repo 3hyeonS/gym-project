@@ -849,7 +849,7 @@ export class RecruitmentController {
   @Get('delete')
   async deleteRecruitment(
     @GetUser() center: CenterEntity,
-    idRequestDto: IdRequestDto,
+    @Body() idRequestDto: IdRequestDto,
   ): Promise<void> {
     await this.recruitmentService.deleteRecruitment(center, idRequestDto.id);
   }
