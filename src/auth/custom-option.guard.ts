@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
@@ -16,11 +20,9 @@ export class OptionalAuthGuard extends AuthGuard('jwt') {
     try {
       const result = (await super.canActivate(context)) as boolean;
       // 인증 성공 시 request.user 세팅됨
-      await super.logIn?.(request); // optional chaining
       return result;
     } catch (err) {
-      // 유효하지 않은 토큰이 들어와도 비회원으로 간주하고 통과시킴
-      return true;
+      throw new UnauthorizedException('Invalid or expired accessToken');
     }
   }
 }

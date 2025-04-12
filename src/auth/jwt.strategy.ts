@@ -26,24 +26,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // [5] JWT에서 사용자 정보 가져오기(인증)
   async validate(payload) {
-    const { id, email, role } = payload;
+    try {
+      const { id, email, role } = payload;
 
-    let member: UserEntity | CenterEntity;
+      let member: UserEntity | CenterEntity;
 
-    if (role === 'USER' || role === 'ADMIN') {
-      member = await this.usersRepository.findOne({
-        where: { id, email },
-      });
-    } else {
-      member = await this.centersRepository.findOne({
-        where: { id, email },
-      });
-    }
+      if (role === 'USER' || role === 'ADMIN') {
+        member = await this.usersRepository.findOne({
+          where: { id, email },
+        });
+      } else {
+        member = await this.centersRepository.findOne({
+          where: { id, email },
+        });
+      }
 
-    if (!member) {
+      if (!member) {
+        throw new UnauthorizedException('Invalid or expired accessToken');
+      }
+      return member;
+    } catch (err) {
       throw new UnauthorizedException('Invalid or expired accessToken');
     }
-
-    return member;
   }
 }
