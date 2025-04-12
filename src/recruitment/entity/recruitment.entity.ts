@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -90,7 +91,7 @@ export class RecruitmentEntity {
   @Column({ type: 'tinyint', name: 'isHiring', nullable: false, default: 1 })
   isHiring: number;
 
-  @OneToMany(() => CenterEntity, (center) => center.recruitments, {
+  @ManyToOne(() => CenterEntity, (center) => center.recruitments, {
     eager: true,
     nullable: true,
     onUpdate: 'CASCADE',
