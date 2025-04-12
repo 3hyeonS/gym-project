@@ -146,7 +146,7 @@ export class RecruitmentResponseDto {
     description: '채용 사이트',
     example: {
       호호스포: ['url1'],
-      알바몬: ['url2', 'url2'],
+      알바몬: ['url2', 'url3'],
     },
   })
   @ApiProperty({
