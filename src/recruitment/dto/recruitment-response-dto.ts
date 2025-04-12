@@ -84,35 +84,35 @@ export class RecruitmentResponseDto {
     description: '기본급 (단위: 원)',
     example: [800000, 1000000],
   })
-  basePay: number[];
+  basePay: number[] = null;
 
   @ApiProperty({
     type: [Number],
     description: '수업 단가 (단위: 원)',
     example: [50000, 65000],
   })
-  classPay: number[];
+  classPay: number[] = null;
 
   @ApiProperty({
     type: [Number],
     description: '수업료 분배(단위: %)',
     example: [40, 50],
   })
-  classFee: number[];
+  classFee: number[] = null;
 
   @ApiProperty({
     type: [Number],
     description: '월급 (단위: 원)',
     example: [2000000, 2500000],
   })
-  monthly: number[];
+  monthly: number[] = null;
 
   @ApiProperty({
     type: [Number],
     description: '시급 (단위: 원)',
     example: [20000, 30000],
   })
-  hourly: number[];
+  hourly: number[] = null;
 
   @ApiProperty({
     type: [String],
@@ -136,6 +136,20 @@ export class RecruitmentResponseDto {
   preference: string[];
 
   @ApiProperty({
+    type: 'object',
+    additionalProperties: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    description: '채용 사이트',
+    example: {
+      호호스포: ['url1'],
+      알바몬: ['url2', 'url2'],
+    },
+  })
+  @ApiProperty({
     type: [String],
     description: '채용 사이트',
     example: ['잡코리아'],
@@ -148,7 +162,7 @@ export class RecruitmentResponseDto {
     example:
       'https://www.jobkorea.co.kr/Recruit/GI_Read/46253705?rPageCode=SL&logpath=21&sn=6',
   })
-  description: string;
+  description: string = null;
 
   @ApiProperty({
     type: [String],
@@ -159,7 +173,7 @@ export class RecruitmentResponseDto {
       'https://sehyeon-gym-images.s3.ap-northeast-2.amazonaws.com/images/헬스보이짐 배곧점 14d5a73e57a080a3a04ae25f180d5857/KakaoTalk_Photo_2024-11-29-16-49-41_003.png',
     ],
   })
-  image: string[];
+  image: string[] = null;
 
   @ApiProperty({
     type: Date,
@@ -180,7 +194,7 @@ export class RecruitmentResponseDto {
     description: '조회수',
     example: 10,
   })
-  view: number;
+  view: number = 0;
 
   @ApiProperty({
     type: Number,
@@ -188,7 +202,7 @@ export class RecruitmentResponseDto {
       '지원 방법  \n0: 앱 내 지원  \n1: 앱 내 지원 & 이메일+문자 지원',
     example: 1,
   })
-  apply: number;
+  apply: number = null;
 
   @ApiProperty({
     type: 'object',
@@ -201,7 +215,7 @@ export class RecruitmentResponseDto {
       phone: '000-0000-0000',
     },
   })
-  contact: Record<string, string>;
+  contact: Record<string, string> = null;
 
   @ApiProperty({
     type: Boolean,

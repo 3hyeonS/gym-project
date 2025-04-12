@@ -21,10 +21,10 @@ export class RecruitmentEntity {
   @Column({ type: 'varchar', name: 'city', nullable: false })
   city: string;
 
-  @Column({ type: 'varchar', name: 'location', nullable: true })
+  @Column({ type: 'varchar', name: 'location', nullable: false })
   location: string;
 
-  @Column({ type: 'varchar', name: 'address', nullable: true })
+  @Column({ type: 'varchar', name: 'address', nullable: false })
   address: string;
 
   @Column({ type: 'json', name: 'workType', nullable: false })
