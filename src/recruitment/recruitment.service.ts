@@ -412,7 +412,7 @@ export class RecruitmentService {
     const savedRecruitment = await this.recruitmentRepository.save(recruitment);
 
     // 즐겨찾기 처리
-    if (user) {
+    if (user instanceof UserEntity) {
       if (await this.isBookmarked(user, savedRecruitment)) {
         return new RecruitmentResponseDto(savedRecruitment, true);
       }

@@ -19,8 +19,8 @@ export class OptionalAuthGuard extends AuthGuard('jwt') {
       await super.logIn?.(request); // optional chaining
       return result;
     } catch (err) {
-      // Authorization 헤더가 있지만 유효하지 않으면 막음
-      return false;
+      // 유효하지 않은 토큰이 들어와도 비회원으로 간주하고 통과시킴
+      return true;
     }
   }
 }

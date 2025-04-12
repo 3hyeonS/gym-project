@@ -87,6 +87,7 @@ export class RecruitmentController {
   async getTotalNumber(): Promise<number> {
     return await this.recruitmentService.getTotalNumber();
   }
+  0;
 
   // 채용 공고 1개 불러오기(조회수 증가)
   @ApiBearerAuth('accessToken')
@@ -846,7 +847,7 @@ export class RecruitmentController {
   @ResponseMsg('Hiring recruitment deleted successfully')
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('CENTER')
-  @Get('delete')
+  @Post('delete')
   async deleteRecruitment(
     @GetUser() center: CenterEntity,
     @Body() idRequestDto: IdRequestDto,
