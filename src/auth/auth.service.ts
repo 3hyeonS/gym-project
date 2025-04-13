@@ -38,6 +38,8 @@ import { CareerEntity } from './entity/career.entity';
 import { AcademyEntity } from './entity/academy.entity';
 import { QualificationEntity } from './entity/qualification.entity';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -912,7 +914,9 @@ export class AuthService {
       return [];
     }
     const uploadPromises = files.map(async (file) => {
-      const fileKey = `resume/${userId}-register/${file.originalname}`;
+      const ext = extname(file.originalname); // .pdf, .jpg 등
+      const uniqueFileName = `${uuidv4()}${ext}`;
+      const fileKey = `resume/${userId}-register/${uniqueFileName}`;
 
       const params = {
         Bucket: this.bucketName,

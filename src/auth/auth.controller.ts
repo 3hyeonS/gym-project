@@ -839,7 +839,7 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        images: {
+        files: {
           type: 'array',
           items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
           description: '파일 등록',
