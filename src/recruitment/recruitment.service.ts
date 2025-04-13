@@ -646,7 +646,7 @@ export class RecruitmentService {
     const myExpiredRecruitments = await this.recruitmentRepository.find({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
-        isHiring: 10,
+        isHiring: 0,
       },
     });
     return myExpiredRecruitments.map(
