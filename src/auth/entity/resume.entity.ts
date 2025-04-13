@@ -49,8 +49,11 @@ export class ResumeEntity {
   @Column({ type: 'json', name: 'award', nullable: true })
   award: string[];
 
-  @Column({ type: 'varchar', name: 'portfolio', nullable: true })
-  portfolio: string;
+  @Column({ type: 'varchar', name: 'SNS', nullable: true })
+  SNS: string;
+
+  @Column({ type: 'json', name: 'portfolio', nullable: true })
+  portfolio: string[];
 
   @Column({ type: 'text', name: 'introduction', nullable: true })
   introduction: string;

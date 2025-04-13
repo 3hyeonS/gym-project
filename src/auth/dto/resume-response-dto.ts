@@ -134,10 +134,17 @@ export class ResumeResponseDto {
 
   @ApiProperty({
     type: String,
-    description: '포트폴리오',
+    description: 'SNS',
     example: 'url',
   })
-  portfolio?: string = null;
+  SNS?: string = null;
+
+  @ApiProperty({
+    type: [String],
+    description: '포트폴리오',
+    example: ['url1', 'url2'],
+  })
+  portfolio?: string[] = null;
 
   @ApiProperty({
     type: String,
@@ -161,6 +168,7 @@ export class ResumeResponseDto {
     this.academy = resume.academy;
     this.qualifications = resume.qualifications;
     this.award = resume.award;
+    this.SNS = resume.SNS;
     this.portfolio = resume.portfolio;
     this.introduction = resume.introduction;
   }

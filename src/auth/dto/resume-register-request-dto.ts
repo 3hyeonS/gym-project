@@ -183,13 +183,23 @@ export class ResumeRegisterRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '포트폴리오 url(100자 이내)',
+    description: 'SNS url(100자 이내)',
     example: 'url',
   })
   @IsOptional()
   @Length(1, 100)
   @IsString()
-  portfolio?: string;
+  SNS?: string;
+
+  @ApiProperty({
+    type: [String],
+    description: '포트폴리오 url',
+    example: ['url1', 'url2'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  portfolio?: string[];
 
   @ApiProperty({
     type: String,

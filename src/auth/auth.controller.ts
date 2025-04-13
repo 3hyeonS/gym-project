@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   UnauthorizedException,
+  UploadedFiles,
   UseFilters,
   UseGuards,
   UseInterceptors,
@@ -23,6 +24,8 @@ import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiExtraModels,
   ApiOperation,
   ApiTags,
@@ -54,6 +57,7 @@ import { UserTokenResponseDto } from './dto/user-token-response-dto';
 import { CenterTokenResponseDto } from './dto/center-token-response-dto';
 import { ResumeResponseDto } from './dto/resume-response-dto';
 import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -801,6 +805,57 @@ export class AuthController {
       refreshToken: refreshToken, // 클라이언트 보안 저장소에 저장할 Refresh Token
       user: userResponseDto,
     };
+  }
+
+  // 이력서 파일 등록
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '이력서 파일 등록하기',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '이력서 파일 등록 성공',
+    message: 'Resume files uploaded successfully',
+    type: 'string',
+    isArray: true,
+    example: 'urlexample',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 등록 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Recruitment images uploaded successfully')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '파일 업로드',
+    schema: {
+      type: 'object',
+      properties: {
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
+          description: '파일 등록',
+        },
+      },
+    },
+  })
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @UseInterceptors(FilesInterceptor('files', 5))
+  @Post('uploadResumeFiles')
+  async uploadResumeFiles(
+    @GetUser() user: UserEntity,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<string[]> {
+    return await this.authService.uploadResumeFiles(user.id, files);
   }
 
   // 이력서 등록

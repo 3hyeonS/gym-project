@@ -37,10 +37,14 @@ import { ResumeEntity } from './entity/resume.entity';
 import { CareerEntity } from './entity/career.entity';
 import { AcademyEntity } from './entity/academy.entity';
 import { QualificationEntity } from './entity/qualification.entity';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+
+  private s3: S3Client;
+  private bucketName: string;
 
   constructor(
     @InjectRepository(UserEntity)
@@ -70,7 +74,17 @@ export class AuthService {
     private jwtService: JwtService,
     private httpService: HttpService,
     private emailService: EmailService,
-  ) {}
+  ) {
+    this.s3 = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    this.bucketName = process.env.S3_BUCKET_NAME;
+  }
 
   // 문자 출력
   getHello(): string {
@@ -749,8 +763,10 @@ export class AuthService {
       } else {
         // 기존 애플 사용자 정보 불러오기
         const appleKey = await this.appleKeyRepository.findOneBy({ appleId });
-        user = await this.userRepository.findOneBy({
-          appleKey,
+        user = await this.userRepository.findOne({
+          where: {
+            appleKey: { id: appleKey.id },
+          },
         });
       }
 
@@ -848,6 +864,7 @@ export class AuthService {
       workTime: resumeRegisterRequestDto.workTime,
       license: 0,
       award: resumeRegisterRequestDto.award,
+      SNS: resumeRegisterRequestDto.SNS,
       portfolio: resumeRegisterRequestDto.portfolio,
       introduction: resumeRegisterRequestDto.introduction,
       user,
@@ -884,5 +901,30 @@ export class AuthService {
 
     const savedResume = await this.resumeRepository.save(newResume);
     return new ResumeResponseDto(savedResume);
+  }
+
+  // method12: 다중 파일 S3 업로드
+  async uploadResumeFiles(
+    userId: number,
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
+    if (!files || files.length === 0) {
+      return [];
+    }
+    const uploadPromises = files.map(async (file) => {
+      const fileKey = `resume/${userId}-register/${file.originalname}`;
+
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      };
+
+      await this.s3.send(new PutObjectCommand(params));
+      return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    });
+
+    return Promise.all(uploadPromises);
   }
 }

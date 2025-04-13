@@ -105,7 +105,10 @@ export class RecruitmentService {
       };
     }
     // 즐겨찾기 처리
-    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarks = await this.bookmarkRepository.find({
+      where: { user: { id: user.id } }, // 확실한 조건 명시
+      relations: ['recruitment'], // 즐겨찾기한 공고 정보도 함께 로딩
+    });
     const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
 
     const mappedRecruitmentList = recruitmentsList.map((recruitment) => {
@@ -383,7 +386,10 @@ export class RecruitmentService {
     }
 
     // 즐겨찾기 처리
-    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarks = await this.bookmarkRepository.find({
+      where: { user: { id: user.id } }, // 확실한 조건 명시
+      relations: ['recruitment'], // 즐겨찾기한 공고 정보도 함께 로딩
+    });
     const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
 
     const mappedRecruitmentList = objectList.map((recruitment) => {
@@ -441,7 +447,10 @@ export class RecruitmentService {
       return recruitmentList;
     }
     // 즐겨찾기 처리
-    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarks = await this.bookmarkRepository.find({
+      where: { user: { id: user.id } }, // 확실한 조건 명시
+      relations: ['recruitment'], // 즐겨찾기한 공고 정보도 함께 로딩
+    });
     const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
 
     const recruitmentList = popularRecruitments.map((recruitment) => {
@@ -478,7 +487,10 @@ export class RecruitmentService {
 
   // 즐겨찾기 공고 불러오기
   async getBookmarked(user: UserEntity): Promise<RecruitmentResponseDto[]> {
-    const bookmarks = await this.bookmarkRepository.findBy({ user });
+    const bookmarks = await this.bookmarkRepository.find({
+      where: { user: { id: user.id } }, // 확실한 조건 명시
+      relations: ['recruitment'], // 즐겨찾기한 공고 정보도 함께 로딩
+    });
 
     const recruitmentList = bookmarks.map(
       (bookmark) => new RecruitmentResponseDto(bookmark.recruitment, true),
@@ -488,9 +500,11 @@ export class RecruitmentService {
 
   // 채용 공고 등록 가능 여부 확인
   async canRegisterRecruitment(center: CenterEntity): Promise<boolean> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
-      isHiring: 1,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
+      },
     });
     if (myRecruitment) {
       return false;
@@ -613,9 +627,11 @@ export class RecruitmentService {
   async getMyRecruitment(
     center: CenterEntity,
   ): Promise<RecruitmentResponseDto | null> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
-      isHiring: 1,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
+      },
     });
     if (!myRecruitment) {
       return null;
@@ -627,9 +643,11 @@ export class RecruitmentService {
   async getMyExpiredRecruitments(
     center: CenterEntity,
   ): Promise<RecruitmentResponseDto[]> {
-    const myExpiredRecruitments = await this.recruitmentRepository.findBy({
-      center,
-      isHiring: 0,
+    const myExpiredRecruitments = await this.recruitmentRepository.find({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 10,
+      },
     });
     return myExpiredRecruitments.map(
       (recruitment) => new RecruitmentResponseDto(recruitment),
@@ -641,9 +659,11 @@ export class RecruitmentService {
     center: CenterEntity,
     id: number,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      id,
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        id,
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no recruitment for selected id');
@@ -653,9 +673,11 @@ export class RecruitmentService {
 
   // method7: 내 채용 중 공고 끌어올리기
   async refreshMyRecruitment(center: CenterEntity): Promise<void> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
-      isHiring: 1,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
@@ -672,9 +694,11 @@ export class RecruitmentService {
 
   // method8: 내 채용 중 공고 만료시키기
   async expireMyRecruitment(center: CenterEntity): Promise<void> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
-      isHiring: 1,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hring recruitment');
@@ -685,9 +709,11 @@ export class RecruitmentService {
 
   // method9: 내 공고 삭제하기
   async deleteRecruitment(center: CenterEntity, id: number): Promise<void> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      id,
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        id,
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no recruitment for selected id');
@@ -700,8 +726,10 @@ export class RecruitmentService {
     center: CenterEntity,
     weekendDutyModifyRequestDto: WeekendDutyModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
@@ -726,8 +754,10 @@ export class RecruitmentService {
     center: CenterEntity,
     applyConditionModifyRequestDto: ApplyConditionModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
@@ -757,8 +787,10 @@ export class RecruitmentService {
     center: CenterEntity,
     salaryCondtionModifyRequestDto: SalaryCondtionModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
@@ -785,8 +817,10 @@ export class RecruitmentService {
     center: CenterEntity,
     applyModifyRequestDto: ApplyModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
@@ -804,8 +838,10 @@ export class RecruitmentService {
     center: CenterEntity,
     detailModifyRequestDto: DetailModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({
-      center,
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
