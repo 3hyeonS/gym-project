@@ -119,7 +119,7 @@ export class AuthService {
       throw new GoneException('Verification code has expired'); // 410 Gone 사용
     }
 
-    await this.emailCodeRepository.delete({ email, code });
+    await this.emailCodeRepository.remove(savedCode);
     await this.emailCodeRepository.delete({ expiresAt: LessThan(now) }); // 만료된 코드들 삭제
     return true;
   }
@@ -564,7 +564,7 @@ export class AuthService {
     if (!tokenEntity || tokenEntity.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refreshToken');
     } else {
-      await this.refreshTokenRepository.delete({ token: refreshToken });
+      await this.refreshTokenRepository.remove(tokenEntity);
     }
   }
 
@@ -573,9 +573,13 @@ export class AuthService {
     member: UserEntity | CenterEntity,
   ): Promise<void> {
     if (member instanceof UserEntity) {
-      await this.refreshTokenRepository.delete({ user: member });
+      await this.refreshTokenRepository.delete({
+        user: { id: member.id },
+      });
     } else {
-      await this.refreshTokenRepository.delete({ center: member });
+      await this.refreshTokenRepository.delete({
+        center: { id: member.id },
+      });
     }
   }
 
@@ -673,9 +677,9 @@ export class AuthService {
       if (member.signWith.platform == 'APPLE') {
         await this.revokeAppleTokens(member.appleKey.appleRefreshToken);
       }
-      await this.userRepository.delete({ id: member.id });
+      await this.userRepository.remove(member);
     } else {
-      await this.centerRepository.delete({ id: member.id });
+      await this.centerRepository.remove(member);
     }
   }
 
@@ -930,5 +934,18 @@ export class AuthService {
     });
 
     return Promise.all(uploadPromises);
+  }
+
+  // 이력서 삭제
+  async deleteResume(user: UserEntity): Promise<void> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+    await this.resumeRepository.remove(myResume);
   }
 }

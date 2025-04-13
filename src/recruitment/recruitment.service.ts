@@ -469,7 +469,7 @@ export class RecruitmentService {
       },
     });
     if (existBookmark) {
-      await this.bookmarkRepository.delete({ id: existBookmark.id });
+      await this.bookmarkRepository.remove(existBookmark);
     } else {
       const recruitmentForBookmark = await this.recruitmentRepository.findOneBy(
         { id, isHiring: 1 },
@@ -718,7 +718,7 @@ export class RecruitmentService {
     if (!myRecruitment) {
       throw new NotFoundException('There is no recruitment for selected id');
     }
-    await this.recruitmentRepository.delete({ center });
+    await this.recruitmentRepository.remove(myRecruitment);
   }
 
   // 주말당직 수정하기
