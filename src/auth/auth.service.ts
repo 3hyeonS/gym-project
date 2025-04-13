@@ -44,6 +44,10 @@ import {
 } from '@aws-sdk/client-s3';
 import { RecruitmentService } from 'src/recruitment/recruitment.service';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
+import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
+import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
+import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
+import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
 
 @Injectable()
 export class AuthService {
@@ -884,7 +888,7 @@ export class AuthService {
   // 내 이력서 불러오기
   async getMyResume(user: UserEntity): Promise<ResumeResponseDto> {
     if (!(await this.hasResume(user))) {
-      throw new NotFoundException('You did not register your resume');
+      throw new NotFoundException('There is no registered resume');
     }
     return new ResumeResponseDto(user.resume);
   }
@@ -1025,7 +1029,7 @@ export class AuthService {
       },
     });
     if (!myResume) {
-      throw new NotFoundException('You did not register your resume');
+      throw new NotFoundException('There is no registered resume');
     }
 
     // 증명사진 삭제
@@ -1060,5 +1064,133 @@ export class AuthService {
       }
     }
     await this.resumeRepository.remove(myResume);
+  }
+
+  // 이력서 개인정보 수정하기
+  async modifyPersonal(
+    user: UserEntity,
+    personalModifyRequestDto: PersonalModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.profileImage = personalModifyRequestDto.profileImage;
+    myResume.name = personalModifyRequestDto.name;
+    myResume.birth = personalModifyRequestDto.birth;
+    myResume.phone = personalModifyRequestDto.phone;
+    myResume.email = personalModifyRequestDto.email;
+    myResume.gender = personalModifyRequestDto.gender;
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 희망근무조건 수정하기
+  async modifyWorkCondition(
+    user: UserEntity,
+    workConditionModifyRequestDto: WorkConditionModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.location = workConditionModifyRequestDto.location;
+    myResume.workType = workConditionModifyRequestDto.workType;
+    myResume.workTime = workConditionModifyRequestDto.workTime;
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 커리어 수정하기
+  async modifyCareer(
+    user: UserEntity,
+    careerModifyRequestDto: CareerModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.isNew = careerModifyRequestDto.isNew;
+    // careers 초기화 후 재등록
+    await this.careerRepository.delete({ resume: { id: myResume.id } }); // 기존 삭제
+    if (careerModifyRequestDto.careers) {
+      const newCareers = careerModifyRequestDto.careers.map((career) =>
+        this.careerRepository.create({
+          ...career,
+          resume: myResume,
+        }),
+      );
+      await this.careerRepository.save(newCareers);
+    }
+    // academy 초기화 후 재등록
+    await this.academyRepository.delete({ resume: { id: myResume.id } });
+    if (careerModifyRequestDto.academy) {
+      const newAcademy = this.academyRepository.create({
+        ...careerModifyRequestDto.academy,
+        resume: myResume,
+      });
+      await this.academyRepository.save(newAcademy);
+    }
+    // qualifications 초기화 후 재등록
+    await this.qualificationRepository.delete({ resume: { id: myResume.id } });
+    if (careerModifyRequestDto.qualifications) {
+      const newQualifications = careerModifyRequestDto.qualifications.map(
+        (qualifiaction) =>
+          this.qualificationRepository.create({
+            ...qualifiaction,
+            resume: myResume,
+          }),
+      );
+      await this.qualificationRepository.save(newQualifications);
+
+      // 4-1. 생활스포츠지도사 있는지 체크
+      const hasLicense = careerModifyRequestDto.qualifications.some(
+        (qualifiaction) => qualifiaction.certificate === '생활스포츠지도사',
+      );
+      myResume.license = hasLicense ? 1 : 0;
+    }
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 추가정보 수정하기
+  async modifyAdditional(
+    user: UserEntity,
+    additionalModifyRequestDto: AdditionalModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.SNS = additionalModifyRequestDto.SNS;
+    myResume.portfolioFile = additionalModifyRequestDto.portfolioFile;
+    myResume.portfolioImages = additionalModifyRequestDto.portfolioImages;
+    myResume.introduction = additionalModifyRequestDto.introduction;
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
   }
 }

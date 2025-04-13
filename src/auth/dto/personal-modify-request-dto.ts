@@ -21,7 +21,7 @@ export class PersonalModifyRequestDto {
   @IsOptional()
   @Length(1, 100)
   @IsString()
-  portfolioImage?: string = null;
+  profileImage?: string = null;
 
   @ApiProperty({
     type: String,
