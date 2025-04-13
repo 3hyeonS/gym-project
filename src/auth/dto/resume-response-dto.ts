@@ -17,7 +17,7 @@ export class ResumeResponseDto {
     description: '증명사진',
     example: 'url',
   })
-  image?: string = null;
+  profileImage?: string = null;
 
   @ApiProperty({
     type: String,
@@ -147,11 +147,18 @@ export class ResumeResponseDto {
   SNS?: string = null;
 
   @ApiProperty({
+    type: String,
+    description: '포트폴리오 파일',
+    example: 'url',
+  })
+  portfolioFile?: string = null;
+
+  @ApiProperty({
     type: [String],
-    description: '포트폴리오',
+    description: '포트폴리오 이미지',
     example: ['url1', 'url2'],
   })
-  portfolio?: string[] = null;
+  portfolioImages?: string[] = null;
 
   @ApiProperty({
     type: String,
@@ -162,7 +169,7 @@ export class ResumeResponseDto {
 
   constructor(resume: ResumeEntity) {
     this.id = resume.id;
-    this.image = resume.image;
+    this.profileImage = resume.profileImage;
     this.name = resume.name;
     this.birth = resume.birth;
     this.phone = resume.phone;
@@ -177,7 +184,8 @@ export class ResumeResponseDto {
     this.qualifications = resume.qualifications;
     this.award = resume.award;
     this.SNS = resume.SNS;
-    this.portfolio = resume.portfolio;
+    this.portfolioFile = resume.portfolioFile;
+    this.portfolioImages = resume.portfolioImages;
     this.introduction = resume.introduction;
   }
 }

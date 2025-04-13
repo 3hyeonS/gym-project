@@ -15,7 +15,11 @@ import {
   TWeekendDuty,
 } from './dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
 import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
@@ -23,6 +27,8 @@ import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
 import { UserEntity } from 'src/auth/entity/user.entity';
 import { BookmarkEntity } from './entity/bookmark.entity';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RecruitmentService {
@@ -718,6 +724,19 @@ export class RecruitmentService {
     if (!myRecruitment) {
       throw new NotFoundException('There is no recruitment for selected id');
     }
+
+    // 공고 이미지 삭제
+    if (myRecruitment.image) {
+      for (let i = 0; i < myRecruitment.image.length; i++) {
+        const fileKey = `recruitment/${center.centerName}/images/image${i}`;
+        const params = {
+          Bucket: this.bucketName,
+          Key: fileKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+      }
+    }
+
     await this.recruitmentRepository.remove(myRecruitment);
   }
 
@@ -860,14 +879,17 @@ export class RecruitmentService {
 
   // method12: 다중 이미지 S3 업로드
   async uploadImages(
-    centerName: string,
+    center: CenterEntity,
     files: Express.Multer.File[],
   ): Promise<string[]> {
     if (!files || files.length === 0) {
       return [];
     }
-    const uploadPromises = files.map(async (file) => {
-      const fileKey = `register/${centerName}-register/${file.originalname}`;
+    const uploadedUrls: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileKey = `recruitment/${center.centerName}/images/image${i}`;
 
       const params = {
         Bucket: this.bucketName,
@@ -877,9 +899,11 @@ export class RecruitmentService {
       };
 
       await this.s3.send(new PutObjectCommand(params));
-      return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-    });
+      uploadedUrls.push(
+        `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`,
+      );
+    }
 
-    return Promise.all(uploadPromises);
+    return uploadedUrls;
   }
 }

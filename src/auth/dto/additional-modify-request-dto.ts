@@ -13,14 +13,24 @@ export class AdditionalModifyRequestDto {
   SNS?: string = null;
 
   @ApiProperty({
+    type: String,
+    description: '포트폴리오 파일 url(100자 이내)',
+    example: 'url',
+  })
+  @IsOptional()
+  @Length(1, 100)
+  @IsString()
+  portfolioFile?: string = null;
+
+  @ApiProperty({
     type: [String],
-    description: '포트폴리오 url',
+    description: '포트폴리오 이미지 url',
     example: ['url1', 'url2'],
   })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  portfolio?: string[] = null;
+  portfolioImages?: string[] = null;
 
   @ApiProperty({
     type: String,

@@ -26,6 +26,7 @@ import { CareerEntity } from './entity/career.entity';
 import { AcademyEntity } from './entity/academy.entity';
 import { QualificationEntity } from './entity/qualification.entity';
 import { VillyEntity } from 'src/recruitment/entity/villy.entity';
+import { RecruitmentService } from 'src/recruitment/recruitment.service';
 
 // .env 파일 로드
 dotenv.config();
@@ -62,6 +63,7 @@ dotenv.config();
     AppleStrategy,
     KakaoStrategy,
     EmailService,
+    RecruitmentService,
   ],
   exports: [AuthService, AuthModule, JwtModule, PassportModule],
 })

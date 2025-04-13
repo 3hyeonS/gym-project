@@ -342,7 +342,7 @@ export class RecruitmentController {
     @GetUser() center: CenterEntity,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<string[]> {
-    return await this.recruitmentService.uploadImages(center.centerName, files);
+    return await this.recruitmentService.uploadImages(center, files);
   }
 
   //채용 공고 등록하기

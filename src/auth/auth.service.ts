@@ -10,36 +10,40 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { LessThan, Not, Repository } from 'typeorm';
 import { UserEntity } from './entity/user.entity';
-import { AdminSignUpRequestDto } from './dto/user-sign-up-request.dto';
+import { AdminSignUpRequestDto } from './dto/user-sign-up-request-dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
-import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
-import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
+import { CenterSignUpRequestDto } from './dto/center-sign-up-request-dto';
+import { CenterSignInRequestDto } from './dto/center-sign-in-request-dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
-import { addressResponseDto } from './dto/address-response.dto';
+import { addressResponseDto } from './dto/address-response-dto';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
-import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
+import { CenterModifyRequestDto } from './dto/center-modify-request-dto';
 import appleSignin from 'apple-signin-auth';
 import { SignWithEntity } from './entity/signWith.entity';
 import { AuthorityEntity } from './entity/authority.entity';
 import { KakaoKeyEntity } from './entity/kakaoKey.entity';
 import { AppleKeyEntity } from './entity/appleKey.entity';
-import { AdminSignInRequestDto } from './dto/admin-sign-in-request.dto';
+import { AdminSignInRequestDto } from './dto/admin-sign-in-request-dto';
 import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
 import { ResumeResponseDto } from './dto/resume-response-dto';
 import { ResumeEntity } from './entity/resume.entity';
 import { CareerEntity } from './entity/career.entity';
 import { AcademyEntity } from './entity/academy.entity';
 import { QualificationEntity } from './entity/qualification.entity';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { RecruitmentService } from 'src/recruitment/recruitment.service';
+import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 
 @Injectable()
 export class AuthService {
@@ -73,9 +77,12 @@ export class AuthService {
     private academyRepository: Repository<AcademyEntity>,
     @InjectRepository(QualificationEntity)
     private qualificationRepository: Repository<QualificationEntity>,
+    @InjectRepository(RecruitmentEntity)
+    private recruitmentRepository: Repository<RecruitmentEntity>,
     private jwtService: JwtService,
     private httpService: HttpService,
     private emailService: EmailService,
+    private recruitmentService: RecruitmentService,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -198,6 +205,15 @@ export class AuthService {
     center: CenterEntity,
     centerModifyRequestDto: CenterModifyRequestDto,
   ): Promise<CenterEntity> {
+    const existingCenter = await this.centerRepository.findOne({
+      where: {
+        email: centerModifyRequestDto.email,
+        id: Not(center.id), //
+      },
+    });
+    if (existingCenter) {
+      throw new ConflictException('email already exists');
+    }
     const id = center.id;
     if (centerModifyRequestDto.password) {
       const hashedPassword = await this.hashPassword(
@@ -274,6 +290,18 @@ export class AuthService {
       address,
     } = centerSignUpRequestDto;
 
+    // signId 중복체크
+    await this.checkSignIdExists(signId);
+
+    // 센터명 중복체크
+    await this.checkCenterNameExists(centerName);
+
+    // 이메일 중복체크
+    await this.checkEmailExists(email);
+
+    // 사업자등록번호 중복체크
+    await this.checkBusinessIdExists(businessId);
+
     // 비밀번호 해싱
     const hashedPassword = await this.hashPassword(password);
 
@@ -331,7 +359,7 @@ export class AuthService {
     const { signId, password } = centerSignInRequestDto;
 
     // [1] 회원 정보 조회
-    const existingCenter = await this.findCenterBySignId(signId);
+    const existingCenter = await this.centerRepository.findOneBy({ signId });
 
     if (
       !existingCenter ||
@@ -350,34 +378,32 @@ export class AuthService {
 
   // signId 중복 확인 메서드
   async checkSignIdExists(signId: string): Promise<void> {
-    const existingCenter = await this.findCenterBySignId(signId);
+    const existingCenter = await this.centerRepository.findOneBy({
+      signId,
+    });
     if (existingCenter) {
       throw new ConflictException('signId already exists');
     }
   }
 
-  // signId로 센터 찾기 메서드
-  async findCenterBySignId(signId: string): Promise<CenterEntity> {
-    const center: CenterEntity = await this.centerRepository.findOneBy({
-      signId,
+  // 센터명 중복 확인 메서드
+  async checkCenterNameExists(centerName: string): Promise<void> {
+    const existingCenter = await this.centerRepository.findOneBy({
+      centerName,
     });
-    return center;
+    if (existingCenter) {
+      throw new ConflictException('centerName already exists');
+    }
   }
 
   // 이메일 중복 확인 메서드
   async checkEmailExists(email: string): Promise<void> {
-    const existingCenter = await this.findCenterByEmail(email);
+    const existingCenter = await this.centerRepository.findOneBy({
+      email,
+    });
     if (existingCenter) {
       throw new ConflictException('email already exists');
     }
-  }
-
-  // 이메일로 센터 찾기 메서드
-  private async findCenterByEmail(email: string): Promise<CenterEntity> {
-    const center: CenterEntity = await this.centerRepository.findOneBy({
-      email,
-    });
-    return center;
   }
 
   // 비밀번호 해싱 암호화 메서드
@@ -677,8 +703,22 @@ export class AuthService {
       if (member.signWith.platform == 'APPLE') {
         await this.revokeAppleTokens(member.appleKey.appleRefreshToken);
       }
+      // 이력서 삭제 및 s3 파일, 이미지 삭제
+      await this.deleteResume(member);
       await this.userRepository.remove(member);
     } else {
+      // 공고 삭제 및 s3 파일, 이미지 삭제
+      const recruitments = await this.recruitmentRepository.find({
+        where: {
+          center: { id: member.id }, // 명시적으로 id 사용
+        },
+      });
+      for (let i = 0; i < recruitments.length; i++) {
+        await this.recruitmentService.deleteRecruitment(
+          member,
+          recruitments[i].id,
+        );
+      }
       await this.centerRepository.remove(member);
     }
   }
@@ -849,6 +889,72 @@ export class AuthService {
     return new ResumeResponseDto(user.resume);
   }
 
+  // 증명사진 S3 업로드
+  async uploadProfileImage(
+    user: UserEntity,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    const fileKey = `profileImage/${user.id}`;
+
+    const params = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
+
+    await this.s3.send(new PutObjectCommand(params));
+    return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+  }
+
+  // 포트폴리오 파일 S3 업로드
+  async uploadPortfolioFile(
+    user: UserEntity,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    const fileKey = `portfolio/${user.id}/file`;
+
+    const params = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
+
+    await this.s3.send(new PutObjectCommand(params));
+    return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+  }
+
+  // 포트폴리오 다중 이미지 S3 업로드
+  async uploadPortfolioImages(
+    user: UserEntity,
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
+    if (!files || files.length === 0) {
+      return [];
+    }
+    const uploadedUrls: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileKey = `portfolio/${user.id}/images/image${i}`;
+
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      };
+
+      await this.s3.send(new PutObjectCommand(params));
+      uploadedUrls.push(
+        `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`,
+      );
+    }
+
+    return uploadedUrls;
+  }
+
   // 이력서 등록
   async registerResume(
     user: UserEntity,
@@ -859,7 +965,7 @@ export class AuthService {
     }
 
     const createdResume = this.resumeRepository.create({
-      image: resumeRegisterRequestDto.image,
+      profileImage: resumeRegisterRequestDto.profileImage,
       name: resumeRegisterRequestDto.name,
       birth: resumeRegisterRequestDto.birth,
       phone: resumeRegisterRequestDto.phone,
@@ -872,7 +978,8 @@ export class AuthService {
       license: 0,
       award: resumeRegisterRequestDto.award,
       SNS: resumeRegisterRequestDto.SNS,
-      portfolio: resumeRegisterRequestDto.portfolio,
+      portfolioFile: resumeRegisterRequestDto.portfolioFile,
+      portfolioImages: resumeRegisterRequestDto.portfolioImages,
       introduction: resumeRegisterRequestDto.introduction,
       user,
     });
@@ -910,35 +1017,6 @@ export class AuthService {
     return new ResumeResponseDto(savedResume);
   }
 
-  // method12: 다중 파일 S3 업로드
-  async uploadResumeFiles(
-    userId: number,
-    files: Express.Multer.File[],
-  ): Promise<string[]> {
-    if (!files || files.length === 0) {
-      return [];
-    }
-    const uploadPromises = files.map(async (file) => {
-      const ext = extname(file.originalname); // .pdf, .jpg 등
-      const uniqueFileName = `${uuidv4()}${ext}`;
-      const fileKey = `resume/${userId}-register/${uniqueFileName}`;
-
-      const params = {
-        Bucket: this.bucketName,
-        Key: fileKey,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      };
-
-      await this.s3.send(new PutObjectCommand(params));
-      return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-    });
-
-    return Promise.all(uploadPromises);
-  }
-
-  // 증명사진 S3 업로드
-
   // 이력서 삭제
   async deleteResume(user: UserEntity): Promise<void> {
     const myResume = await this.resumeRepository.findOne({
@@ -948,6 +1026,38 @@ export class AuthService {
     });
     if (!myResume) {
       throw new NotFoundException('You did not register your resume');
+    }
+
+    // 증명사진 삭제
+    if (myResume.profileImage) {
+      const fileKey = `profileImage/${user.id}`;
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+      };
+      await this.s3.send(new DeleteObjectCommand(params));
+    }
+
+    // 포트폴리오 파일 삭제
+    if (myResume.portfolioFile) {
+      const fileKey = `portfolio/${user.id}/file`;
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+      };
+      await this.s3.send(new DeleteObjectCommand(params));
+    }
+
+    // 포트폴리오 이미지 삭제
+    if (myResume.portfolioImages) {
+      for (let i = 0; i < myResume.portfolioImages.length; i++) {
+        const fileKey = `portfolio/${user.id}/images/image${i}`;
+        const params = {
+          Bucket: this.bucketName,
+          Key: fileKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+      }
     }
     await this.resumeRepository.remove(myResume);
   }

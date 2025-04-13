@@ -1,5 +1,5 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { UserResponseDto } from './user-response.dto';
+import { UserResponseDto } from './user-response-dto';
 
 export class UserTokenResponseDto {
   @ApiProperty({ example: 'accessTokenExample' })

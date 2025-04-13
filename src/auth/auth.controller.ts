@@ -6,21 +6,22 @@ import {
   Post,
   Query,
   UnauthorizedException,
+  UploadedFile,
   UploadedFiles,
   UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AdminSignUpRequestDto } from './dto/user-sign-up-request.dto';
+import { AdminSignUpRequestDto } from './dto/user-sign-up-request-dto';
 import { UserEntity } from './entity/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/get-user-decorator';
-import { UserResponseDto } from './dto/user-response.dto';
-import { CenterSignUpRequestDto } from './dto/center-sign-up-request.dto';
-import { CenterResponseDto } from './dto/center-response.dto';
+import { UserResponseDto } from './dto/user-response-dto';
+import { CenterSignUpRequestDto } from './dto/center-sign-up-request-dto';
+import { CenterResponseDto } from './dto/center-response-dto';
 import { CenterEntity } from './entity/center.entity';
-import { CenterSignInRequestDto } from './dto/center-sign-in-request.dto';
+import { CenterSignInRequestDto } from './dto/center-sign-in-request-dto';
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,
@@ -34,7 +35,7 @@ import { ResponseTransformInterceptor } from 'src/interceptors/response-transfor
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseDto } from 'src/response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
-import { addressResponseDto } from './dto/address-response.dto';
+import { addressResponseDto } from './dto/address-response-dto';
 import { TokenResponseDto } from './dto/token-response-dto';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
 import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
@@ -47,17 +48,18 @@ import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
 import { CustomUnauthorizedExceptionFilter } from './custom-unauthorizedExcetption-filter';
 import { RolesGuard } from './custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
-import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request.dto';
-import { EmailRequestDto } from './dto/email-request.dto';
+import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request-dto';
+import { EmailRequestDto } from './dto/email-request-dto';
 import { PasswordRequestDto } from './dto/password-request-dto';
-import { CenterModifyRequestDto } from './dto/center-modify-request.dto';
+import { CenterModifyRequestDto } from './dto/center-modify-request-dto';
 import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
-import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request.dto';
+import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request-dto';
 import { UserTokenResponseDto } from './dto/user-token-response-dto';
 import { CenterTokenResponseDto } from './dto/center-token-response-dto';
 import { ResumeResponseDto } from './dto/resume-response-dto';
 import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { centerNameRequestDto } from './dto/centerName-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -120,6 +122,44 @@ export class AuthController {
         return false;
       }
       // this.logger.error(`Error checking signId: ${error.message}`);
+      throw error; // 다른 예외는 그대로 throw
+    }
+  }
+
+  // 이메일 중복 검사
+  @ApiOperation({
+    summary: '센터명 중복 검사',
+    description: `
+    true: 사용 가능한 센터명  \n
+    false: 사용 불가능한 센터명`,
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '센터명 중복 검사 완료',
+    message: 'centerName duplicate checked successfully',
+    type: 'boolean',
+    example: true,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'email must be an email',
+    error: 'BadRequestException',
+  })
+  @ResponseMsg('centerName duplicate checked successfully')
+  @Post('/signup/checkCeterName')
+  async checkCenterNameExists(
+    @Body() centerNameRequestDto: centerNameRequestDto,
+  ): Promise<boolean> {
+    try {
+      await this.authService.checkCenterNameExists(
+        centerNameRequestDto.centerName,
+      );
+      return true;
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        return false;
+      }
       throw error; // 다른 예외는 그대로 throw
     }
   }
@@ -344,6 +384,13 @@ export class AuthController {
     message: 'signId must contain only alphanumeric characters(lower case)',
     error: 'BadRequestException',
   })
+  @ErrorApiResponse({
+    status: 409,
+    description:
+      'signId, 센터명, 이메일, 사업자등록번호 중 이미 존재하는 필드가 있음',
+    message: 'centerName already exists',
+    error: 'ConflictException',
+  })
   @ResponseMsg('Center signed up successfully')
   @Post('/signup/center')
   async centerSignUp(
@@ -523,6 +570,12 @@ export class AuthController {
     description: '센터 회원이 아님 (센터 회원만 정보 수정 가능)',
     message: 'Not a member of the CENTER (only CENTER can call this api)',
     error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '해당 이메일의 센터 회원이 이미 존재함',
+    message: 'email already exists',
+    error: 'ConflictException',
   })
   @ResponseMsg('Your information modified successfully')
   @UseGuards(AuthGuard(), RolesGuard)
@@ -807,15 +860,15 @@ export class AuthController {
     };
   }
 
-  // 이력서 파일 등록
+  // 증명사진 업로드
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '이력서 파일 등록하기',
+    summary: '증명사진 등록하기',
   })
   @PrimitiveApiResponse({
     status: 201,
-    description: '이력서 파일 등록 성공',
-    message: 'Resume files uploaded successfully',
+    description: '증명사진 등록 성공',
+    message: 'Profile image uploaded successfully',
     type: 'string',
     isArray: true,
     example: 'urlexample',
@@ -828,34 +881,135 @@ export class AuthController {
   })
   @ErrorApiResponse({
     status: 403,
-    description: '유저 회원이 아님 (유저 회원만 이력서 등록 가능)',
+    description: '유저 회원이 아님 (유저 회원만 포트폴리오 이미지 등록 가능)',
     message: 'Not a member of the USER (only USER can call this api)',
     error: 'ForbiddenException',
   })
-  @ResponseMsg('Recruitment images uploaded successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: '파일 업로드',
+    description: '이미지 업로드',
     schema: {
       type: 'object',
       properties: {
-        files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
-          description: '파일 등록',
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: '이미지 파일',
         },
       },
     },
   })
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles('USER')
-  @UseInterceptors(FilesInterceptor('files', 5))
-  @Post('uploadResumeFiles')
-  async uploadResumeFiles(
+  @UseInterceptors(FileInterceptor('image'))
+  @ResponseMsg('Profile image uploaded successfully')
+  @Post('uploadProfileImage')
+  async uploadProfileImage(
+    @GetUser() user: UserEntity,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<string> {
+    return await this.authService.uploadProfileImage(user, file);
+  }
+
+  // 포트폴리오 파일 업로드
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '포트폴리오 파일 등록하기',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '포트폴리오 파일 등록 성공',
+    message: 'Portfolio file uploaded successfully',
+    type: 'string',
+    example: 'urlexample',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 포트폴리오 파일 등록 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '파일 업로드',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: '업로드할 파일 (PDF, DOCX 등)',
+        },
+      },
+    },
+  })
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @UseInterceptors(FileInterceptor('file'))
+  @ResponseMsg('Portfolio file uploaded successfully')
+  @Post('uploadPortfolioFile')
+  async uploadPortfolioFile(
+    @GetUser() user: UserEntity,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<string> {
+    return await this.authService.uploadPortfolioFile(user, file);
+  }
+
+  // 포트폴리오 다중 이미지 등록
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '포트폴리오 이미지 등록하기',
+  })
+  @PrimitiveApiResponse({
+    status: 201,
+    description: '포트폴리오 이미지 등록 성공',
+    message: 'Portfolio images uploaded successfully',
+    type: 'string',
+    isArray: true,
+    example: 'urlexample',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 포트폴리오 이미지 등록 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: '이미지 파일 업로드',
+    schema: {
+      type: 'object',
+      properties: {
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' }, // 여러 개의 파일 처리
+          description: '이미지 파일 등록(최대 10개)',
+        },
+      },
+    },
+  })
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @UseInterceptors(FilesInterceptor('images', 10))
+  @ResponseMsg('Portfolio images uploaded successfully')
+  @Post('uploadPortfolioImages')
+  async uploadPortfolioImages(
     @GetUser() user: UserEntity,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<string[]> {
-    return await this.authService.uploadResumeFiles(user.id, files);
+    return await this.authService.uploadPortfolioImages(user, files);
   }
 
   // 이력서 등록

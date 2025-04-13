@@ -17,7 +17,7 @@ export class ResumeEntity {
   id: number;
 
   @Column({ type: 'varchar', name: 'image', nullable: true })
-  image: string;
+  profileImage: string;
 
   @Column({ type: 'varchar', name: 'name', nullable: false })
   name: string;
@@ -55,8 +55,11 @@ export class ResumeEntity {
   @Column({ type: 'varchar', name: 'SNS', nullable: true })
   SNS: string;
 
-  @Column({ type: 'json', name: 'portfolio', nullable: true })
-  portfolio: string[];
+  @Column({ type: 'varchar', name: 'portfolioFile', nullable: true })
+  portfolioFile: string;
+
+  @Column({ type: 'json', name: 'portfolioImages', nullable: true })
+  portfolioImages: string[];
 
   @Column({ type: 'text', name: 'introduction', nullable: true })
   introduction: string;
