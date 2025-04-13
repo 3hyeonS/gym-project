@@ -836,7 +836,7 @@ export class AuthService {
       throw new ConflictException('Your resume already exists');
     }
 
-    const newResume = this.resumeRepository.create({
+    const createdResume = this.resumeRepository.create({
       name: resumeRegisterRequestDto.name,
       birth: resumeRegisterRequestDto.birth,
       phone: resumeRegisterRequestDto.phone,
@@ -852,6 +852,8 @@ export class AuthService {
       introduction: resumeRegisterRequestDto.introduction,
       user,
     });
+
+    const newResume = await this.resumeRepository.save(createdResume);
 
     for (const career of resumeRegisterRequestDto.careers ?? []) {
       const newCareer = this.careerRepository.create({
