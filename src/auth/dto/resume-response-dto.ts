@@ -14,6 +14,13 @@ export class ResumeResponseDto {
 
   @ApiProperty({
     type: String,
+    description: '증명사진',
+    example: 'url',
+  })
+  image?: string = null;
+
+  @ApiProperty({
+    type: String,
     description: '이름',
     example: '홍길동',
   })
@@ -155,6 +162,7 @@ export class ResumeResponseDto {
 
   constructor(resume: ResumeEntity) {
     this.id = resume.id;
+    this.image = resume.image;
     this.name = resume.name;
     this.birth = resume.birth;
     this.phone = resume.phone;

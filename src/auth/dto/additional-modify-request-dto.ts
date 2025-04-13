@@ -13,6 +13,16 @@ export class AdditionalModifyRequestDto {
   SNS?: string = null;
 
   @ApiProperty({
+    type: [String],
+    description: '포트폴리오 url',
+    example: ['url1', 'url2'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  portfolio?: string[] = null;
+
+  @ApiProperty({
     type: String,
     description: '자기소개(500자 이내)',
     example: '안녕하세요, 홍길동입니다.',

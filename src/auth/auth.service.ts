@@ -859,6 +859,7 @@ export class AuthService {
     }
 
     const createdResume = this.resumeRepository.create({
+      image: resumeRegisterRequestDto.image,
       name: resumeRegisterRequestDto.name,
       birth: resumeRegisterRequestDto.birth,
       phone: resumeRegisterRequestDto.phone,
@@ -935,6 +936,8 @@ export class AuthService {
 
     return Promise.all(uploadPromises);
   }
+
+  // 증명사진 S3 업로드
 
   // 이력서 삭제
   async deleteResume(user: UserEntity): Promise<void> {

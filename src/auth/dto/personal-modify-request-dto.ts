@@ -6,12 +6,23 @@ import {
   IsIn,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   Length,
   Matches,
 } from 'class-validator';
 
 export class PersonalModifyRequestDto {
+  @ApiProperty({
+    type: String,
+    description: '증명사진 url(100자 이내)',
+    example: 'url',
+  })
+  @IsOptional()
+  @Length(1, 100)
+  @IsString()
+  image?: string = null;
+
   @ApiProperty({
     type: String,
     description: '이름',
