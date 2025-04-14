@@ -31,7 +31,7 @@ export class ResumeResponseDto {
     description: '생년월일',
     example: '1999-03-17',
   })
-  birth: Date;
+  birth: string;
 
   @ApiProperty({
     type: String,
@@ -171,7 +171,10 @@ export class ResumeResponseDto {
     this.id = resume.id;
     this.profileImage = resume.profileImage;
     this.name = resume.name;
-    this.birth = resume.birth;
+    this.birth =
+      resume.birth instanceof Date
+        ? resume.birth.toISOString().split('T')[0]
+        : resume.birth;
     this.phone = resume.phone;
     this.email = resume.email;
     this.gender = resume.gender;

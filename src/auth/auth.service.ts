@@ -867,7 +867,12 @@ export class AuthService {
 
   // 이력서 보유 여부 확인
   async hasResume(user: UserEntity): Promise<boolean> {
-    if (user.resume) {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
+    if (myResume) {
       return true;
     }
     return false;
@@ -875,10 +880,15 @@ export class AuthService {
 
   // 내 이력서 불러오기
   async getMyResume(user: UserEntity): Promise<ResumeResponseDto> {
-    if (!(await this.hasResume(user))) {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
+    if (!myResume) {
       throw new NotFoundException('There is no registered resume');
     }
-    return new ResumeResponseDto(user.resume);
+    return new ResumeResponseDto(myResume);
   }
 
   // 증명사진 S3 업로드
@@ -886,7 +896,7 @@ export class AuthService {
     user: UserEntity,
     file: Express.Multer.File,
   ): Promise<string> {
-    const existResume = await this.resumeRepository.findOne({
+    const myResume = await this.resumeRepository.findOne({
       where: {
         user: { id: user.id }, // 명시적으로 id 사용
       },
@@ -895,7 +905,7 @@ export class AuthService {
     const fileKey = `resume/${user.id}/profileImage`;
 
     // 증명사진이 기존에 있으면 삭제
-    if (existResume) {
+    if (myResume) {
       const params = {
         Bucket: this.bucketName,
         Key: fileKey,
@@ -920,7 +930,7 @@ export class AuthService {
     user: UserEntity,
     file: Express.Multer.File,
   ): Promise<string> {
-    const existResume = await this.resumeRepository.findOne({
+    const myResume = await this.resumeRepository.findOne({
       where: {
         user: { id: user.id }, // 명시적으로 id 사용
       },
@@ -929,7 +939,7 @@ export class AuthService {
     const fileKey = `resume/${user.id}/portfolio/file`;
 
     // 포트폴리오 파일이 기존에 있으면 삭제
-    if (existResume.portfolioFile) {
+    if (myResume.portfolioFile) {
       const params = {
         Bucket: this.bucketName,
         Key: fileKey,
@@ -953,7 +963,7 @@ export class AuthService {
     user: UserEntity,
     files: Express.Multer.File[],
   ): Promise<string[]> {
-    const existResume = await this.resumeRepository.findOne({
+    const myResume = await this.resumeRepository.findOne({
       where: {
         user: { id: user.id }, // 명시적으로 id 사용
       },
@@ -961,9 +971,9 @@ export class AuthService {
 
     // 이미 등록된 이미지가 있으면 시작 번호 증가
     let number = 0;
-    if (existResume) {
-      if (existResume.portfolioImages) {
-        for (const url in existResume.portfolioImages) {
+    if (myResume) {
+      if (myResume.portfolioImages) {
+        for (const url in myResume.portfolioImages) {
           const match = url.match(/image(\d+)/);
           const urlNumber = parseInt(match[1], 10);
           number = urlNumber > number ? urlNumber : number;
