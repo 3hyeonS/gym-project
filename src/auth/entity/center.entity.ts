@@ -24,7 +24,6 @@ export class CenterEntity {
     type: 'varchar',
     name: 'centerName',
     nullable: false,
-    unique: true,
   })
   centerName: string;
 

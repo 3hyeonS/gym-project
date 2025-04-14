@@ -48,6 +48,7 @@ import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
 import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
 import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
 import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
+import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
 
 @Injectable()
 export class AuthService {
@@ -297,9 +298,6 @@ export class AuthService {
     // signId 중복체크
     await this.checkSignIdExists(signId);
 
-    // 센터명 중복체크
-    await this.checkCenterNameExists(centerName);
-
     // 이메일 중복체크
     await this.checkEmailExists(email);
 
@@ -387,16 +385,6 @@ export class AuthService {
     });
     if (existingCenter) {
       throw new ConflictException('signId already exists');
-    }
-  }
-
-  // 센터명 중복 확인 메서드
-  async checkCenterNameExists(centerName: string): Promise<void> {
-    const existingCenter = await this.centerRepository.findOneBy({
-      centerName,
-    });
-    if (existingCenter) {
-      throw new ConflictException('centerName already exists');
     }
   }
 
@@ -1066,6 +1054,25 @@ export class AuthService {
     await this.resumeRepository.remove(myResume);
   }
 
+  // 이력서 증명사진 수정하기
+  async modifyProfileImage(
+    user: UserEntity,
+    profileImageModifyRequestDto: ProfileImageModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.profileImage = profileImageModifyRequestDto.profileImage;
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
   // 이력서 개인정보 수정하기
   async modifyPersonal(
     user: UserEntity,
@@ -1080,7 +1087,6 @@ export class AuthService {
       throw new NotFoundException('You did not register your resume');
     }
 
-    myResume.profileImage = personalModifyRequestDto.profileImage;
     myResume.name = personalModifyRequestDto.name;
     myResume.birth = personalModifyRequestDto.birth;
     myResume.phone = personalModifyRequestDto.phone;

@@ -64,6 +64,7 @@ import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
 import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
 import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
 import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
+import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -126,44 +127,6 @@ export class AuthController {
         return false;
       }
       // this.logger.error(`Error checking signId: ${error.message}`);
-      throw error; // 다른 예외는 그대로 throw
-    }
-  }
-
-  // 이메일 중복 검사
-  @ApiOperation({
-    summary: '센터명 중복 검사',
-    description: `
-    true: 사용 가능한 센터명  \n
-    false: 사용 불가능한 센터명`,
-  })
-  @PrimitiveApiResponse({
-    status: 201,
-    description: '센터명 중복 검사 완료',
-    message: 'centerName duplicate checked successfully',
-    type: 'boolean',
-    example: true,
-  })
-  @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: 'email must be an email',
-    error: 'BadRequestException',
-  })
-  @ResponseMsg('centerName duplicate checked successfully')
-  @Post('/signup/checkCeterName')
-  async checkCenterNameExists(
-    @Body() centerNameRequestDto: centerNameRequestDto,
-  ): Promise<boolean> {
-    try {
-      await this.authService.checkCenterNameExists(
-        centerNameRequestDto.centerName,
-      );
-      return true;
-    } catch (error) {
-      if (error instanceof ConflictException) {
-        return false;
-      }
       throw error; // 다른 예외는 그대로 throw
     }
   }
@@ -390,9 +353,8 @@ export class AuthController {
   })
   @ErrorApiResponse({
     status: 409,
-    description:
-      'signId, 센터명, 이메일, 사업자등록번호 중 이미 존재하는 필드가 있음',
-    message: 'centerName already exists',
+    description: 'signId, 이메일, 사업자등록번호 중 이미 존재하는 필드가 있음',
+    message: 'signId already exists',
     error: 'ConflictException',
   })
   @ResponseMsg('Center signed up successfully')
@@ -1016,6 +978,41 @@ export class AuthController {
     return await this.authService.uploadPortfolioImages(user, files);
   }
 
+  // 이력서 보유 여부 확인
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '이력서 보유 여부 확인',
+    description: `
+    true: 이력서 보유  \n
+    false: 이력서 미보유`,
+  })
+  @PrimitiveApiResponse({
+    status: 200,
+    description: '이력서 보유 여부 확인',
+    message: 'Resume retention checked successfully',
+    type: 'boolean',
+    example: true,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 보유 여부 확인 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Resume retention checked successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Get('/hasResume')
+  async hasResume(@GetUser() user: UserEntity): Promise<boolean> {
+    return await this.authService.hasResume(user);
+  }
+
   // 이력서 등록
   @ApiBearerAuth('accessToken')
   @ApiOperation({
@@ -1035,8 +1032,8 @@ export class AuthController {
   })
   @ErrorApiResponse({
     status: 401,
-    description: '유효하지 않거나 기간이 만료된 refreshToken',
-    message: 'Invalid or expired refreshToken',
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
     error: 'UnauthorizedException',
   })
   @ErrorApiResponse({
@@ -1078,8 +1075,8 @@ export class AuthController {
   })
   @ErrorApiResponse({
     status: 401,
-    description: '유효하지 않거나 기간이 만료된 refreshToken',
-    message: 'Invalid or expired refreshToken',
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
     error: 'UnauthorizedException',
   })
   @ErrorApiResponse({
@@ -1136,6 +1133,55 @@ export class AuthController {
   @Get('deleteResume')
   async deleteResume(@GetUser() user: UserEntity): Promise<void> {
     await this.authService.deleteResume(user);
+  }
+
+  // 이력서 증명사진 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '증명사진 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '증명사진 수정하기 성공',
+    message: 'Profile image modified successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'profileImage should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '등록한 이력서가 없음',
+    message: 'There is no registered resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Profile image modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('modifyProfileImage')
+  async modifyProfileImage(
+    @GetUser() user: UserEntity,
+    @Body() profileImageModifyRequestDto: ProfileImageModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.modifyProfileImage(
+      user,
+      profileImageModifyRequestDto,
+    );
   }
 
   // 이력서 개인정보 수정하기
