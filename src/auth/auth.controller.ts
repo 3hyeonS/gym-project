@@ -59,12 +59,11 @@ import { CenterTokenResponseDto } from './dto/center-token-response-dto';
 import { ResumeResponseDto } from './dto/resume-response-dto';
 import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { centerNameRequestDto } from './dto/centerName-request-dto';
 import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
 import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
 import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
 import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
-import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
+import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -1135,55 +1134,6 @@ export class AuthController {
     await this.authService.deleteResume(user);
   }
 
-  // 이력서 증명사진 수정하기
-  @ApiBearerAuth('accessToken')
-  @ApiOperation({
-    summary: '증명사진 수정하기',
-  })
-  @GenericApiResponse({
-    status: 201,
-    description: '증명사진 수정하기 성공',
-    message: 'Profile image modified successfully',
-    model: ResumeResponseDto,
-  })
-  @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: 'profileImage should not be empty',
-    error: 'BadRequestException',
-  })
-  @ErrorApiResponse({
-    status: 401,
-    description: '유효하지 않거나 기간이 만료된 acccessToken',
-    message: 'Invalid or expired accessToken',
-    error: 'UnauthorizedException',
-  })
-  @ErrorApiResponse({
-    status: 403,
-    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
-    message: 'Not a member of the USER (only USER can call this api)',
-    error: 'ForbiddenException',
-  })
-  @ErrorApiResponse({
-    status: 404,
-    description: '등록한 이력서가 없음',
-    message: 'There is no registered resume',
-    error: 'NotFoundException',
-  })
-  @ResponseMsg('Profile image modified successfully')
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles('USER')
-  @Post('modifyProfileImage')
-  async modifyProfileImage(
-    @GetUser() user: UserEntity,
-    @Body() profileImageModifyRequestDto: ProfileImageModifyRequestDto,
-  ): Promise<ResumeResponseDto> {
-    return await this.authService.modifyProfileImage(
-      user,
-      profileImageModifyRequestDto,
-    );
-  }
-
   // 이력서 개인정보 수정하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
@@ -1374,6 +1324,55 @@ export class AuthController {
     return await this.authService.modifyAdditional(
       user,
       additionalModifyRequestDto,
+    );
+  }
+
+  // 이력서 자기소개 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '자기소개 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '자기소개 수정하기 성공',
+    message: 'Introduction modified successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'introduction must be a string',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '등록한 이력서가 없음',
+    message: 'There is no registered resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Introduction modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('modifyIntroduction')
+  async modifyIntroduction(
+    @GetUser() user: UserEntity,
+    @Body() introductionModifyRequestDto: IntroductionModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.modifyIntroduction(
+      user,
+      introductionModifyRequestDto,
     );
   }
 }

@@ -24,10 +24,10 @@ export class ResumeRegisterRequestDto {
     description: '증명사진 url(100자 이내)',
     example: 'url',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @Length(1, 100)
   @IsString()
-  profileImage?: string;
+  profileImage: string;
 
   @ApiProperty({
     type: String,

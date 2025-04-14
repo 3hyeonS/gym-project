@@ -17,7 +17,7 @@ export class ResumeResponseDto {
     description: '증명사진',
     example: 'url',
   })
-  profileImage?: string = null;
+  profileImage: string;
 
   @ApiProperty({
     type: String,

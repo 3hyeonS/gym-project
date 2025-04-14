@@ -561,6 +561,11 @@ export class RecruitmentService {
     };
     const transformedGender = genderMap[gender];
 
+    const toNullableArray = <T>(arr?: T[]): T[] | null =>
+      !arr || arr.length === 0 ? null : arr;
+    const toNullableString = (value?: string): string | null =>
+      !value || value.trim() === '' ? null : value;
+
     const newRecruitment = this.recruitmentRepository.create({
       centerName: center.centerName,
       city: seperatedAddress.city,
@@ -572,18 +577,18 @@ export class RecruitmentService {
       gender: transformedGender,
       salary,
       maxClassFee: maxClassFee,
-      basePay,
-      classPay,
-      classFee,
-      monthly,
-      hourly,
+      basePay: toNullableArray(basePay),
+      classPay: toNullableArray(classPay),
+      classFee: toNullableArray(classFee),
+      monthly: toNullableArray(monthly),
+      hourly: toNullableArray(hourly),
       welfare,
       qualification,
       preference,
       site: { 빌리지: ['직접 등록'] },
-      description,
+      description: toNullableString(description),
       center: center,
-      image, // 이미지 URL 저장
+      image: toNullableArray(image), // 이미지 URL 저장
       apply,
       view: 0,
       date: new Date(),
@@ -727,8 +732,8 @@ export class RecruitmentService {
 
     // 공고 이미지 삭제
     if (myRecruitment.image) {
-      for (let i = 0; i < myRecruitment.image.length; i++) {
-        const fileKey = `recruitment/${center.centerName}/images/image${i}`;
+      for (const url of myRecruitment.image) {
+        const fileKey = url.split('com/')[1];
         const params = {
           Bucket: this.bucketName,
           Key: fileKey,
@@ -815,13 +820,25 @@ export class RecruitmentService {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
+    const toNullableArray = <T>(arr?: T[]): T[] | null =>
+      !arr || arr.length === 0 ? null : arr;
+
+    const { salary, basePay, classPay, classFee, monthly, hourly, welfare } =
+      salaryCondtionModifyRequestDto;
+
     const maxClassFee = salaryCondtionModifyRequestDto.classFee
       ? salaryCondtionModifyRequestDto.classFee[1]
       : -2;
 
     await this.recruitmentRepository.update(myRecruitment.id, {
-      ...salaryCondtionModifyRequestDto,
+      salary,
+      basePay: toNullableArray(basePay),
+      classPay: toNullableArray(classPay),
+      classFee: toNullableArray(classFee),
+      monthly: toNullableArray(monthly),
+      hourly: toNullableArray(hourly),
       maxClassFee: maxClassFee,
+      welfare,
     });
 
     const updatedRecruitment = await this.recruitmentRepository.findOneBy({
@@ -866,8 +883,30 @@ export class RecruitmentService {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
+    // 기존 이미지 url 중 유지하지 않는 url s3에서 삭제
+    if (detailModifyRequestDto.image) {
+      const newUrl = new Set(detailModifyRequestDto.image);
+      for (const url of myRecruitment.image) {
+        if (!newUrl.has(url)) {
+          const fileKey = url.split('com/')[1];
+          const params = {
+            Bucket: this.bucketName,
+            Key: fileKey,
+          };
+          await this.s3.send(new DeleteObjectCommand(params));
+        }
+      }
+    }
+
+    const toNullableArray = <T>(arr?: T[]): T[] | null =>
+      !arr || arr.length === 0 ? null : arr;
+
+    const toNullableString = (value?: string): string | null =>
+      !value || value.trim() === '' ? null : value;
+
     await this.recruitmentRepository.update(myRecruitment.id, {
-      ...detailModifyRequestDto,
+      description: toNullableString(detailModifyRequestDto.description),
+      image: toNullableArray(detailModifyRequestDto.image),
     });
 
     const updatedRecruitment = await this.recruitmentRepository.findOneBy({
@@ -882,6 +921,23 @@ export class RecruitmentService {
     center: CenterEntity,
     files: Express.Multer.File[],
   ): Promise<string[]> {
+    const existRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+      },
+    });
+
+    // 이미 등록된 이미지가 있으면 시작 번호 증가
+    let number = 0;
+    if (existRecruitment) {
+      if (existRecruitment.image) {
+        const lastUrl =
+          existRecruitment.image[existRecruitment.image.length - 1];
+        const match = lastUrl.match(/image(\d+)/);
+        number = parseInt(match[1], 10) + 1;
+      }
+    }
+
     if (!files || files.length === 0) {
       return [];
     }
@@ -889,7 +945,7 @@ export class RecruitmentService {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileKey = `recruitment/${center.centerName}/images/image${i}`;
+      const fileKey = `recruitment/registered/${center.id}/images/image${i + number}`;
 
       const params = {
         Bucket: this.bucketName,

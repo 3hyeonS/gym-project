@@ -48,7 +48,7 @@ import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
 import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
 import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
 import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
-import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
+import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-dto';
 
 @Injectable()
 export class AuthService {
@@ -886,8 +886,24 @@ export class AuthService {
     user: UserEntity,
     file: Express.Multer.File,
   ): Promise<string> {
-    const fileKey = `profileImage/${user.id}`;
+    const existResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
 
+    const fileKey = `resume/${user.id}/profileImage`;
+
+    // 증명사진이 기존에 있으면 삭제
+    if (existResume) {
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+      };
+      await this.s3.send(new DeleteObjectCommand(params));
+    }
+
+    // 업로드
     const params = {
       Bucket: this.bucketName,
       Key: fileKey,
@@ -904,7 +920,22 @@ export class AuthService {
     user: UserEntity,
     file: Express.Multer.File,
   ): Promise<string> {
-    const fileKey = `portfolio/${user.id}/file`;
+    const existResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
+
+    const fileKey = `resume/${user.id}/portfolio/file`;
+
+    // 포트폴리오 파일이 기존에 있으면 삭제
+    if (existResume.portfolioFile) {
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+      };
+      await this.s3.send(new DeleteObjectCommand(params));
+    }
 
     const params = {
       Bucket: this.bucketName,
@@ -922,6 +953,23 @@ export class AuthService {
     user: UserEntity,
     files: Express.Multer.File[],
   ): Promise<string[]> {
+    const existResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
+
+    // 이미 등록된 이미지가 있으면 시작 번호 증가
+    let number = 0;
+    if (existResume) {
+      if (existResume.portfolioImages) {
+        const lastUrl =
+          existResume.portfolioImages[existResume.portfolioImages.length - 1];
+        const match = lastUrl.match(/image(\d+)/);
+        number = parseInt(match[1], 10) + 1;
+      }
+    }
+
     if (!files || files.length === 0) {
       return [];
     }
@@ -929,7 +977,7 @@ export class AuthService {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileKey = `portfolio/${user.id}/images/image${i}`;
+      const fileKey = `resume/${user.id}/portfolio/images/image${i + number}`;
 
       const params = {
         Bucket: this.bucketName,
@@ -955,6 +1003,11 @@ export class AuthService {
     if (await this.hasResume(user)) {
       throw new ConflictException('Your resume already exists');
     }
+    const toNullableArray = (arr?: string[]) =>
+      !arr || arr.length === 0 ? null : arr;
+
+    const toNullableString = (value?: string): string | null =>
+      !value || value.trim() === '' ? null : value;
 
     const createdResume = this.resumeRepository.create({
       profileImage: resumeRegisterRequestDto.profileImage,
@@ -965,14 +1018,16 @@ export class AuthService {
       gender: resumeRegisterRequestDto.gender,
       location: resumeRegisterRequestDto.location,
       isNew: resumeRegisterRequestDto.isNew,
-      workType: resumeRegisterRequestDto.workType,
-      workTime: resumeRegisterRequestDto.workTime,
+      workType: toNullableArray(resumeRegisterRequestDto.workType),
+      workTime: toNullableArray(resumeRegisterRequestDto.workTime),
       license: 0,
-      award: resumeRegisterRequestDto.award,
-      SNS: resumeRegisterRequestDto.SNS,
-      portfolioFile: resumeRegisterRequestDto.portfolioFile,
-      portfolioImages: resumeRegisterRequestDto.portfolioImages,
-      introduction: resumeRegisterRequestDto.introduction,
+      award: toNullableArray(resumeRegisterRequestDto.award),
+      SNS: toNullableString(resumeRegisterRequestDto.SNS),
+      portfolioFile: toNullableString(resumeRegisterRequestDto.portfolioFile),
+      portfolioImages: toNullableArray(
+        resumeRegisterRequestDto.portfolioImages,
+      ),
+      introduction: toNullableString(resumeRegisterRequestDto.introduction),
       user,
     });
 
@@ -1021,18 +1076,16 @@ export class AuthService {
     }
 
     // 증명사진 삭제
-    if (myResume.profileImage) {
-      const fileKey = `profileImage/${user.id}`;
-      const params = {
-        Bucket: this.bucketName,
-        Key: fileKey,
-      };
-      await this.s3.send(new DeleteObjectCommand(params));
-    }
+    const fileKey = `resume/${user.id}/profileImage`;
+    const params = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+    };
+    await this.s3.send(new DeleteObjectCommand(params));
 
     // 포트폴리오 파일 삭제
     if (myResume.portfolioFile) {
-      const fileKey = `portfolio/${user.id}/file`;
+      const fileKey = `resume/${user.id}/portfolio/file`;
       const params = {
         Bucket: this.bucketName,
         Key: fileKey,
@@ -1043,7 +1096,7 @@ export class AuthService {
     // 포트폴리오 이미지 삭제
     if (myResume.portfolioImages) {
       for (let i = 0; i < myResume.portfolioImages.length; i++) {
-        const fileKey = `portfolio/${user.id}/images/image${i}`;
+        const fileKey = `resume/${user.id}/portfolio/images/image${i}`;
         const params = {
           Bucket: this.bucketName,
           Key: fileKey,
@@ -1052,25 +1105,6 @@ export class AuthService {
       }
     }
     await this.resumeRepository.remove(myResume);
-  }
-
-  // 이력서 증명사진 수정하기
-  async modifyProfileImage(
-    user: UserEntity,
-    profileImageModifyRequestDto: ProfileImageModifyRequestDto,
-  ): Promise<ResumeResponseDto> {
-    const myResume = await this.resumeRepository.findOne({
-      where: {
-        user: { id: user.id },
-      },
-    });
-    if (!myResume) {
-      throw new NotFoundException('You did not register your resume');
-    }
-
-    myResume.profileImage = profileImageModifyRequestDto.profileImage;
-    const updatedResume = await this.resumeRepository.save(myResume);
-    return new ResumeResponseDto(updatedResume);
   }
 
   // 이력서 개인정보 수정하기
@@ -1111,9 +1145,12 @@ export class AuthService {
       throw new NotFoundException('You did not register your resume');
     }
 
+    const toNullableArray = (arr?: string[]) =>
+      !arr || arr.length === 0 ? null : arr;
+
     myResume.location = workConditionModifyRequestDto.location;
-    myResume.workType = workConditionModifyRequestDto.workType;
-    myResume.workTime = workConditionModifyRequestDto.workTime;
+    myResume.workType = toNullableArray(workConditionModifyRequestDto.workType);
+    myResume.workTime = toNullableArray(workConditionModifyRequestDto.workTime);
 
     const updatedResume = await this.resumeRepository.save(myResume);
     return new ResumeResponseDto(updatedResume);
@@ -1191,10 +1228,57 @@ export class AuthService {
       throw new NotFoundException('You did not register your resume');
     }
 
-    myResume.SNS = additionalModifyRequestDto.SNS;
-    myResume.portfolioFile = additionalModifyRequestDto.portfolioFile;
-    myResume.portfolioImages = additionalModifyRequestDto.portfolioImages;
-    myResume.introduction = additionalModifyRequestDto.introduction;
+    // 기존 포트폴리오 이미지 url 중 유지하지 않는 url s3에서 삭제
+    if (additionalModifyRequestDto.portfolioImages) {
+      const newUrl = new Set(additionalModifyRequestDto.portfolioImages);
+      for (const url of myResume.portfolioImages) {
+        if (!newUrl.has(url)) {
+          const fileKey = url.split('com/')[1];
+          const params = {
+            Bucket: this.bucketName,
+            Key: fileKey,
+          };
+          await this.s3.send(new DeleteObjectCommand(params));
+        }
+      }
+    }
+
+    const toNullableArray = (arr?: string[]) =>
+      !arr || arr.length === 0 ? null : arr;
+
+    const toNullableString = (value?: string): string | null =>
+      !value || value.trim() === '' ? null : value;
+
+    myResume.SNS = toNullableString(additionalModifyRequestDto.SNS);
+
+    myResume.portfolioImages = toNullableArray(
+      additionalModifyRequestDto.portfolioImages,
+    );
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 자기소개 수정하기
+  async modifyIntroduction(
+    user: UserEntity,
+    introductionModifyRequestDto: IntroductionModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    const toNullableString = (value?: string): string | null =>
+      !value || value.trim() === '' ? null : value;
+
+    myResume.introduction = toNullableString(
+      introductionModifyRequestDto.introduction,
+    );
 
     const updatedResume = await this.resumeRepository.save(myResume);
     return new ResumeResponseDto(updatedResume);
