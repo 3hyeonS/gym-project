@@ -963,10 +963,12 @@ export class AuthService {
     let number = 0;
     if (existResume) {
       if (existResume.portfolioImages) {
-        const lastUrl =
-          existResume.portfolioImages[existResume.portfolioImages.length - 1];
-        const match = lastUrl.match(/image(\d+)/);
-        number = parseInt(match[1], 10) + 1;
+        for (const url in existResume.portfolioImages) {
+          const match = url.match(/image(\d+)/);
+          const urlNumber = parseInt(match[1], 10);
+          number = urlNumber > number ? urlNumber : number;
+        }
+        number = number + 1;
       }
     }
 

@@ -931,10 +931,12 @@ export class RecruitmentService {
     let number = 0;
     if (existRecruitment) {
       if (existRecruitment.image) {
-        const lastUrl =
-          existRecruitment.image[existRecruitment.image.length - 1];
-        const match = lastUrl.match(/image(\d+)/);
-        number = parseInt(match[1], 10) + 1;
+        for (const url in existRecruitment.image) {
+          const match = url.match(/image(\d+)/);
+          const urlNumber = parseInt(match[1], 10);
+          number = urlNumber > number ? urlNumber : number;
+        }
+        number = number + 1;
       }
     }
 
