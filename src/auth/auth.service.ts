@@ -1240,8 +1240,32 @@ export class AuthService {
       throw new NotFoundException('You did not register your resume');
     }
 
+    const toNullableArray = (arr?: string[]) =>
+      !arr || arr.length === 0 ? null : arr;
+
+    const toNullableString = (value?: string): string | null =>
+      !value || value.trim() === '' ? null : value;
+
+    const toNullablePortfolioFile = toNullableString(
+      additionalModifyRequestDto.portfolioFile,
+    );
+
+    const toNullablePortfolioImages = toNullableArray(
+      additionalModifyRequestDto.portfolioImages,
+    );
+
+    // 포트폴리오 파일이 비어 있으면 s3에서 삭제
+    if (!toNullablePortfolioFile) {
+      const fileKey = `resume/${user.id}/portfolio/file`;
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+      };
+      await this.s3.send(new DeleteObjectCommand(params));
+    }
+
     // 기존 포트폴리오 이미지 url 중 유지하지 않는 url s3에서 삭제
-    if (additionalModifyRequestDto.portfolioImages) {
+    if (toNullablePortfolioImages) {
       const newUrl = new Set(additionalModifyRequestDto.portfolioImages);
       for (const url of myResume.portfolioImages) {
         if (!newUrl.has(url)) {
@@ -1253,19 +1277,21 @@ export class AuthService {
           await this.s3.send(new DeleteObjectCommand(params));
         }
       }
+    } else {
+      // null 이면 모두 s3에서 삭제
+      for (const url of myResume.portfolioImages) {
+        const fileKey = url.split('com/')[1];
+        const params = {
+          Bucket: this.bucketName,
+          Key: fileKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+      }
     }
 
-    const toNullableArray = (arr?: string[]) =>
-      !arr || arr.length === 0 ? null : arr;
-
-    const toNullableString = (value?: string): string | null =>
-      !value || value.trim() === '' ? null : value;
-
     myResume.SNS = toNullableString(additionalModifyRequestDto.SNS);
-
-    myResume.portfolioImages = toNullableArray(
-      additionalModifyRequestDto.portfolioImages,
-    );
+    myResume.portfolioFile = toNullablePortfolioFile;
+    myResume.portfolioImages = toNullablePortfolioImages;
 
     const updatedResume = await this.resumeRepository.save(myResume);
     return new ResumeResponseDto(updatedResume);

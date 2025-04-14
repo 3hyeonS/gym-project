@@ -896,6 +896,15 @@ export class RecruitmentService {
           await this.s3.send(new DeleteObjectCommand(params));
         }
       }
+    } else {
+      for (const url of myRecruitment.image) {
+        const fileKey = url.split('com/')[1];
+        const params = {
+          Bucket: this.bucketName,
+          Key: fileKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+      }
     }
 
     const toNullableArray = <T>(arr?: T[]): T[] | null =>
