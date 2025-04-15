@@ -884,10 +884,21 @@ export class RecruitmentService {
     }
 
     // 기존 이미지 url 중 유지하지 않는 url s3에서 삭제
-    if (detailModifyRequestDto.image) {
-      const newUrl = new Set(detailModifyRequestDto.image);
-      for (const url of myRecruitment.image) {
-        if (!newUrl.has(url)) {
+    if (myRecruitment.image) {
+      if (detailModifyRequestDto.image) {
+        const newUrl = new Set(detailModifyRequestDto.image);
+        for (const url of myRecruitment.image) {
+          if (!newUrl.has(url)) {
+            const fileKey = url.split('com/')[1];
+            const params = {
+              Bucket: this.bucketName,
+              Key: fileKey,
+            };
+            await this.s3.send(new DeleteObjectCommand(params));
+          }
+        }
+      } else {
+        for (const url of myRecruitment.image) {
           const fileKey = url.split('com/')[1];
           const params = {
             Bucket: this.bucketName,
@@ -895,15 +906,6 @@ export class RecruitmentService {
           };
           await this.s3.send(new DeleteObjectCommand(params));
         }
-      }
-    } else {
-      for (const url of myRecruitment.image) {
-        const fileKey = url.split('com/')[1];
-        const params = {
-          Bucket: this.bucketName,
-          Key: fileKey,
-        };
-        await this.s3.send(new DeleteObjectCommand(params));
       }
     }
 

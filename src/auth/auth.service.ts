@@ -1317,20 +1317,34 @@ export class AuthService {
     );
 
     // 포트폴리오 파일이 비어 있으면 s3에서 삭제
-    if (!toNullablePortfolioFile) {
-      const fileKey = `resume/${user.id}/portfolio/file`;
-      const params = {
-        Bucket: this.bucketName,
-        Key: fileKey,
-      };
-      await this.s3.send(new DeleteObjectCommand(params));
+    if (myResume.portfolioFile) {
+      if (!toNullablePortfolioFile) {
+        const fileKey = `resume/${user.id}/portfolio/file`;
+        const params = {
+          Bucket: this.bucketName,
+          Key: fileKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+      }
     }
 
     // 기존 포트폴리오 이미지 url 중 유지하지 않는 url s3에서 삭제
-    if (toNullablePortfolioImages) {
-      const newUrl = new Set(additionalModifyRequestDto.portfolioImages);
-      for (const url of myResume.portfolioImages) {
-        if (!newUrl.has(url)) {
+    if (myResume.portfolioImages) {
+      if (toNullablePortfolioImages) {
+        const newUrl = new Set(additionalModifyRequestDto.portfolioImages);
+        for (const url of myResume.portfolioImages) {
+          if (!newUrl.has(url)) {
+            const fileKey = url.split('com/')[1];
+            const params = {
+              Bucket: this.bucketName,
+              Key: fileKey,
+            };
+            await this.s3.send(new DeleteObjectCommand(params));
+          }
+        }
+      } else {
+        // null 이면 모두 s3에서 삭제
+        for (const url of myResume.portfolioImages) {
           const fileKey = url.split('com/')[1];
           const params = {
             Bucket: this.bucketName,
@@ -1338,16 +1352,6 @@ export class AuthService {
           };
           await this.s3.send(new DeleteObjectCommand(params));
         }
-      }
-    } else {
-      // null 이면 모두 s3에서 삭제
-      for (const url of myResume.portfolioImages) {
-        const fileKey = url.split('com/')[1];
-        const params = {
-          Bucket: this.bucketName,
-          Key: fileKey,
-        };
-        await this.s3.send(new DeleteObjectCommand(params));
       }
     }
 
