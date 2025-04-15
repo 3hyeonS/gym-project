@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
-import { AcademyDto } from './academy-dto';
+import { AcademyRequestDto } from './academy-request-dto';
 
 export class AcademyModifyRequestDto {
   @ApiProperty({
-    type: AcademyDto,
+    type: AcademyRequestDto,
     description: '학력 정보',
     example: {
       level: '대학교(4년제)',
@@ -14,6 +14,6 @@ export class AcademyModifyRequestDto {
     },
   })
   @IsOptional()
-  @Type(() => AcademyDto)
-  academy?: AcademyDto = null;
+  @Type(() => AcademyRequestDto)
+  academy?: AcademyRequestDto = null;
 }

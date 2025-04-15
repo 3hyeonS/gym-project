@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CareerDto } from './career-dto';
-import { AcademyDto } from './academy-dto';
-import { QualificationDto } from './qualification-dto';
 import { ResumeEntity } from '../entity/resume.entity';
+import { CareerResponseDto } from './career-response-dto';
+import { AcademyResponseDto } from './academy-response-dto';
+import { QualificationResponseDto } from './qualification-response-dto';
 
 export class ResumeResponseDto {
   @ApiProperty({
@@ -78,7 +78,7 @@ export class ResumeResponseDto {
   isNew: number;
 
   @ApiProperty({
-    type: [CareerDto],
+    type: [CareerResponseDto],
     description: '경력 사항',
     example: [
       {
@@ -93,7 +93,7 @@ export class ResumeResponseDto {
       },
     ],
   })
-  careers?: CareerDto[] = null;
+  careers?: CareerResponseDto[] = null;
 
   @ApiProperty({
     type: [String],
@@ -110,7 +110,7 @@ export class ResumeResponseDto {
   workTime?: string[] = null;
 
   @ApiProperty({
-    type: AcademyDto,
+    type: AcademyResponseDto,
     description: '학력 정보',
     example: {
       level: '대학교(4년제)',
@@ -118,10 +118,10 @@ export class ResumeResponseDto {
       detail: '서울대학교 체육교육과',
     },
   })
-  academy?: AcademyDto = null;
+  academy?: AcademyResponseDto = null;
 
   @ApiProperty({
-    type: [QualificationDto],
+    type: [QualificationResponseDto],
     description: '자격증 정보',
     example: [
       {
@@ -130,7 +130,7 @@ export class ResumeResponseDto {
       },
     ],
   })
-  qualifications?: QualificationDto[] = null;
+  qualifications?: QualificationResponseDto[] = null;
 
   @ApiProperty({
     type: [String],
@@ -182,7 +182,9 @@ export class ResumeResponseDto {
     this.isNew = resume.isNew;
 
     if (resume.careers) {
-      this.careers = resume.careers.map((career) => new CareerDto(career));
+      this.careers = resume.careers.map(
+        (career) => new CareerResponseDto(career),
+      );
     } else {
       this.careers = resume.careers;
     }
@@ -192,20 +194,19 @@ export class ResumeResponseDto {
 
     this.academy = resume.academy;
     if (resume.academy) {
-      this.academy = new AcademyDto(resume.academy);
+      this.academy = new AcademyResponseDto(resume.academy);
     } else {
       this.academy = resume.academy;
     }
 
     if (resume.qualifications) {
       this.qualifications = resume.qualifications.map(
-        (qualification) => new QualificationDto(qualification),
+        (qualification) => new QualificationResponseDto(qualification),
       );
     } else {
       this.qualifications = resume.qualifications;
     }
 
-    this.qualifications = resume.qualifications;
     this.award = resume.award;
     this.SNS = resume.SNS;
     this.portfolioFile = resume.portfolioFile;

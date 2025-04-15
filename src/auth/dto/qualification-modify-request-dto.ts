@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { QualificationDto } from './qualification-dto';
+import { QualificationRequestDto } from './qualification-request-dto';
 
 export class QualificationModifyRequestDto {
   @ApiProperty({
-    type: [QualificationDto],
+    type: [QualificationRequestDto],
     description: '자격증 정보',
     example: [
       {
@@ -17,6 +17,6 @@ export class QualificationModifyRequestDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => QualificationDto)
-  qualifications?: QualificationDto[] = null;
+  @Type(() => QualificationRequestDto)
+  qualifications?: QualificationRequestDto[] = null;
 }

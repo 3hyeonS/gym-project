@@ -1058,6 +1058,7 @@ export class AuthController {
     @GetUser() user: UserEntity,
     @Body() resumeRegisterRequestDto: ResumeRegisterRequestDto,
   ): Promise<ResumeResponseDto> {
+    console.log('📌 registerResume() called');
     return await this.authService.registerResume(
       user,
       resumeRegisterRequestDto,

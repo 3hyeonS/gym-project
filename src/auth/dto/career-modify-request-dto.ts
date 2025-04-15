@@ -8,7 +8,7 @@ import {
   IsOptional,
   ValidateNested,
 } from 'class-validator';
-import { CareerDto } from './career-dto';
+import { CareerRequestDto } from './career-request-dto';
 
 export class CareerModifyRequestDto {
   @ApiProperty({
@@ -22,7 +22,7 @@ export class CareerModifyRequestDto {
   isNew: number;
 
   @ApiProperty({
-    type: [CareerDto],
+    type: [CareerRequestDto],
     description: '경력 사항',
     example: [
       {
@@ -40,6 +40,6 @@ export class CareerModifyRequestDto {
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => CareerDto)
-  careers?: CareerDto[] = null;
+  @Type(() => CareerRequestDto)
+  careers?: CareerRequestDto[] = null;
 }

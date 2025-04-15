@@ -14,9 +14,9 @@ import {
   Matches,
   ValidateNested,
 } from 'class-validator';
-import { CareerDto } from './career-dto';
-import { AcademyDto } from './academy-dto';
-import { QualificationDto } from './qualification-dto';
+import { CareerRequestDto } from './career-request-dto';
+import { AcademyRequestDto } from './academy-request-dto';
+import { QualificationRequestDto } from './qualification-request-dto';
 
 export class ResumeRegisterRequestDto {
   @ApiProperty({
@@ -111,7 +111,7 @@ export class ResumeRegisterRequestDto {
   isNew: number;
 
   @ApiProperty({
-    type: [CareerDto],
+    type: [CareerRequestDto],
     description: '경력 사항',
     example: [
       {
@@ -129,8 +129,8 @@ export class ResumeRegisterRequestDto {
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => CareerDto)
-  careers?: CareerDto[];
+  @Type(() => CareerRequestDto)
+  careers?: CareerRequestDto[];
 
   @ApiProperty({
     type: [String],
@@ -153,7 +153,7 @@ export class ResumeRegisterRequestDto {
   workTime?: string[];
 
   @ApiProperty({
-    type: AcademyDto,
+    type: AcademyRequestDto,
     description: '학력 정보',
     example: {
       level: '대학교(4년제)',
@@ -162,11 +162,11 @@ export class ResumeRegisterRequestDto {
     },
   })
   @IsOptional()
-  @Type(() => AcademyDto)
-  academy?: AcademyDto;
+  @Type(() => AcademyRequestDto)
+  academy?: AcademyRequestDto;
 
   @ApiProperty({
-    type: [QualificationDto],
+    type: [QualificationRequestDto],
     description: '자격증 정보',
     example: [
       {
@@ -178,8 +178,8 @@ export class ResumeRegisterRequestDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => QualificationDto)
-  qualifications?: QualificationDto[];
+  @Type(() => QualificationRequestDto)
+  qualifications?: QualificationRequestDto[];
 
   @ApiProperty({
     type: [String],

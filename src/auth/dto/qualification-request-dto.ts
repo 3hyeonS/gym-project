@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { QualificationEntity } from '../entity/qualification.entity';
 
-export class QualificationDto {
+export class QualificationRequestDto {
   @ApiProperty({
     type: String,
     description: '자격증 명',
@@ -20,9 +19,4 @@ export class QualificationDto {
   @IsNotEmpty()
   @IsString()
   level: string;
-
-  constructor(qulification: QualificationEntity) {
-    this.certificate = qulification.certificate;
-    this.level = qulification.level;
-  }
 }

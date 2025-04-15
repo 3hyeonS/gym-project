@@ -6,7 +6,7 @@ import {
   SwaggerCustomOptions,
 } from '@nestjs/swagger';
 import { LoggingInterceptor } from './interceptors/logging-interceptor';
-import { ValidationPipe } from '@nestjs/common';
+import { ArgumentsHost, ValidationPipe } from '@nestjs/common';
 // import * as cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes';

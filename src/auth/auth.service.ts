@@ -999,6 +999,8 @@ export class AuthService {
     user: UserEntity,
     resumeRegisterRequestDto: ResumeRegisterRequestDto,
   ): Promise<ResumeResponseDto> {
+    console.log(user.id);
+    console.log(this.resumeRepository);
     const myResume = await this.resumeRepository.findOne({
       where: {
         user: { id: user.id }, // 명시적으로 id 사용
