@@ -1257,8 +1257,13 @@ export class AuthService {
       const hasLicense = qualificationModifyRequestDto.qualifications.some(
         (qualifiaction) => qualifiaction.certificate === '생활스포츠지도사',
       );
-      myResume.license = hasLicense ? 1 : 0;
-      await this.resumeRepository.save(myResume);
+      const modifiedResume = await this.resumeRepository.findOne({
+        where: {
+          user: { id: user.id },
+        },
+      });
+      modifiedResume.license = hasLicense ? 1 : 0;
+      await this.resumeRepository.save(modifiedResume);
     }
 
     const updatedResume = await this.resumeRepository.findOne({
