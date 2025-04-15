@@ -939,12 +939,14 @@ export class AuthService {
     const fileKey = `resume/${user.id}/portfolio/file`;
 
     // 포트폴리오 파일이 기존에 있으면 삭제
-    if (myResume.portfolioFile) {
-      const params = {
-        Bucket: this.bucketName,
-        Key: fileKey,
-      };
-      await this.s3.send(new DeleteObjectCommand(params));
+    if (myResume) {
+      if (myResume.portfolioFile) {
+        const params = {
+          Bucket: this.bucketName,
+          Key: fileKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+      }
     }
 
     const params = {
