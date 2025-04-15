@@ -198,7 +198,7 @@ export class RecruitmentController {
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
   ): Promise<{
-    recruitmentsList: RecruitmentResponseDto[];
+    recruitmentList: RecruitmentResponseDto[];
     page: number;
     totalRecruitments: number;
     totalPages: number;
@@ -238,7 +238,7 @@ export class RecruitmentController {
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
   ): Promise<{
-    recruitmentsList: RecruitmentResponseDto[];
+    recruitmentList: RecruitmentResponseDto[];
     page: number;
     totalRecruitments: number;
     totalPages: number;

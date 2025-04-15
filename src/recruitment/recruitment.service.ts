@@ -27,8 +27,8 @@ import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
 import { UserEntity } from 'src/auth/entity/user.entity';
 import { BookmarkEntity } from './entity/bookmark.entity';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { VillyEntity } from './entity/villy.entity';
+import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
 
 @Injectable()
 export class RecruitmentService {
@@ -45,6 +45,8 @@ export class RecruitmentService {
     private recruitmentRepository: Repository<RecruitmentEntity>,
     @InjectRepository(BookmarkEntity)
     private bookmarkRepository: Repository<BookmarkEntity>,
+    @InjectRepository(VillyEntity)
+    private villyRepository: Repository<VillyEntity>,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -86,12 +88,12 @@ export class RecruitmentService {
     limit: number,
     user?: UserEntity,
   ): Promise<{
-    recruitmentsList: RecruitmentResponseDto[];
+    recruitmentList: RecruitmentResponseDto[];
     page: number;
     totalRecruitments: number;
     totalPages: number;
   }> {
-    const [recruitmentsList, totalCount] =
+    const [recruitmentList, totalCount] =
       await this.recruitmentRepository.findAndCount({
         where: { isHiring: 1 },
         order: { date: 'DESC' }, // 최신순 정렬
@@ -102,7 +104,7 @@ export class RecruitmentService {
     // 비회원 처리
     if (!user) {
       return {
-        recruitmentsList: recruitmentsList.map(
+        recruitmentList: recruitmentList.map(
           (recruitment) => new RecruitmentResponseDto(recruitment),
         ),
         page,
@@ -117,13 +119,13 @@ export class RecruitmentService {
     });
     const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
 
-    const mappedRecruitmentList = recruitmentsList.map((recruitment) => {
+    const mappedRecruitmentList = recruitmentList.map((recruitment) => {
       const isBookmarked = bookmarkedIds.has(recruitment.id);
       return new RecruitmentResponseDto(recruitment, isBookmarked);
     });
 
     return {
-      recruitmentsList: mappedRecruitmentList,
+      recruitmentList: mappedRecruitmentList,
       page,
       totalRecruitments: totalCount,
       totalPages: Math.ceil(totalCount / limit),
@@ -137,7 +139,7 @@ export class RecruitmentService {
     limit: number,
     user?: UserEntity,
   ): Promise<{
-    recruitmentsList: RecruitmentResponseDto[];
+    recruitmentList: RecruitmentResponseDto[];
     page: number;
     totalRecruitments: number;
     totalPages: number;
@@ -382,7 +384,7 @@ export class RecruitmentService {
     // 비회원 처리
     if (!user) {
       return {
-        recruitmentsList: objectList.map(
+        recruitmentList: objectList.map(
           (recruitment) => new RecruitmentResponseDto(recruitment),
         ),
         page,
@@ -404,7 +406,7 @@ export class RecruitmentService {
     });
 
     return {
-      recruitmentsList: mappedRecruitmentList,
+      recruitmentList: mappedRecruitmentList,
       page,
       totalRecruitments: totalCount,
       totalPages: Math.ceil(totalCount / limit),
@@ -483,11 +485,10 @@ export class RecruitmentService {
       if (!recruitmentForBookmark) {
         throw new NotFoundException('There is no recruitment for selected id');
       }
-      const newBookmark = this.bookmarkRepository.create({
+      await this.bookmarkRepository.save({
         user,
         recruitment: recruitmentForBookmark,
       });
-      await this.bookmarkRepository.save(newBookmark);
     }
   }
 
@@ -566,7 +567,7 @@ export class RecruitmentService {
     const toNullableString = (value?: string): string | null =>
       !value || value.trim() === '' ? null : value;
 
-    const newRecruitment = this.recruitmentRepository.create({
+    const newRecruitment = await this.recruitmentRepository.save({
       centerName: center.centerName,
       city: seperatedAddress.city,
       location: seperatedAddress.location,
@@ -595,9 +596,7 @@ export class RecruitmentService {
       isHiring: 1,
     });
 
-    const savedRecruitment =
-      await this.recruitmentRepository.save(newRecruitment);
-    return new RecruitmentResponseDto(savedRecruitment);
+    return new RecruitmentResponseDto(newRecruitment);
   }
 
   // method4: 주소에서 시/도, 시/군/구 추출
@@ -974,5 +973,58 @@ export class RecruitmentService {
     }
 
     return uploadedUrls;
+  }
+
+  // 지원하기
+  async apply(user: UserEntity, id: number): Promise<void> {
+    const recruitment = await this.recruitmentRepository.findOneBy({ id });
+    await this.villyRepository.save({
+      messageType: 1,
+      user,
+      recruitment,
+    });
+  }
+
+  // 지원한 공고 보기
+  async getAppliedRecruitments(
+    user: UserEntity,
+  ): Promise<RecruitmentResponseDto[]> {
+    const applyVillies = await this.villyRepository.find({
+      where: {
+        user: { id: user.id },
+        messageType: 1,
+      },
+      order: { createdAt: 'DESC' }, // 최신순
+    });
+
+    const recruitmentList = applyVillies.map(
+      (villy) => new RecruitmentResponseDto(villy.recruitment),
+    );
+
+    return recruitmentList;
+  }
+
+  // 지원받은 이력서 보기
+  async getAppliedResumes(center: CenterEntity): Promise<ResumeResponseDto[]> {
+    const myRecruitment = await this.recruitmentRepository.findOne({
+      where: {
+        center: { id: center.id },
+        isHiring: 1,
+      },
+    });
+
+    const applyVillies = await this.villyRepository.find({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+      order: { createdAt: 'DESC' }, // 최신순
+    });
+
+    const resumeList = applyVillies
+      .filter((villy) => villy.user.resume) // null 체크
+      .map((villy) => new ResumeResponseDto(villy.user.resume));
+
+    return resumeList;
   }
 }

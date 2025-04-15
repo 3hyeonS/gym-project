@@ -115,12 +115,11 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
     await this.emailCodeRepository.delete({ email });
-    const createdCode = this.emailCodeRepository.create({
+    await this.emailCodeRepository.save({
       email,
       code,
       expiresAt,
     });
-    await this.emailCodeRepository.save(createdCode);
   }
 
   // 인증 코드 확인
@@ -171,12 +170,11 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 3); // 3분 뒤 만료
 
-    const createdCode = this.emailCodeRepository.create({
+    await this.emailCodeRepository.save({
       email,
       code,
       expiresAt,
     });
-    await this.emailCodeRepository.save(createdCode);
     return email;
   }
 
@@ -272,15 +270,12 @@ export class AuthService {
 
     const admin = await this.authorityRepository.findOneBy({ role: 'ADMIN' });
 
-    const newAdmin = this.userRepository.create({
+    return await this.userRepository.save({
       nickname: adminId,
       email,
       signWith: local,
       authority: admin,
     });
-
-    const savedAdmin = await this.userRepository.save(newAdmin);
-    return savedAdmin;
   }
 
   // 센터 회원 가입
@@ -312,7 +307,7 @@ export class AuthService {
 
     const center = await this.authorityRepository.findOneBy({ role: 'CENTER' });
 
-    const newCenter = this.centerRepository.create({
+    return await this.centerRepository.save({
       signId,
       password: hashedPassword, // 해싱된 비밀번호 사용
       centerName,
@@ -323,9 +318,6 @@ export class AuthService {
       address,
       authority: center,
     });
-    const savedCenter = await this.centerRepository.save(newCenter);
-
-    return savedCenter;
   }
 
   // 관리자 로그인 메서드
@@ -429,23 +421,19 @@ export class AuthService {
     }
 
     // 새 사용자 생성 로직
-    const newUser = this.userRepository.create({
+    const newUser = await this.userRepository.save({
       nickname: kakaoUserNickname,
       email: kakaoEmail,
       signWith: await this.signWithRepository.findOneBy({ platform: 'KAKAO' }),
       authority: await this.authorityRepository.findOneBy({ role: 'USER' }),
     });
 
-    const savedUser = await this.userRepository.save(newUser);
-
-    const newKakaoKey = this.kakaoKeyRepository.create({
+    await this.kakaoKeyRepository.save({
       kakaoId: kakaoUserId,
-      user: savedUser,
+      user: newUser,
     });
-    const savedKakaoKey = await this.kakaoKeyRepository.save(newKakaoKey);
 
-    savedUser.kakaoKey = savedKakaoKey;
-    return await this.userRepository.save(savedUser);
+    return await this.userRepository.findOneBy({ id: newUser.id });
   }
 
   // 카카오 로그인
@@ -551,14 +539,12 @@ export class AuthService {
     expiresAt.setDate(expiresAt.getDate() + 7); // 7일 만료
     // expiresAt.setMinutes(expiresAt.getMinutes() + 3);
 
-    const refreshTokenEntity = this.refreshTokenRepository.create({
+    await this.refreshTokenRepository.save({
       token: refreshToken,
       expiresAt,
       user: member instanceof UserEntity ? member : null,
       center: member instanceof CenterEntity ? member : null,
     });
-
-    await this.refreshTokenRepository.save(refreshTokenEntity);
     return refreshToken;
   }
 
@@ -830,24 +816,20 @@ export class AuthService {
     appleRefreshToken: string,
   ): Promise<UserEntity> {
     // 새 사용자 생성 로직
-    const newUser = this.userRepository.create({
+    const newUser = await this.userRepository.save({
       nickname: name,
       email: email,
       signWith: await this.signWithRepository.findOneBy({ platform: 'APPLE' }),
       authority: await this.authorityRepository.findOneBy({ role: 'USER' }),
     });
 
-    const savedUser = await this.userRepository.save(newUser);
-
-    const newAppleKey = this.appleKeyRepository.create({
+    await this.appleKeyRepository.save({
       appleId,
       appleRefreshToken,
-      user: savedUser,
+      user: newUser,
     });
-    const savedAppleKey = await this.appleKeyRepository.save(newAppleKey);
 
-    savedUser.appleKey = savedAppleKey;
-    return await this.userRepository.save(savedUser);
+    return await this.userRepository.findOneBy({ id: newUser.id });
   }
 
   async revokeAppleTokens(appleRefreshToken: string): Promise<void> {
@@ -1026,7 +1008,7 @@ export class AuthService {
     const toNullableString = (value?: string): string | null =>
       !value || value.trim() === '' ? null : value;
 
-    const createdResume = this.resumeRepository.create({
+    const newResume = await this.resumeRepository.save({
       profileImage: resumeRegisterRequestDto.profileImage,
       name: resumeRegisterRequestDto.name,
       birth: resumeRegisterRequestDto.birth,
@@ -1048,36 +1030,35 @@ export class AuthService {
       user,
     });
 
-    const newResume = await this.resumeRepository.save(createdResume);
-
     for (const career of resumeRegisterRequestDto.careers ?? []) {
-      const newCareer = this.careerRepository.create({
+      await this.careerRepository.save({
         ...career,
         resume: newResume,
       });
-      await this.careerRepository.save(newCareer);
     }
 
     if (resumeRegisterRequestDto.academy) {
-      const newAcademy = this.academyRepository.create({
+      await this.academyRepository.save({
         ...resumeRegisterRequestDto.academy,
         resume: newResume,
       });
-      await this.academyRepository.save(newAcademy);
     }
 
     for (const qualifiaction of resumeRegisterRequestDto.qualifications ?? []) {
       if (qualifiaction.certificate == '생활체육지도자') {
         newResume.license = 1;
       }
-      const newQualification = this.qualificationRepository.create({
+      await this.qualificationRepository.save({
         ...qualifiaction,
         resume: newResume,
       });
-      await this.qualificationRepository.save(newQualification);
     }
 
-    const savedResume = await this.resumeRepository.save(newResume);
+    const savedResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
     return new ResumeResponseDto(savedResume);
   }
 
@@ -1188,6 +1169,8 @@ export class AuthService {
     }
 
     myResume.isNew = careerModifyRequestDto.isNew;
+    await this.resumeRepository.save(myResume);
+
     // careers 초기화 후 재등록
     await this.careerRepository.delete({ resume: { id: myResume.id } }); // 기존 삭제
     if (careerModifyRequestDto.careers) {
@@ -1200,7 +1183,12 @@ export class AuthService {
       await this.careerRepository.save(newCareers);
     }
 
-    const updatedResume = await this.resumeRepository.save(myResume);
+    const updatedResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+
     return new ResumeResponseDto(updatedResume);
   }
 
@@ -1220,14 +1208,17 @@ export class AuthService {
     // academy 초기화 후 재등록
     await this.academyRepository.delete({ resume: { id: myResume.id } });
     if (academyModifyRequestDto.academy) {
-      const newAcademy = this.academyRepository.create({
+      await this.academyRepository.save({
         ...academyModifyRequestDto.academy,
         resume: myResume,
       });
-      await this.academyRepository.save(newAcademy);
     }
 
-    const updatedResume = await this.resumeRepository.save(myResume);
+    const updatedResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
     return new ResumeResponseDto(updatedResume);
   }
 
@@ -1262,9 +1253,14 @@ export class AuthService {
         (qualifiaction) => qualifiaction.certificate === '생활스포츠지도사',
       );
       myResume.license = hasLicense ? 1 : 0;
+      await this.resumeRepository.save(myResume);
     }
 
-    const updatedResume = await this.resumeRepository.save(myResume);
+    const updatedResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
     return new ResumeResponseDto(updatedResume);
   }
 
