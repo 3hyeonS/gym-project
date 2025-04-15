@@ -999,7 +999,12 @@ export class AuthService {
     user: UserEntity,
     resumeRegisterRequestDto: ResumeRegisterRequestDto,
   ): Promise<ResumeResponseDto> {
-    if (await this.hasResume(user)) {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id }, // 명시적으로 id 사용
+      },
+    });
+    if (myResume) {
       throw new ConflictException('Your resume already exists');
     }
     const toNullableArray = (arr?: string[]) =>
