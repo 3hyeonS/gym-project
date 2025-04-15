@@ -180,10 +180,31 @@ export class ResumeResponseDto {
     this.gender = resume.gender;
     this.location = resume.location;
     this.isNew = resume.isNew;
-    this.careers = resume.careers;
+
+    if (resume.careers) {
+      this.careers = resume.careers.map((career) => new CareerDto(career));
+    } else {
+      this.careers = resume.careers;
+    }
+
     this.workType = resume.workType;
     this.workTime = resume.workTime;
+
     this.academy = resume.academy;
+    if (resume.academy) {
+      this.academy = new AcademyDto(resume.academy);
+    } else {
+      this.academy = resume.academy;
+    }
+
+    if (resume.qualifications) {
+      this.qualifications = resume.qualifications.map(
+        (qualifiaction) => new QualificationDto(qualifiaction),
+      );
+    } else {
+      this.qualifications = resume.qualifications;
+    }
+
     this.qualifications = resume.qualifications;
     this.award = resume.award;
     this.SNS = resume.SNS;

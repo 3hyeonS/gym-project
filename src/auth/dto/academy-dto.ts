@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { AcademyEntity } from '../entity/academy.entity';
 
 export class AcademyDto {
   @ApiProperty({
@@ -28,4 +29,10 @@ export class AcademyDto {
   @IsNotEmpty()
   @IsString()
   detail: string;
+
+  constructor(academy: AcademyEntity) {
+    this.level = academy.level;
+    this.status = academy.status;
+    this.detail = academy.detail;
+  }
 }

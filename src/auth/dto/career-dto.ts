@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { CareerEntity } from '../entity/career.entity';
 
 export class CareerDto {
   @ApiProperty({
@@ -31,4 +32,10 @@ export class CareerDto {
   @Type(() => Date)
   @IsDate()
   end: Date;
+
+  constructor(career: CareerEntity) {
+    this.where = career.where;
+    this.start = career.start;
+    this.end = career.end;
+  }
 }
