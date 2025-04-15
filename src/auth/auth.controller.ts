@@ -64,6 +64,9 @@ import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-reque
 import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
 import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
 import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-dto';
+import { AcademyModifyRequestDto } from './dto/academy-modify-request-dto';
+import { QualificationModifyRequestDto } from './dto/qualification-modify-request-dto';
+import { AwardModifyRequestDto } from './dto/award-modify-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -1232,14 +1235,14 @@ export class AuthController {
     );
   }
 
-  // 이력서 커리어 수정하기
+  // 이력서 경력정보 수정하기
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '커리어 수정하기',
+    summary: '경력정보 수정하기',
   })
   @GenericApiResponse({
     status: 201,
-    description: '커리어 수정하기 성공',
+    description: '경력정보 수정하기 성공',
     message: 'Career modified successfully',
     model: ResumeResponseDto,
   })
@@ -1276,6 +1279,147 @@ export class AuthController {
     @Body() careerModifyRequestDto: CareerModifyRequestDto,
   ): Promise<ResumeResponseDto> {
     return await this.authService.modifyCareer(user, careerModifyRequestDto);
+  }
+
+  // 이력서 학력정보 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '학력정보 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '학력정보 수정하기 성공',
+    message: 'Academy modified successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'isNew should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '등록한 이력서가 없음',
+    message: 'There is no registered resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Academy modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('modifyAcademy')
+  async modifyAcademy(
+    @GetUser() user: UserEntity,
+    @Body() academyModifyRequestDto: AcademyModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.modifyAcademy(user, academyModifyRequestDto);
+  }
+
+  // 이력서 자격증정보 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '자격증정보 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '자격증정보 수정하기 성공',
+    message: 'Qualification modified successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'isNew should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '등록한 이력서가 없음',
+    message: 'There is no registered resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Qualification modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('modifyQualification')
+  async modifyQualification(
+    @GetUser() user: UserEntity,
+    @Body() qualificationModifyRequestDto: QualificationModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.modifyQualification(
+      user,
+      qualificationModifyRequestDto,
+    );
+  }
+
+  // 이력서 수상정보 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '수상정보 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '수상정보 수정하기 성공',
+    message: 'Award modified successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'isNew should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '등록한 이력서가 없음',
+    message: 'There is no registered resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Award modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('modifyAward')
+  async modifyAward(
+    @GetUser() user: UserEntity,
+    @Body() awardModifyRequestDto: AwardModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.modifyAward(user, awardModifyRequestDto);
   }
 
   // 이력서 추가정보 수정하기

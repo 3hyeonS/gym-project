@@ -6,12 +6,9 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
   ValidateNested,
 } from 'class-validator';
 import { CareerDto } from './career-dto';
-import { AcademyDto } from './academy-dto';
-import { QualificationDto } from './qualification-dto';
 
 export class CareerModifyRequestDto {
   @ApiProperty({
@@ -45,43 +42,4 @@ export class CareerModifyRequestDto {
   @ValidateNested({ each: true })
   @Type(() => CareerDto)
   careers?: CareerDto[] = null;
-
-  @ApiProperty({
-    type: AcademyDto,
-    description: '학력 정보',
-    example: {
-      level: '대학교(4년제)',
-      status: '졸업',
-      detail: '서울대학교 체육교육과',
-    },
-  })
-  @IsOptional()
-  @Type(() => AcademyDto)
-  academy?: AcademyDto = null;
-
-  @ApiProperty({
-    type: [QualificationDto],
-    description: '자격증 정보',
-    example: [
-      {
-        certificate: '생활스포츠지도사',
-        level: '2급',
-      },
-    ],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => QualificationDto)
-  qualifications?: QualificationDto[] = null;
-
-  @ApiProperty({
-    type: [String],
-    description: '수상 내역',
-    example: ['2026 ABCD 피지크 2위'],
-  })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  award?: string[] = null;
 }

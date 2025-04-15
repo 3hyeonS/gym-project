@@ -49,6 +49,9 @@ import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-reque
 import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
 import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
 import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-dto';
+import { AcademyModifyRequestDto } from './dto/academy-modify-request-dto';
+import { QualificationModifyRequestDto } from './dto/qualification-modify-request-dto';
+import { AwardModifyRequestDto } from './dto/award-modify-request-dto';
 
 @Injectable()
 export class AuthService {
@@ -1170,7 +1173,7 @@ export class AuthService {
     return new ResumeResponseDto(updatedResume);
   }
 
-  // 이력서 커리어 수정하기
+  // 이력서 경력정보 수정하기
   async modifyCareer(
     user: UserEntity,
     careerModifyRequestDto: CareerModifyRequestDto,
@@ -1196,33 +1199,90 @@ export class AuthService {
       );
       await this.careerRepository.save(newCareers);
     }
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 학력정보 수정하기
+  async modifyAcademy(
+    user: UserEntity,
+    academyModifyRequestDto: AcademyModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
     // academy 초기화 후 재등록
     await this.academyRepository.delete({ resume: { id: myResume.id } });
-    if (careerModifyRequestDto.academy) {
+    if (academyModifyRequestDto.academy) {
       const newAcademy = this.academyRepository.create({
-        ...careerModifyRequestDto.academy,
+        ...academyModifyRequestDto.academy,
         resume: myResume,
       });
       await this.academyRepository.save(newAcademy);
     }
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 자격증정보 수정하기
+  async modifyQualification(
+    user: UserEntity,
+    qualificationModifyRequestDto: QualificationModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
     // qualifications 초기화 후 재등록
     await this.qualificationRepository.delete({ resume: { id: myResume.id } });
-    if (careerModifyRequestDto.qualifications) {
-      const newQualifications = careerModifyRequestDto.qualifications.map(
-        (qualifiaction) =>
+    if (qualificationModifyRequestDto.qualifications) {
+      const newQualifications =
+        qualificationModifyRequestDto.qualifications.map((qualifiaction) =>
           this.qualificationRepository.create({
             ...qualifiaction,
             resume: myResume,
           }),
-      );
+        );
       await this.qualificationRepository.save(newQualifications);
 
       // 4-1. 생활스포츠지도사 있는지 체크
-      const hasLicense = careerModifyRequestDto.qualifications.some(
+      const hasLicense = qualificationModifyRequestDto.qualifications.some(
         (qualifiaction) => qualifiaction.certificate === '생활스포츠지도사',
       );
       myResume.license = hasLicense ? 1 : 0;
     }
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
+  }
+
+  // 이력서 수상정보 수정하기
+  async modifyAward(
+    user: UserEntity,
+    awardModifyRequestDto: AwardModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.award = awardModifyRequestDto.award;
 
     const updatedResume = await this.resumeRepository.save(myResume);
     return new ResumeResponseDto(updatedResume);
