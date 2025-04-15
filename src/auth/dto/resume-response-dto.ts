@@ -199,7 +199,7 @@ export class ResumeResponseDto {
 
     if (resume.qualifications) {
       this.qualifications = resume.qualifications.map(
-        (qualifiaction) => new QualificationDto(qualifiaction),
+        (qualification) => new QualificationDto(qualification),
       );
     } else {
       this.qualifications = resume.qualifications;
