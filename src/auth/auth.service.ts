@@ -975,7 +975,7 @@ export class AuthService {
     let number = 0;
     if (myResume) {
       if (myResume.portfolioImages) {
-        for (const url in myResume.portfolioImages) {
+        for (const url of myResume.portfolioImages) {
           const match = url.match(/image(\d+)/);
           const urlNumber = parseInt(match[1], 10);
           number = urlNumber > number ? urlNumber : number;

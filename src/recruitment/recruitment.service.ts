@@ -940,7 +940,7 @@ export class RecruitmentService {
     let number = 0;
     if (existRecruitment) {
       if (existRecruitment.image) {
-        for (const url in existRecruitment.image) {
+        for (const url of existRecruitment.image) {
           const match = url.match(/image(\d+)/);
           const urlNumber = parseInt(match[1], 10);
           number = urlNumber > number ? urlNumber : number;
