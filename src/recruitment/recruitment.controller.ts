@@ -437,11 +437,16 @@ export class RecruitmentController {
   async getMyAll(
     @GetUser() center: CenterEntity,
   ): Promise<MyRecruitmentsResponseDto> {
-    const myRecruitment =
+    const { myRecruitment, hiringApply } =
       await this.recruitmentService.getMyRecruitment(center);
-    const myExpiredRecruitments =
+    const { myExpiredRecruitments, expiredApplies } =
       await this.recruitmentService.getMyExpiredRecruitments(center);
-    return new MyRecruitmentsResponseDto(myRecruitment, myExpiredRecruitments);
+    return new MyRecruitmentsResponseDto(
+      myRecruitment,
+      hiringApply,
+      myExpiredRecruitments,
+      expiredApplies,
+    );
   }
 
   // 내 공고 1개 불러오기

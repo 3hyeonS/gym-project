@@ -642,9 +642,10 @@ export class RecruitmentService {
   }
 
   // method5: 내 채용 중 공고 불러오기
-  async getMyRecruitment(
-    center: CenterEntity,
-  ): Promise<RecruitmentResponseDto | null> {
+  async getMyRecruitment(center: CenterEntity): Promise<{
+    myRecruitment: RecruitmentResponseDto | null;
+    hiringApply: number;
+  }> {
     const myRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
@@ -652,24 +653,47 @@ export class RecruitmentService {
       },
     });
     if (!myRecruitment) {
-      return null;
+      return { myRecruitment: null, hiringApply: 0 };
     }
-    return new RecruitmentResponseDto(myRecruitment);
+
+    const applyVillies = await this.villyRepository.count({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+    });
+    return {
+      myRecruitment: new RecruitmentResponseDto(myRecruitment),
+      hiringApply: applyVillies,
+    };
   }
 
   // method6: 내 만료된 공고 불러오기
-  async getMyExpiredRecruitments(
-    center: CenterEntity,
-  ): Promise<RecruitmentResponseDto[]> {
-    const myExpiredRecruitments = await this.recruitmentRepository.find({
+  async getMyExpiredRecruitments(center: CenterEntity): Promise<{
+    myExpiredRecruitments: RecruitmentResponseDto[];
+    expiredApplies: number[];
+  }> {
+    const expiredRecruitments = await this.recruitmentRepository.find({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 0,
       },
     });
-    return myExpiredRecruitments.map(
+    const myExpiredRecruitments = expiredRecruitments.map(
       (recruitment) => new RecruitmentResponseDto(recruitment),
     );
+
+    const expiredApplies = [];
+    for (const expiredRecruitment of expiredRecruitments) {
+      const applyVillies = await this.villyRepository.count({
+        where: {
+          recruitment: { id: expiredRecruitment.id },
+          messageType: 1,
+        },
+      });
+      expiredApplies.push(applyVillies);
+    }
+    return { myExpiredRecruitments, expiredApplies };
   }
 
   // 내 공고 1개 불러오기
