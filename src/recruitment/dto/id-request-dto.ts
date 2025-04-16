@@ -4,7 +4,7 @@ import { IsNotEmpty, IsNumber } from 'class-validator';
 export class IdRequestDto {
   @ApiProperty({
     type: Number,
-    description: '채용공고/이력서의 id',
+    description: '채용공고 id',
     example: 1,
   })
   @IsNotEmpty()

@@ -685,7 +685,14 @@ export class AuthService {
         await this.revokeAppleTokens(member.appleKey.appleRefreshToken);
       }
       // 이력서 삭제 및 s3 파일, 이미지 삭제
-      await this.deleteResume(member);
+      const resume = await this.resumeRepository.findOne({
+        where: {
+          user: { id: member.id },
+        },
+      });
+      if (resume) {
+        await this.deleteResume(member);
+      }
       await this.userRepository.remove(member);
     } else {
       // 공고 삭제 및 s3 파일, 이미지 삭제

@@ -1075,4 +1075,131 @@ export class RecruitmentService {
       recruitment,
     });
   }
+
+  // 내 주변 공고 불러오기
+  async getNearby(
+    page: number,
+    limit: number,
+    user?: UserEntity,
+  ): Promise<{
+    recruitmentList: RecruitmentResponseDto[];
+    page: number;
+    totalRecruitments: number;
+    totalPages: number;
+  }> {
+    const queryBuilder = this.recruitmentRepository
+      .createQueryBuilder('recruitment')
+      .leftJoinAndSelect('recruitment.center', 'center');
+    const conditions: {
+      condition: string;
+      parameters?: Record<string, any>;
+    }[] = [];
+
+    // 채용 중 여부 처리
+    conditions.push({
+      condition: 'recruitment.isHiring = :isHiring',
+      parameters: { isHiring: 1 },
+    });
+
+    // user, resume 여부에 따라 location 값 처리
+    let finalLocation: Record<string, string[]>;
+
+    if (user) {
+      const resume = await this.resumeRepository.findOne({
+        where: {
+          user: { id: user.id },
+        },
+      });
+
+      finalLocation = resume?.location ?? { 서울: ['강남구'] };
+    } else {
+      finalLocation = { 서울: ['강남구'] };
+    }
+
+    // location 조건 처리
+    const locConditions: string[] = [];
+    const locParameters: Record<string, any> = {};
+
+    let index = 0;
+    for (const [city, districts] of Object.entries(finalLocation)) {
+      const cityKey = `city_${index}`;
+      const cityAllKeyword = `${city.split(' ')[0]} 전체`; // "{city} 전체" 생성
+
+      if (districts.includes(cityAllKeyword)) {
+        locConditions.push(`recruitment.city = :${cityKey}`);
+        locParameters[cityKey] = city;
+      } else {
+        const cityCondition = `recruitment.city = :${cityKey}`;
+        const locKeys = districts.map((_, i) => `loc_${index}_${i}`);
+        const locConditionsPart = locKeys
+          .map((key) => `recruitment.location = :${key}`)
+          .join(' OR ');
+
+        locConditions.push(`(${cityCondition} AND (${locConditionsPart}))`);
+        locParameters[cityKey] = city;
+
+        districts.forEach((district, i) => {
+          locParameters[`loc_${index}_${i}`] = district;
+        });
+      }
+      index++;
+    }
+
+    conditions.push({
+      condition: `(${locConditions.join(' OR ')})`,
+      parameters: locParameters,
+    });
+
+    // 쿼리 빌더에 조건 추가
+    conditions.forEach((condition, index) => {
+      if (index === 0) {
+        queryBuilder.where(condition.condition, condition.parameters);
+      } else {
+        queryBuilder.andWhere(condition.condition, condition.parameters);
+      }
+    });
+
+    // date 내림차순 정렬 추가
+    queryBuilder.orderBy('recruitment.date', 'DESC');
+
+    // 총 개수 가져오기
+    const totalCount = await queryBuilder.getCount();
+
+    // 페이징 처리
+    queryBuilder.take(limit).skip((page - 1) * limit);
+
+    // 최종 데이터 가져오기
+    const objectList = await queryBuilder.getMany();
+
+    // 비회원 처리
+    if (!user) {
+      return {
+        recruitmentList: objectList.map(
+          (recruitment) => new RecruitmentResponseDto(recruitment),
+        ),
+        page,
+        totalRecruitments: totalCount, // 전체 헬스장 수
+        totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
+      };
+    }
+
+    // 즐겨찾기 처리
+    const bookmarks = await this.bookmarkRepository.find({
+      where: { user: { id: user.id } }, // 확실한 조건 명시
+      relations: ['recruitment'], // 즐겨찾기한 공고 정보도 함께 로딩
+    });
+    const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
+
+    const mappedRecruitmentList = objectList.map((recruitment) => {
+      const isBookmarked = bookmarkedIds.has(recruitment.id);
+      return new RecruitmentResponseDto(recruitment, isBookmarked);
+    });
+
+    return {
+      recruitmentList: mappedRecruitmentList,
+      page,
+      totalRecruitments: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+  }
 }

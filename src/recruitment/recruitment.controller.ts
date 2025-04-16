@@ -104,6 +104,12 @@ export class RecruitmentController {
     model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'id must be a number conforming to the specified constraints',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
     status: 401,
     description: '유효하지 않거나 기간이 만료된 acccessToken',
     message: 'Invalid or expired accessToken',
@@ -114,12 +120,6 @@ export class RecruitmentController {
     description: '해당 id의 공고를 찾을 수 없음',
     message: 'There is no recruitment for selected id',
     error: 'NotFoundException',
-  })
-  @ErrorApiResponse({
-    status: 400,
-    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
-    message: 'id must be a number conforming to the specified constraints',
-    error: 'BadRequestException',
   })
   @ResponseMsg('Recruitment returned successfully')
   @UseGuards(OptionalAuthGuard)
@@ -230,6 +230,12 @@ export class RecruitmentController {
     message:
       'selectedMaxClassFee must be a number conforming to the specified constraints',
     error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
   })
   @ResponseMsg('Recruitments with selected conditions returned successfully')
   @UseGuards(OptionalAuthGuard)
@@ -1020,7 +1026,7 @@ export class RecruitmentController {
     summary: '지원받은 이력서 불러오기',
   })
   @GenericApiResponse({
-    status: 200,
+    status: 201,
     description: '지원한 이력서 불러오기 성공',
     message: 'Applied resume returned successfully',
     isArray: true,
@@ -1093,5 +1099,44 @@ export class RecruitmentController {
       doubleIdRequestDto.recruitmentId,
       doubleIdRequestDto.resumeId,
     );
+  }
+
+  // 내 주변 공고 불러오기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '내 주변 공고 불러오기',
+    description:
+      '이력서 기준, 비로그인 및 이력서 미보유 시 강남구로 설정  \n로그인 시 즐겨찾기 여부 반영',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '내 주변 공고 불러오기 성공',
+    message: 'Nearby recruitments returned successfully',
+    model: RecruitmentsPageResponseDto,
+    isArray: true,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Nearby recruitments returned successfully')
+  @UseGuards(OptionalAuthGuard)
+  @Get('getNearby')
+  async getNearby(
+    @GetOptionalUser() user: UserEntity | CenterEntity | null,
+    @Query('page') page: number = 1, // 기본값 1
+    @Query('limit') limit: number = 20, // 기본값 20
+  ): Promise<{
+    recruitmentList: RecruitmentResponseDto[];
+    page: number;
+    totalRecruitments: number;
+    totalPages: number;
+  }> {
+    if (user instanceof UserEntity) {
+      return await this.recruitmentService.getNearby(page, limit, user);
+    }
+    return await this.recruitmentService.getNearby(page, limit);
   }
 }
