@@ -46,6 +46,8 @@ import { UserEntity } from 'src/auth/entity/user.entity';
 import { IdRequestDto } from './dto/id-request-dto';
 import { GetOptionalUser } from 'src/decorators/get-optional-user-decorator';
 import { OptionalAuthGuard } from 'src/auth/custom-option.guard';
+import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
+import { DoubleIdRequestDto } from './dto/double-id-request-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -931,5 +933,165 @@ export class RecruitmentController {
     @GetUser() user: UserEntity,
   ): Promise<RecruitmentResponseDto[]> {
     return await this.recruitmentService.getBookmarked(user);
+  }
+
+  // 지원하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '지원하기',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '지원하기 성공',
+    message: 'Applied successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'id should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 지원하기 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '이미 지원함',
+    message: 'You already applied',
+    error: 'ConflictException',
+  })
+  @ResponseMsg('Applied successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('apply')
+  async apply(
+    @GetUser() user: UserEntity,
+    @Body() idRequestDto: IdRequestDto,
+  ): Promise<void> {
+    await this.recruitmentService.apply(user, idRequestDto.id);
+  }
+
+  // 지원한 공고 불러오기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '지원한 공고 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '지원한 공고 불러오기 성공',
+    message: 'Applied recruitments returned successfully',
+    isArray: true,
+    model: RecruitmentListResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 지원한 공고 불러오기 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Applied recruitments returned successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Get('getAppliedRecruitments')
+  async getAppliedRecruitments(
+    @GetUser() user: UserEntity,
+  ): Promise<RecruitmentResponseDto[]> {
+    return await this.recruitmentService.getAppliedRecruitments(user);
+  }
+
+  // 지원받은 이력서 불러오기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '지원받은 이력서 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '지원한 이력서 불러오기 성공',
+    message: 'Applied resume returned successfully',
+    isArray: true,
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 지원한 이력서 불러오기 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Applied resume returned successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('getAppliedResumes')
+  async getAppliedResumes(
+    @Body() idRequestDto: IdRequestDto,
+  ): Promise<ResumeResponseDto[]> {
+    return await this.recruitmentService.getAppliedResumes(idRequestDto.id);
+  }
+
+  // 면접 제안하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '면접 제안하기',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '면접 제안하기 성공',
+    message: 'Interview proposed successfully',
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'resumeid should not be empty',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '센터 회원이 아님 (센터 회원만 면접 제안하기 가능)',
+    message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 409,
+    description: '이미 면접을 제안함',
+    message: 'You already proposed interview',
+    error: 'ConflictException',
+  })
+  @ResponseMsg('Interview proposed successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('CENTER')
+  @Post('proposeInterview')
+  async proposeInterview(
+    @Body() doubleIdRequestDto: DoubleIdRequestDto,
+  ): Promise<void> {
+    await this.recruitmentService.proposeInterview(
+      doubleIdRequestDto.recruitmentId,
+      doubleIdRequestDto.resumeId,
+    );
   }
 }

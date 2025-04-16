@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -29,6 +30,7 @@ import { UserEntity } from 'src/auth/entity/user.entity';
 import { BookmarkEntity } from './entity/bookmark.entity';
 import { VillyEntity } from './entity/villy.entity';
 import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
+import { ResumeEntity } from 'src/auth/entity/resume.entity';
 
 @Injectable()
 export class RecruitmentService {
@@ -45,6 +47,12 @@ export class RecruitmentService {
     private recruitmentRepository: Repository<RecruitmentEntity>,
     @InjectRepository(BookmarkEntity)
     private bookmarkRepository: Repository<BookmarkEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
+    @InjectRepository(CenterEntity)
+    private centerRepository: Repository<CenterEntity>,
+    @InjectRepository(ResumeEntity)
+    private resumeRepository: Repository<ResumeEntity>,
     @InjectRepository(VillyEntity)
     private villyRepository: Repository<VillyEntity>,
   ) {
@@ -978,6 +986,18 @@ export class RecruitmentService {
   // 지원하기
   async apply(user: UserEntity, id: number): Promise<void> {
     const recruitment = await this.recruitmentRepository.findOneBy({ id });
+
+    const existApplyVilly = await this.villyRepository.findOne({
+      where: {
+        messageType: 1,
+        recruitment: { id },
+        user: { id: user.id },
+      },
+    });
+    if (existApplyVilly) {
+      throw new ConflictException('You already applied');
+    }
+
     await this.villyRepository.save({
       messageType: 1,
       user,
@@ -1005,13 +1025,8 @@ export class RecruitmentService {
   }
 
   // 지원받은 이력서 보기
-  async getAppliedResumes(center: CenterEntity): Promise<ResumeResponseDto[]> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
-      where: {
-        center: { id: center.id },
-        isHiring: 1,
-      },
-    });
+  async getAppliedResumes(id: number): Promise<ResumeResponseDto[]> {
+    const myRecruitment = await this.recruitmentRepository.findOneBy({ id });
 
     const applyVillies = await this.villyRepository.find({
       where: {
@@ -1026,5 +1041,38 @@ export class RecruitmentService {
       .map((villy) => new ResumeResponseDto(villy.user.resume));
 
     return resumeList;
+  }
+
+  // 면접 제안하기
+  async proposeInterview(
+    recruitmentId: number,
+    resumeId: number,
+  ): Promise<void> {
+    const recruitment = await this.recruitmentRepository.findOneBy({
+      id: recruitmentId,
+    });
+
+    const user = await this.userRepository.findOne({
+      where: {
+        resume: { id: resumeId },
+      },
+    });
+
+    const existProposalVilly = await this.villyRepository.findOne({
+      where: {
+        messageType: 2,
+        recruitment: { id: recruitment.id },
+        user: { id: user.id },
+      },
+    });
+    if (existProposalVilly) {
+      throw new ConflictException('You already proposed interview');
+    }
+
+    await this.villyRepository.save({
+      messageType: 2,
+      user,
+      recruitment,
+    });
   }
 }
