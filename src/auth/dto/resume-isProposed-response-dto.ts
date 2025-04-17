@@ -169,8 +169,9 @@ export class ResumeisProposedResponseDto {
 
   @ApiProperty({
     type: Boolean,
-    description: '전화번호',
-    example: '010-0000-0000',
+    description:
+      '면접 제안 여부  \ntrue: 면접 제안 완료  \nfalse: 면접 제안 미완료',
+    example: true,
   })
   isProposed: boolean;
 
