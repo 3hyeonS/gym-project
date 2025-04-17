@@ -67,6 +67,7 @@ import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-
 import { AcademyModifyRequestDto } from './dto/academy-modify-request-dto';
 import { QualificationModifyRequestDto } from './dto/qualification-modify-request-dto';
 import { AwardModifyRequestDto } from './dto/award-modify-request-dto';
+import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -1135,6 +1136,55 @@ export class AuthController {
   @Get('deleteResume')
   async deleteResume(@GetUser() user: UserEntity): Promise<void> {
     await this.authService.deleteResume(user);
+  }
+
+  // 이력서 증명사진 수정하기
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '증명사진 수정하기',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '증명사진 수정하기 성공',
+    message: 'Profile image modified successfully',
+    model: ResumeResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'profileImage must be a string',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 이력서 수정 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '등록한 이력서가 없음',
+    message: 'There is no registered resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('Profile image modified successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Post('modifyProfileImage')
+  async modifyProfileImage(
+    @GetUser() user: UserEntity,
+    @Body() profileImageModifyRequestDto: ProfileImageModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    return await this.authService.modifyProfileImage(
+      user,
+      profileImageModifyRequestDto,
+    );
   }
 
   // 이력서 개인정보 수정하기

@@ -1115,11 +1115,17 @@ export class RecruitmentController {
       '이력서 기준, 비로그인 및 이력서 미보유 시 강남구로 설정  \n로그인 시 즐겨찾기 여부 반영',
   })
   @GenericApiResponse({
-    status: 200,
+    status: 201,
     description: '내 주변 공고 불러오기 성공',
     message: 'Nearby recruitments returned successfully',
-    model: RecruitmentsPageResponseDto,
+    model: RecruitmentResponseDto,
     isArray: true,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'num should not be empty',
+    error: 'BadRequestException',
   })
   @ErrorApiResponse({
     status: 401,
@@ -1129,20 +1135,14 @@ export class RecruitmentController {
   })
   @ResponseMsg('Nearby recruitments returned successfully')
   @UseGuards(OptionalAuthGuard)
-  @Get('getNearby')
+  @Post('getNearby')
   async getNearby(
     @GetOptionalUser() user: UserEntity | CenterEntity | null,
-    @Query('page') page: number = 1, // 기본값 1
-    @Query('limit') limit: number = 20, // 기본값 20
-  ): Promise<{
-    recruitmentList: RecruitmentResponseDto[];
-    page: number;
-    totalRecruitments: number;
-    totalPages: number;
-  }> {
+    @Body() numRequestDto: NumRequestDto,
+  ): Promise<RecruitmentResponseDto[]> {
     if (user instanceof UserEntity) {
-      return await this.recruitmentService.getNearby(page, limit, user);
+      return await this.recruitmentService.getNearby(numRequestDto.num, user);
     }
-    return await this.recruitmentService.getNearby(page, limit);
+    return await this.recruitmentService.getNearby(numRequestDto.num);
   }
 }

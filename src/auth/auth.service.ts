@@ -52,6 +52,7 @@ import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-
 import { AcademyModifyRequestDto } from './dto/academy-modify-request-dto';
 import { QualificationModifyRequestDto } from './dto/qualification-modify-request-dto';
 import { AwardModifyRequestDto } from './dto/award-modify-request-dto';
+import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
 
 @Injectable()
 export class AuthService {
@@ -894,10 +895,14 @@ export class AuthService {
       },
     });
 
-    const fileKey = `resume/${user.id}/profileImage`;
-
-    // 증명사진이 기존에 있으면 삭제
+    // 증명사진이 기존에 있으면 번호 증가 후 삭제
+    let number = 0;
     if (myResume) {
+      const match = myResume.profileImage.match(/profileImage(\d+)/);
+      const urlNumber = parseInt(match[1], 10);
+      number = urlNumber + 1;
+
+      const fileKey = myResume.profileImage.split('com/')[1];
       const params = {
         Bucket: this.bucketName,
         Key: fileKey,
@@ -905,16 +910,18 @@ export class AuthService {
       await this.s3.send(new DeleteObjectCommand(params));
     }
 
+    const newFileKey = `resume/${user.id}/profileImage/${number}`;
+
     // 업로드
     const params = {
       Bucket: this.bucketName,
-      Key: fileKey,
+      Key: newFileKey,
       Body: file.buffer,
       ContentType: file.mimetype,
     };
 
     await this.s3.send(new PutObjectCommand(params));
-    return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${newFileKey}`;
   }
 
   // 포트폴리오 파일 S3 업로드
@@ -928,28 +935,33 @@ export class AuthService {
       },
     });
 
-    const fileKey = `resume/${user.id}/portfolio/file`;
-
-    // 포트폴리오 파일이 기존에 있으면 삭제
+    // 포트폴리오 파일이 기존에 있으면 번호 증가 후 삭제
+    let number = 0;
     if (myResume) {
-      if (myResume.portfolioFile) {
-        const params = {
-          Bucket: this.bucketName,
-          Key: fileKey,
-        };
-        await this.s3.send(new DeleteObjectCommand(params));
-      }
+      const match = myResume.portfolioFile.match(/file(\d+)/);
+      const urlNumber = parseInt(match[1], 10);
+      number = urlNumber + 1;
+
+      const fileKey = myResume.portfolioFile.split('com/')[1];
+      const params = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+      };
+      await this.s3.send(new DeleteObjectCommand(params));
     }
 
+    const newFileKey = `resume/${user.id}/portfolio/file/${number}`;
+
+    // 업로드
     const params = {
       Bucket: this.bucketName,
-      Key: fileKey,
+      Key: newFileKey,
       Body: file.buffer,
       ContentType: file.mimetype,
     };
 
     await this.s3.send(new PutObjectCommand(params));
-    return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${newFileKey}`;
   }
 
   // 포트폴리오 다중 이미지 S3 업로드
@@ -1086,7 +1098,7 @@ export class AuthService {
     }
 
     // 증명사진 삭제
-    const fileKey = `resume/${user.id}/profileImage`;
+    const fileKey = myResume.profileImage.split('com/')[1];
     const params = {
       Bucket: this.bucketName,
       Key: fileKey,
@@ -1095,7 +1107,7 @@ export class AuthService {
 
     // 포트폴리오 파일 삭제
     if (myResume.portfolioFile) {
-      const fileKey = `resume/${user.id}/portfolio/file`;
+      const fileKey = myResume.portfolioFile.split('com/')[1];
       const params = {
         Bucket: this.bucketName,
         Key: fileKey,
@@ -1106,7 +1118,7 @@ export class AuthService {
     // 포트폴리오 이미지 삭제
     if (myResume.portfolioImages) {
       for (let i = 0; i < myResume.portfolioImages.length; i++) {
-        const fileKey = `resume/${user.id}/portfolio/images/image${i}`;
+        const fileKey = myResume.portfolioImages[i].split('com/')[1];
         const params = {
           Bucket: this.bucketName,
           Key: fileKey,
@@ -1115,6 +1127,26 @@ export class AuthService {
       }
     }
     await this.resumeRepository.remove(myResume);
+  }
+
+  // 이력서 증명사진 수정하기
+  async modifyProfileImage(
+    user: UserEntity,
+    profileImageModifyRequestDto: ProfileImageModifyRequestDto,
+  ): Promise<ResumeResponseDto> {
+    const myResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    if (!myResume) {
+      throw new NotFoundException('You did not register your resume');
+    }
+
+    myResume.profileImage = profileImageModifyRequestDto.profileImage;
+
+    const updatedResume = await this.resumeRepository.save(myResume);
+    return new ResumeResponseDto(updatedResume);
   }
 
   // 이력서 개인정보 수정하기
@@ -1332,7 +1364,7 @@ export class AuthService {
     // 포트폴리오 파일이 비어 있으면 s3에서 삭제
     if (myResume.portfolioFile) {
       if (!toNullablePortfolioFile) {
-        const fileKey = `resume/${user.id}/portfolio/file`;
+        const fileKey = myResume.portfolioFile.split('com/')[1];
         const params = {
           Bucket: this.bucketName,
           Key: fileKey,

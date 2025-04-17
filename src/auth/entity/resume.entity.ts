@@ -16,7 +16,7 @@ export class ResumeEntity {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column({ type: 'varchar', name: 'image', nullable: false })
+  @Column({ type: 'varchar', name: 'profileImage', nullable: false })
   profileImage: string;
 
   @Column({ type: 'varchar', name: 'name', nullable: false })

@@ -1124,15 +1124,9 @@ export class RecruitmentService {
 
   // 내 주변 공고 불러오기
   async getNearby(
-    page: number,
-    limit: number,
+    num: number,
     user?: UserEntity,
-  ): Promise<{
-    recruitmentList: RecruitmentResponseDto[];
-    page: number;
-    totalRecruitments: number;
-    totalPages: number;
-  }> {
+  ): Promise<RecruitmentResponseDto[]> {
     const queryBuilder = this.recruitmentRepository
       .createQueryBuilder('recruitment')
       .leftJoinAndSelect('recruitment.center', 'center');
@@ -1208,25 +1202,17 @@ export class RecruitmentService {
     // date 내림차순 정렬 추가
     queryBuilder.orderBy('recruitment.date', 'DESC');
 
-    // 총 개수 가져오기
-    const totalCount = await queryBuilder.getCount();
-
-    // 페이징 처리
-    queryBuilder.take(limit).skip((page - 1) * limit);
+    // 개수 처리
+    queryBuilder.take(num);
 
     // 최종 데이터 가져오기
     const objectList = await queryBuilder.getMany();
 
     // 비회원 처리
     if (!user) {
-      return {
-        recruitmentList: objectList.map(
-          (recruitment) => new RecruitmentResponseDto(recruitment),
-        ),
-        page,
-        totalRecruitments: totalCount, // 전체 헬스장 수
-        totalPages: Math.ceil(totalCount / limit), // 총 페이지 수
-      };
+      return objectList.map(
+        (recruitment) => new RecruitmentResponseDto(recruitment),
+      );
     }
 
     // 즐겨찾기 처리
@@ -1241,11 +1227,6 @@ export class RecruitmentService {
       return new RecruitmentResponseDto(recruitment, isBookmarked);
     });
 
-    return {
-      recruitmentList: mappedRecruitmentList,
-      page,
-      totalRecruitments: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-    };
+    return mappedRecruitmentList;
   }
 }
