@@ -40,15 +40,14 @@ import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-req
 import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
 import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
 import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
-import { RecruitmentListResponseDto } from './dto/recruitment-list-response-dto';
 import { NumRequestDto } from './dto/num-request-dto';
 import { UserEntity } from 'src/auth/entity/user.entity';
 import { IdRequestDto } from './dto/id-request-dto';
 import { GetOptionalUser } from 'src/decorators/get-optional-user-decorator';
 import { OptionalAuthGuard } from 'src/auth/custom-option.guard';
-import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
 import { DoubleIdRequestDto } from './dto/double-id-request-dto';
 import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-isProposed-response-dto';
+import { RecruitmentListLocationResponseDto } from './dto/recruitmentList-location-response-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -145,7 +144,8 @@ export class RecruitmentController {
     status: 201,
     description: '인기 공고 불러오기 성공',
     message: 'Popular recruitments returned successfully',
-    model: RecruitmentListResponseDto,
+    isArray: true,
+    model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -159,20 +159,11 @@ export class RecruitmentController {
   async getPopular(
     @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Body() numRequestDto: NumRequestDto,
-  ): Promise<{ recruitmentList: RecruitmentResponseDto[] }> {
+  ): Promise<RecruitmentResponseDto[]> {
     if (user instanceof UserEntity) {
-      return {
-        recruitmentList: await this.recruitmentService.getPopular(
-          numRequestDto.num,
-          user,
-        ),
-      };
+      return await this.recruitmentService.getPopular(numRequestDto.num, user);
     }
-    return {
-      recruitmentList: await this.recruitmentService.getPopular(
-        numRequestDto.num,
-      ),
-    };
+    return await this.recruitmentService.getPopular(numRequestDto.num);
   }
 
   // 모든 공고 불러오기
@@ -923,7 +914,8 @@ export class RecruitmentController {
     status: 200,
     description: '저장한 공고 불러오기 성공',
     message: 'Bookmarked recruitments returned successfully',
-    model: RecruitmentListResponseDto,
+    isArray: true,
+    model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -1002,7 +994,7 @@ export class RecruitmentController {
     description: '지원한 공고 불러오기 성공',
     message: 'Applied recruitments returned successfully',
     isArray: true,
-    model: RecruitmentListResponseDto,
+    model: RecruitmentResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -1118,8 +1110,7 @@ export class RecruitmentController {
     status: 201,
     description: '내 주변 공고 불러오기 성공',
     message: 'Nearby recruitments returned successfully',
-    model: RecruitmentResponseDto,
-    isArray: true,
+    model: RecruitmentListLocationResponseDto,
   })
   @ErrorApiResponse({
     status: 400,
@@ -1139,7 +1130,7 @@ export class RecruitmentController {
   async getNearby(
     @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Body() numRequestDto: NumRequestDto,
-  ): Promise<RecruitmentResponseDto[]> {
+  ): Promise<RecruitmentListLocationResponseDto> {
     if (user instanceof UserEntity) {
       return await this.recruitmentService.getNearby(numRequestDto.num, user);
     }

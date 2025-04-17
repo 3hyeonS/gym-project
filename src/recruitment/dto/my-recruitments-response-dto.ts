@@ -13,7 +13,7 @@ export class MyRecruitmentsResponseDto {
   hiring: RecruitmentResponseDto | null;
 
   @ApiProperty({
-    type: [Number],
+    type: Number,
     description: '지원자 수',
     example: 1,
   })

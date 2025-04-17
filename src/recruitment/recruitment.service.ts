@@ -32,6 +32,7 @@ import { VillyEntity } from './entity/villy.entity';
 import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
 import { ResumeEntity } from 'src/auth/entity/resume.entity';
 import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-isProposed-response-dto';
+import { RecruitmentListLocationResponseDto } from './dto/recruitmentList-location-response-dto';
 
 @Injectable()
 export class RecruitmentService {
@@ -1126,7 +1127,7 @@ export class RecruitmentService {
   async getNearby(
     num: number,
     user?: UserEntity,
-  ): Promise<RecruitmentResponseDto[]> {
+  ): Promise<RecruitmentListLocationResponseDto> {
     const queryBuilder = this.recruitmentRepository
       .createQueryBuilder('recruitment')
       .leftJoinAndSelect('recruitment.center', 'center');
@@ -1208,10 +1209,14 @@ export class RecruitmentService {
     // 최종 데이터 가져오기
     const objectList = await queryBuilder.getMany();
 
+    const recruitmentList = objectList.map(
+      (recruitment) => new RecruitmentResponseDto(recruitment),
+    );
     // 비회원 처리
     if (!user) {
-      return objectList.map(
-        (recruitment) => new RecruitmentResponseDto(recruitment),
+      return new RecruitmentListLocationResponseDto(
+        finalLocation,
+        recruitmentList,
       );
     }
 
@@ -1227,6 +1232,9 @@ export class RecruitmentService {
       return new RecruitmentResponseDto(recruitment, isBookmarked);
     });
 
-    return mappedRecruitmentList;
+    return new RecruitmentListLocationResponseDto(
+      finalLocation,
+      mappedRecruitmentList,
+    );
   }
 }
