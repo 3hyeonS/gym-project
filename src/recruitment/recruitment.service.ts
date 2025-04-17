@@ -31,6 +31,7 @@ import { BookmarkEntity } from './entity/bookmark.entity';
 import { VillyEntity } from './entity/villy.entity';
 import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
 import { ResumeEntity } from 'src/auth/entity/resume.entity';
+import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-isProposed-response-dto';
 
 @Injectable()
 export class RecruitmentService {
@@ -1049,7 +1050,7 @@ export class RecruitmentService {
   }
 
   // 지원받은 이력서 보기
-  async getAppliedResumes(id: number): Promise<ResumeResponseDto[]> {
+  async getAppliedResumes(id: number): Promise<ResumeisProposedResponseDto[]> {
     const myRecruitment = await this.recruitmentRepository.findOneBy({ id });
 
     const applyVillies = await this.villyRepository.find({
@@ -1060,9 +1061,25 @@ export class RecruitmentService {
       order: { createdAt: 'DESC' }, // 최신순
     });
 
-    const resumeList = applyVillies
-      .filter((villy) => villy.user.resume) // null 체크
-      .map((villy) => new ResumeResponseDto(villy.user.resume));
+    let resumeList = [];
+    for (const villy of applyVillies) {
+      const proposalVilly = await this.villyRepository.findOne({
+        where: {
+          user: { id: villy.user.id },
+          recruitment: { id: myRecruitment.id },
+          messageType: 2,
+        },
+      });
+      if (proposalVilly) {
+        resumeList.push(
+          new ResumeisProposedResponseDto(villy.user.resume, true),
+        );
+      } else {
+        resumeList.push(
+          new ResumeisProposedResponseDto(villy.user.resume, false),
+        );
+      }
+    }
 
     return resumeList;
   }

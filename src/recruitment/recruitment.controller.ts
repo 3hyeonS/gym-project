@@ -48,6 +48,7 @@ import { GetOptionalUser } from 'src/decorators/get-optional-user-decorator';
 import { OptionalAuthGuard } from 'src/auth/custom-option.guard';
 import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
 import { DoubleIdRequestDto } from './dto/double-id-request-dto';
+import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-isProposed-response-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -1035,7 +1036,7 @@ export class RecruitmentController {
     description: '지원한 이력서 불러오기 성공',
     message: 'Applied resume returned successfully',
     isArray: true,
-    model: ResumeResponseDto,
+    model: ResumeisProposedResponseDto,
   })
   @ErrorApiResponse({
     status: 401,
@@ -1055,7 +1056,7 @@ export class RecruitmentController {
   @Post('getAppliedResumes')
   async getAppliedResumes(
     @Body() idRequestDto: IdRequestDto,
-  ): Promise<ResumeResponseDto[]> {
+  ): Promise<ResumeisProposedResponseDto[]> {
     return await this.recruitmentService.getAppliedResumes(idRequestDto.id);
   }
 
