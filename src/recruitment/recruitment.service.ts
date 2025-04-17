@@ -426,7 +426,6 @@ export class RecruitmentService {
   async getOne(id: number, user?: UserEntity): Promise<RecruitmentResponseDto> {
     const recruitment = await this.recruitmentRepository.findOneBy({
       id,
-      isHiring: 1,
     });
     if (!recruitment) {
       throw new NotFoundException('There is no recruitment for selected id');
@@ -746,6 +745,12 @@ export class RecruitmentService {
     if (!myRecruitment) {
       throw new NotFoundException('There is no hring recruitment');
     }
+
+    // 북마크 모두 해제
+    await this.bookmarkRepository.delete({
+      recruitment: { id: myRecruitment.id },
+    });
+
     myRecruitment.isHiring = 0;
     await this.recruitmentRepository.save(myRecruitment);
   }
