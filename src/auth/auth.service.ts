@@ -898,9 +898,9 @@ export class AuthService {
     // 증명사진이 기존에 있으면 번호 증가 후 삭제
     let number = 0;
     if (myResume) {
-      const match = myResume.profileImage.match(/profileImage(\d+)/);
-      const urlNumber = parseInt(match[1], 10);
-      number = urlNumber + 1;
+      // const match = myResume.profileImage.match(/profileImage(\d+)/);
+      // const urlNumber = parseInt(match[1], 10);
+      // number = urlNumber + 1;
 
       const fileKey = myResume.profileImage.split('com/')[1];
       const params = {
@@ -910,7 +910,7 @@ export class AuthService {
       await this.s3.send(new DeleteObjectCommand(params));
     }
 
-    const newFileKey = `resume/${user.id}/profileImage/${number}`;
+    const newFileKey = `resume/${user.id}/profileImage${number}`;
 
     // 업로드
     const params = {
@@ -950,7 +950,7 @@ export class AuthService {
       await this.s3.send(new DeleteObjectCommand(params));
     }
 
-    const newFileKey = `resume/${user.id}/portfolio/file/${number}`;
+    const newFileKey = `resume/${user.id}/portfolio/file${number}`;
 
     // 업로드
     const params = {
