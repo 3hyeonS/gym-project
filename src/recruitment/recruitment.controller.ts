@@ -1131,7 +1131,7 @@ export class RecruitmentController {
     @GetOptionalUser() user: UserEntity | CenterEntity | null,
     @Body() numRequestDto: NumRequestDto,
   ): Promise<RecruitmentListLocationResponseDto> {
-    if (user instanceof UserEntity) {
+    if (user) {
       return await this.recruitmentService.getNearby(numRequestDto.num, user);
     }
     return await this.recruitmentService.getNearby(numRequestDto.num);

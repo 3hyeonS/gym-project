@@ -16,6 +16,7 @@ import {
 } from './dto/recruitment-dto/request-dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import {
+  $Command,
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -1125,7 +1126,7 @@ export class RecruitmentService {
   // 내 주변 공고 불러오기
   async getNearby(
     num: number,
-    user?: UserEntity,
+    member?: UserEntity | CenterEntity,
   ): Promise<RecruitmentListLocationResponseDto> {
     const queryBuilder = this.recruitmentRepository
       .createQueryBuilder('recruitment')
@@ -1144,14 +1145,17 @@ export class RecruitmentService {
     // user, resume 여부에 따라 location 값 처리
     let finalLocation: Record<string, string[]>;
 
-    if (user) {
+    if (member instanceof UserEntity) {
       const resume = await this.resumeRepository.findOne({
         where: {
-          user: { id: user.id },
+          user: { id: member.id },
         },
       });
 
       finalLocation = resume?.location ?? { 서울: ['강남구'] };
+    } else if (member instanceof CenterEntity) {
+      const { city, location } = await this.extractLocation(member.address);
+      finalLocation = { [city]: [location] };
     } else {
       finalLocation = { 서울: ['강남구'] };
     }
@@ -1212,7 +1216,7 @@ export class RecruitmentService {
       (recruitment) => new RecruitmentResponseDto(recruitment),
     );
     // 비회원 처리
-    if (!user) {
+    if (!member || member instanceof CenterEntity) {
       return new RecruitmentListLocationResponseDto(
         finalLocation,
         recruitmentList,
@@ -1221,7 +1225,7 @@ export class RecruitmentService {
 
     // 즐겨찾기 처리
     const bookmarks = await this.bookmarkRepository.find({
-      where: { user: { id: user.id } }, // 확실한 조건 명시
+      where: { user: { id: member.id } }, // 확실한 조건 명시
       relations: ['recruitment'], // 즐겨찾기한 공고 정보도 함께 로딩
     });
     const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
