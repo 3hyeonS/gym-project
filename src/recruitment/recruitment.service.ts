@@ -1250,7 +1250,7 @@ export class RecruitmentService {
       where: {
         user: { id: user.id },
       },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'ASC' }, // 오래된 순
     });
     return villies.map((villy) => new VillyResponseDto(villy));
   }
@@ -1269,13 +1269,7 @@ export class RecruitmentService {
       user,
       matchedRecruitment,
     });
-    const villies = await this.villyRepository.find({
-      where: {
-        user: { id: user.id },
-      },
-      order: { createdAt: 'DESC' },
-    });
-    return villies.map((villy) => new VillyResponseDto(villy));
+    return await this.getVillies(user);
   }
 
   // 파일 업데이트
