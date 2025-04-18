@@ -46,7 +46,13 @@ import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
     }),
     HttpModule,
   ],
-  exports: [TypeOrmModule, PassportModule, JwtModule, RecruitmentService],
+  exports: [
+    TypeOrmModule,
+    PassportModule,
+    JwtModule,
+    RecruitmentService,
+    VillySchedulerService,
+  ],
   controllers: [RecruitmentController],
   providers: [
     RecruitmentService,
