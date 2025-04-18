@@ -48,6 +48,7 @@ import { RecruitmentListLocationResponseDto } from './dto/recruitment-dto/respon
 import { RecruitmentResponseDto } from './dto/recruitment-dto/response-dto/recruitment-response-dto';
 import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { WeekendDutyModifyRequestDto } from './dto/recruitment-dto/request-dto/weekendDuty-modify-request-dto';
+import { VillyResponseDto } from './dto/villy-dto/villy-response-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -1135,5 +1136,37 @@ export class RecruitmentController {
       return await this.recruitmentService.getNearby(numRequestDto.num, user);
     }
     return await this.recruitmentService.getNearby(numRequestDto.num);
+  }
+
+  // 빌리
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '빌리 불러오기',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '빌리 불러오기 성공',
+    message: 'Villies returned successfully',
+    isArray: true,
+    model: VillyResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 빌리 불러오기 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ResponseMsg('Villies returned successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Get('getVillies')
+  async getVillies(@GetUser() user: UserEntity): Promise<VillyResponseDto[]> {
+    return await this.recruitmentService.getVillies(user);
   }
 }

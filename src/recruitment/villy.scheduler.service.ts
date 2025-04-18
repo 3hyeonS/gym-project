@@ -23,7 +23,7 @@ export class VillySchedulerService implements OnModuleInit {
 
   scheduleDailyVillyCreation() {
     // 매일 오후 6시 실행 (한국시간 기준)
-    cron.schedule('21 12 * * *', async () => {
+    cron.schedule('0 18 * * *', async () => {
       const users = await this.userRepository.find();
       for (const user of users) {
         const recruitment = await this.getMatched(user);
@@ -41,6 +41,9 @@ export class VillySchedulerService implements OnModuleInit {
   // 매칭 알고리즘
   async getMatched(user: UserEntity): Promise<RecruitmentEntity> {
     const resume = user.resume;
+    if (!resume) {
+      return null;
+    }
 
     // 이미 매칭되었거나 지원한 공고 리스트
     const alreadyVillies = await this.villyRepository.find({
@@ -137,7 +140,6 @@ export class VillySchedulerService implements OnModuleInit {
       }
       index++;
     }
-
     conditions2_1.push({
       condition: `(${locConditions.join(' OR ')})`,
       parameters: locParameters,
@@ -168,24 +170,36 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    conditions3.push({
-      condition: 'JSON_OVERLAPS(recruitment.workTime, :wti) > 0',
-      parameters: {
-        wti: JSON.stringify(resume.workTime),
-      },
-    });
+    if (resume.workTime) {
+      conditions3.push({
+        condition: 'JSON_OVERLAPS(recruitment.workTime, :wti) > 0',
+        parameters: {
+          wti: JSON.stringify(resume.workTime),
+        },
+      });
+    } else {
+      conditions3.push({
+        condition: '1=1', // 조건 생략용
+      });
+    }
 
     // 근무형태 조건 4
     const conditions4: {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    conditions4.push({
-      condition: 'JSON_OVERLAPS(recruitment.workType, :wty) > 0',
-      parameters: {
-        wty: JSON.stringify(resume.workType),
-      },
-    });
+    if (resume.workType) {
+      conditions4.push({
+        condition: 'JSON_OVERLAPS(recruitment.workType, :wty) > 0',
+        parameters: {
+          wty: JSON.stringify(resume.workType),
+        },
+      });
+    } else {
+      conditions4.push({
+        condition: '1=1', // 조건 생략용
+      });
+    }
 
     // 경력 조건 5-1
     const conditions5_1: {
@@ -195,9 +209,9 @@ export class VillySchedulerService implements OnModuleInit {
     if (resume.isNew == 0) {
       // 신입일 경우
       conditions5_1.push({
-        condition: 'JSON_OVERLAPS(recruitment.preference, :pre)',
+        condition: 'JSON_OVERLAPS(recruitment.qualification, :qlf)',
         parameters: {
-          pre: JSON.stringify(['신입 지원 가능']),
+          qlf: JSON.stringify(['신입 지원 가능']),
         },
       });
     } else {
@@ -215,12 +229,21 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    conditions5_2.push({
-      condition: 'NOT JSON_OVERLAPS(recruitment.preference, :pre)',
-      parameters: {
-        pre: JSON.stringify(['경력자']),
-      },
-    });
+
+    if (resume.isNew == 0) {
+      // 신입일 경우
+      conditions5_2.push({
+        condition: 'NOT JSON_OVERLAPS(recruitment.qualification, :qlf)',
+        parameters: {
+          qlf: JSON.stringify(['경력자']),
+        },
+      });
+    } else {
+      // 경력자일 경우
+      conditions5_2.push({
+        condition: '1=1', // 조건 생략용
+      });
+    }
 
     // 채용 중 여부 처리
     const hiringCondition = {
@@ -229,10 +252,15 @@ export class VillySchedulerService implements OnModuleInit {
     };
 
     // 이미 매칭되었거나 지원한 공고 처리
-    const alreadyCondition = {
-      condition: 'recruitment.id NOT IN (:...excludedIds)',
-      parameters: { excludedIds: alreadyRecruitments },
-    };
+    const alreadyCondition =
+      alreadyRecruitments.length > 0
+        ? {
+            condition: 'recruitment.id NOT IN (:...excludedIds)',
+            parameters: { excludedIds: alreadyRecruitments },
+          }
+        : {
+            condition: '1=1', // 조건 생략용
+          };
 
     const firstMatchingCondition = [
       ...conditions1_1,

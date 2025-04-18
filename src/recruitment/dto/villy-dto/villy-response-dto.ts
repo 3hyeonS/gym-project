@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { VillyEntity } from 'src/recruitment/entity/villy.entity';
+import { RecruitmentResponseDto } from '../recruitment-dto/response-dto/recruitment-response-dto';
+import { ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class VillyResponseDto {
   @ApiProperty({
@@ -23,8 +26,18 @@ export class VillyResponseDto {
   })
   createdAt: Date;
 
+  @ValidateNested()
+  @ApiProperty({
+    type: RecruitmentResponseDto,
+    description: '채용 공고',
+  })
+  @Type(() => RecruitmentResponseDto)
+  recruitment: RecruitmentResponseDto;
+
   constructor(villy: VillyEntity) {
     this.id = villy.id;
     this.messageType = villy.messageType;
+    this.createdAt = villy.createdAt;
+    this.recruitment = new RecruitmentResponseDto(villy.recruitment);
   }
 }

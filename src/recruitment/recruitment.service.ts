@@ -32,6 +32,7 @@ import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 import { RecruitmentResponseDto } from './dto/recruitment-dto/response-dto/recruitment-response-dto';
 import { WeekendDutyModifyRequestDto } from './dto/recruitment-dto/request-dto/weekendDuty-modify-request-dto';
+import { VillyResponseDto } from './dto/villy-dto/villy-response-dto';
 
 @Injectable()
 export class RecruitmentService {
@@ -1236,5 +1237,15 @@ export class RecruitmentService {
       finalLocation,
       mappedRecruitmentList,
     );
+  }
+
+  // 빌리
+  async getVillies(user: UserEntity): Promise<VillyResponseDto[]> {
+    const villies = await this.villyRepository.find({
+      where: {
+        user: { id: user.id },
+      },
+    });
+    return villies.map((villy) => new VillyResponseDto(villy));
   }
 }
