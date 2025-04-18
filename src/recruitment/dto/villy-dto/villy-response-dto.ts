@@ -14,7 +14,7 @@ export class VillyResponseDto {
 
   @ApiProperty({
     type: Number,
-    description: '유형  \n매칭: 0  \n지원: 1  \n면접제안: 1',
+    description: '유형  \n매칭: 0  \n지원: 1  \n면접제안: 2',
     example: 1,
   })
   messageType: number;

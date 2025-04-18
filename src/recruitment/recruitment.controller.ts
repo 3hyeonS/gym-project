@@ -1169,4 +1169,44 @@ export class RecruitmentController {
   async getVillies(@GetUser() user: UserEntity): Promise<VillyResponseDto[]> {
     return await this.recruitmentService.getVillies(user);
   }
+
+  // 새로운 매칭
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '새로운 매칭',
+  })
+  @GenericApiResponse({
+    status: 200,
+    description: '새로운 매칭 성공',
+    message: 'New recruitment matched successfully',
+    isArray: true,
+    model: VillyResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 acccessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '유저 회원이 아님 (유저 회원만 새로운 매칭 가능)',
+    message: 'Not a member of the USER (only USER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 404,
+    description: '이력서에 적합한 채용공고가 더 이상 없음',
+    message: 'There is no more recruitment for your resume',
+    error: 'NotFoundException',
+  })
+  @ResponseMsg('New recruitment matched successfully')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles('USER')
+  @Get('getNewMatching')
+  async getNewMatching(
+    @GetUser() user: UserEntity,
+  ): Promise<VillyResponseDto[]> {
+    return await this.recruitmentService.getNewMatching(user);
+  }
 }

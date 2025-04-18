@@ -19,6 +19,7 @@ import { QualificationEntity } from 'src/auth/entity/resume/qualification.entity
 import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 import { VillySchedulerService } from './villy.scheduler.service';
+import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { VillySchedulerService } from './villy.scheduler.service';
       CareerEntity,
       AcademyEntity,
       QualificationEntity,
+      NotionRecruitmentEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({

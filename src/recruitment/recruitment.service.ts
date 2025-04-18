@@ -33,6 +33,8 @@ import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 import { RecruitmentResponseDto } from './dto/recruitment-dto/response-dto/recruitment-response-dto';
 import { WeekendDutyModifyRequestDto } from './dto/recruitment-dto/request-dto/weekendDuty-modify-request-dto';
 import { VillyResponseDto } from './dto/villy-dto/villy-response-dto';
+import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
+import { VillySchedulerService } from './villy.scheduler.service';
 
 @Injectable()
 export class RecruitmentService {
@@ -55,6 +57,9 @@ export class RecruitmentService {
     private resumeRepository: Repository<ResumeEntity>,
     @InjectRepository(VillyEntity)
     private villyRepository: Repository<VillyEntity>,
+    @InjectRepository(NotionRecruitmentEntity)
+    private notionRecruitmentRepository: Repository<NotionRecruitmentEntity>,
+    private villySchedulerService: VillySchedulerService,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -1248,5 +1253,72 @@ export class RecruitmentService {
       order: { createdAt: 'DESC' },
     });
     return villies.map((villy) => new VillyResponseDto(villy));
+  }
+
+  // 새로운 매칭보기
+  async getNewMatching(user: UserEntity): Promise<VillyResponseDto[]> {
+    const matchedRecruitment =
+      await this.villySchedulerService.getMatched(user);
+    if (matchedRecruitment) {
+      throw new NotFoundException(
+        'There is no more recruitment for your resume',
+      );
+    }
+    await this.villyRepository.save({
+      messageType: 0,
+      user,
+      matchedRecruitment,
+    });
+    const villies = await this.villyRepository.find({
+      where: {
+        user: { id: user.id },
+      },
+      order: { createdAt: 'DESC' },
+    });
+    return villies.map((villy) => new VillyResponseDto(villy));
+  }
+
+  // 파일 업데이트
+  async update(): Promise<void> {
+    // 전체 데이터
+    const notionRecruitments = await this.notionRecruitmentRepository.find();
+    const dbRecruitments = await this.recruitmentRepository.findBy({
+      center: null,
+    });
+
+    // 비교 Map
+    const dbMap = new Map(
+      dbRecruitments.map((dbRecruitment) => [
+        `${dbRecruitment.centerName}_${dbRecruitment.address}`,
+        dbRecruitment,
+      ]),
+    );
+
+    const notionKeySet = new Set<string>();
+
+    for (const notionRecruitment of notionRecruitments) {
+      const key = `${notionRecruitment.centerName}_${notionRecruitment.address}`;
+      notionKeySet.add(key);
+
+      const existRecruitment = dbMap.get(key);
+      const { id, ...dataWithoutId } = notionRecruitment;
+
+      if (existRecruitment) {
+        await this.recruitmentRepository.update(
+          existRecruitment.id,
+          dataWithoutId,
+        );
+      } else {
+        await this.recruitmentRepository.save(dataWithoutId);
+      }
+    }
+
+    // 3. Notion에 존재하지 않는 DB 레코드는 삭제
+    for (const recruitment of dbRecruitments) {
+      const key = `${recruitment.centerName}_${recruitment.address}`;
+      if (!notionKeySet.has(key)) {
+        await this.recruitmentRepository.delete(recruitment.id);
+      }
+    }
   }
 }
