@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RecruitmentEntity } from '../entity/recruitment.entity';
+import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 
 export class RecruitmentResponseDto {
   @ApiProperty({

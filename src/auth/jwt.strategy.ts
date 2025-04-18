@@ -3,9 +3,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserEntity } from './entity/user.entity';
 import * as dotenv from 'dotenv';
 import { CenterEntity } from './entity/center.entity';
+import { UserEntity } from './entity/user/user.entity';
 
 // .env 파일 로드
 dotenv.config();

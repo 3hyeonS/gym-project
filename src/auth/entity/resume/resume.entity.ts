@@ -9,7 +9,7 @@ import {
 import { CareerEntity } from './career.entity';
 import { AcademyEntity } from './academy.entity';
 import { QualificationEntity } from './qualification.entity';
-import { UserEntity } from './user.entity';
+import { UserEntity } from '../user/user.entity';
 
 @Entity({ name: 'resume' })
 export class ResumeEntity {

@@ -13,15 +13,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AdminSignUpRequestDto } from './dto/user-sign-up-request-dto';
-import { UserEntity } from './entity/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/get-user-decorator';
-import { UserResponseDto } from './dto/user-response-dto';
-import { CenterSignUpRequestDto } from './dto/center-sign-up-request-dto';
-import { CenterResponseDto } from './dto/center-response-dto';
+import { CenterSignUpRequestDto } from './dto/center-dto/request-dto/center-sign-up-request-dto';
 import { CenterEntity } from './entity/center.entity';
-import { CenterSignInRequestDto } from './dto/center-sign-in-request-dto';
+import { CenterSignInRequestDto } from './dto/center-dto/request-dto/center-sign-in-request-dto';
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,
@@ -35,39 +31,43 @@ import { ResponseTransformInterceptor } from 'src/interceptors/response-transfor
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseDto } from 'src/response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
-import { addressResponseDto } from './dto/address-response-dto';
-import { TokenResponseDto } from './dto/token-response-dto';
+import { addressResponseDto } from './dto/center-dto/response-dto/address-response-dto';
+import { TokenResponseDto } from './dto/token-dto/response-dto/token-response-dto';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
-import { RefreshTokenRequestDto } from './dto/refreshToken-request-dto';
-import { SignIdRequestDto } from './dto/signId-request-dto';
-import { AddressRequestDto } from './dto/address-request-dto';
+import { RefreshTokenRequestDto } from './dto/token-dto/request-dto/refreshToken-request-dto';
+import { SignIdRequestDto } from './dto/center-dto/request-dto/signId-request-dto';
+import { AddressRequestDto } from './dto/center-dto/request-dto/address-request-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
-import { BusinessIdRequestDto } from './dto/businessId-request-dto';
-import { BusinessIdIsValidResponseDto } from './dto/businessId-isvalid-response-dto';
+import { BusinessIdRequestDto } from './dto/center-dto/request-dto/businessId-request-dto';
+import { BusinessIdIsValidResponseDto } from './dto/center-dto/response-dto/businessId-isvalid-response-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
 import { CustomUnauthorizedExceptionFilter } from './custom-unauthorizedExcetption-filter';
 import { RolesGuard } from './custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
-import { EmailCodeConfirmRequestDto } from './dto/email-code-confirm-request-dto';
-import { EmailRequestDto } from './dto/email-request-dto';
-import { PasswordRequestDto } from './dto/password-request-dto';
-import { CenterModifyRequestDto } from './dto/center-modify-request-dto';
-import { FindCenterSignIdRequestDto } from './dto/find-center-signId-request-dto';
-import { PasswordEmailCodeConfirmRequestDto } from './dto/password-email-code-confirm-request-dto';
-import { UserTokenResponseDto } from './dto/user-token-response-dto';
-import { CenterTokenResponseDto } from './dto/center-token-response-dto';
-import { ResumeResponseDto } from './dto/resume-response-dto';
-import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
+import { EmailCodeConfirmRequestDto } from './dto/email-dto/email-code-confirm-request-dto';
+import { EmailRequestDto } from './dto/email-dto/email-request-dto';
+import { PasswordRequestDto } from './dto/center-dto/request-dto/password-request-dto';
+import { CenterModifyRequestDto } from './dto/center-dto/request-dto/center-modify-request-dto';
+import { FindCenterSignIdRequestDto } from './dto/center-dto/request-dto/find-center-signId-request-dto';
+import { PasswordEmailCodeConfirmRequestDto } from './dto/center-dto/request-dto/password-email-code-confirm-request-dto';
+import { UserTokenResponseDto } from './dto/token-dto/response-dto/user-token-response-dto';
+import { CenterTokenResponseDto } from './dto/token-dto/response-dto/center-token-response-dto';
+import { ResumeResponseDto } from './dto/resume-dto/response-dto/resume-response-dto';
+import { ResumeRegisterRequestDto } from './dto/resume-dto/request-dto/resume-register-request-dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
-import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
-import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
-import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
-import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-dto';
-import { AcademyModifyRequestDto } from './dto/academy-modify-request-dto';
-import { QualificationModifyRequestDto } from './dto/qualification-modify-request-dto';
-import { AwardModifyRequestDto } from './dto/award-modify-request-dto';
-import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
+import { PersonalModifyRequestDto } from './dto/resume-dto/request-dto/personal-modify-request-dto';
+import { WorkConditionModifyRequestDto } from './dto/resume-dto/request-dto/work-condition-modify-request-dto';
+import { AdditionalModifyRequestDto } from './dto/resume-dto/request-dto/additional-modify-request-dto';
+import { IntroductionModifyRequestDto } from './dto/resume-dto/request-dto/introduction-modify-request-dto';
+import { AwardModifyRequestDto } from './dto/resume-dto/request-dto/award-modify-request-dto';
+import { ProfileImageModifyRequestDto } from './dto/resume-dto/request-dto/profileImage-modify-request-dto';
+import { UserResponseDto } from './dto/user-dto/response-dto/user-response-dto';
+import { AdminSignUpRequestDto } from './dto/user-dto/request-dto/user-sign-up-request-dto';
+import { CenterResponseDto } from './dto/center-dto/response-dto/center-response-dto';
+import { UserEntity } from './entity/user/user.entity';
+import { CareerModifyRequestDto } from './dto/resume-dto/career-dto/career-modify-request-dto';
+import { AcademyModifyRequestDto } from './dto/resume-dto/academy-dto/academy-modify-request-dto';
+import { QualificationModifyRequestDto } from './dto/resume-dto/qualification-dto/qualification-modify-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)

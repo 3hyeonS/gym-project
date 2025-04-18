@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CareerEntity } from '../entity/career.entity';
+import { CareerEntity } from 'src/auth/entity/resume/career.entity';
 
 export class CareerResponseDto {
   @ApiProperty({

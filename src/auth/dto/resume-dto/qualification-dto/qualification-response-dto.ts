@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { QualificationEntity } from '../entity/qualification.entity';
+import { QualificationEntity } from 'src/auth/entity/resume/qualification.entity';
 
 export class QualificationResponseDto {
   @ApiProperty({

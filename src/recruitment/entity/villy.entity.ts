@@ -1,4 +1,3 @@
-import { UserEntity } from 'src/auth/entity/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -7,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { RecruitmentEntity } from './recruitment.entity';
+import { UserEntity } from 'src/auth/entity/user/user.entity';
 
 @Entity({ name: 'villy' })
 export class VillyEntity {

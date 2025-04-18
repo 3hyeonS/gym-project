@@ -4,7 +4,6 @@ import { RecruitmentService } from './recruitment.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RecruitmentEntity } from './entity/recruitment.entity';
 import { CenterEntity } from 'src/auth/entity/center.entity';
-import { UserEntity } from 'src/auth/entity/user.entity';
 import { RefreshTokenEntity } from 'src/auth/entity/refreshToken.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
@@ -13,11 +12,12 @@ import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { KakaoStrategy } from 'src/auth/kakao.strategy';
 import { EmailCodeEntity } from 'src/auth/entity/emailCode.entity';
 import { BookmarkEntity } from './entity/bookmark.entity';
-import { ResumeEntity } from 'src/auth/entity/resume.entity';
 import { VillyEntity } from './entity/villy.entity';
-import { CareerEntity } from 'src/auth/entity/career.entity';
-import { AcademyEntity } from 'src/auth/entity/academy.entity';
-import { QualificationEntity } from 'src/auth/entity/qualification.entity';
+import { CareerEntity } from 'src/auth/entity/resume/career.entity';
+import { AcademyEntity } from 'src/auth/entity/resume/academy.entity';
+import { QualificationEntity } from 'src/auth/entity/resume/qualification.entity';
+import { UserEntity } from 'src/auth/entity/user/user.entity';
+import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 
 @Module({
   imports: [

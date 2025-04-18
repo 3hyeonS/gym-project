@@ -17,37 +17,37 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { RecruitmentResponseDto } from './dto/recruitment-response-dto';
 import { ResponseMsg } from 'src/decorators/response-message-decorator';
 import { ResponseTransformInterceptor } from 'src/interceptors/response-transform-interceptor';
 import { ResponseDto } from '../response-dto';
 import { GenericApiResponse } from 'src/decorators/generic-api-response-decorator';
 import { PrimitiveApiResponse } from 'src/decorators/primitive-api-response-decorator';
-import { SelectedOptionsDto } from './dto/selected-options-dto';
+import { SelectedOptionsRequestDto } from './dto/recruitment-dto/request-dto/selected-options-request-dto';
 import { ErrorApiResponse } from 'src/decorators/error-api-response-decorator';
-import { RecruitmentRegisterRequestDto } from './dto/recruitment-register-request-dto';
+import { RecruitmentRegisterRequestDto } from './dto/recruitment-dto/request-dto/recruitment-register-request-dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/custom-role.guard';
 import { Roles } from 'src/decorators/roles-decorator';
 import { GetUser } from 'src/decorators/get-user-decorator';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { RecruitmentsPageResponseDto } from './dto/recruitments-page-response-dto';
+import { RecruitmentsPageResponseDto } from './dto/recruitment-dto/response-dto/recruitments-page-response-dto';
 import { NullApiResponse } from 'src/decorators/null-api-response-decorator';
-import { MyRecruitmentsResponseDto } from './dto/my-recruitments-response-dto';
-import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
-import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
-import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
-import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
-import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
-import { NumRequestDto } from './dto/num-request-dto';
-import { UserEntity } from 'src/auth/entity/user.entity';
-import { IdRequestDto } from './dto/id-request-dto';
+import { MyRecruitmentsResponseDto } from './dto/recruitment-dto/response-dto/my-recruitments-response-dto';
+import { ApplyConditionModifyRequestDto } from './dto/recruitment-dto/request-dto/apply-condition-modify-request-dto';
+import { SalaryCondtionModifyRequestDto } from './dto/recruitment-dto/request-dto/salary-condition-modify-request-dto';
+import { ApplyModifyRequestDto } from './dto/recruitment-dto/request-dto/apply-modify-request-dto';
+import { DetailModifyRequestDto } from './dto/recruitment-dto/request-dto/detail-modify-request-dto';
+import { NumRequestDto } from './dto/recruitment-dto/request-dto/num-request-dto';
+import { IdRequestDto } from './dto/recruitment-dto/request-dto/id-request-dto';
 import { GetOptionalUser } from 'src/decorators/get-optional-user-decorator';
 import { OptionalAuthGuard } from 'src/auth/custom-option.guard';
-import { DoubleIdRequestDto } from './dto/double-id-request-dto';
-import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-isProposed-response-dto';
-import { RecruitmentListLocationResponseDto } from './dto/recruitmentList-location-response-dto';
+import { DoubleIdRequestDto } from './dto/recruitment-dto/request-dto/double-id-request-dto';
+import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-dto/response-dto/resume-isProposed-response-dto';
+import { RecruitmentListLocationResponseDto } from './dto/recruitment-dto/response-dto/recruitmentList-location-response-dto';
+import { RecruitmentResponseDto } from './dto/recruitment-dto/response-dto/recruitment-response-dto';
+import { UserEntity } from 'src/auth/entity/user/user.entity';
+import { WeekendDutyModifyRequestDto } from './dto/recruitment-dto/request-dto/weekendDuty-modify-request-dto';
 
 @ApiTags('Recruitment')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -234,7 +234,7 @@ export class RecruitmentController {
   @Post('selected')
   async searchSelected(
     @GetOptionalUser() user: UserEntity | CenterEntity | null,
-    @Body() selectedOptionsDto: SelectedOptionsDto,
+    @Body() selectedOptionsDto: SelectedOptionsRequestDto,
     @Query('page') page: number = 1, // 기본값 1
     @Query('limit') limit: number = 20, // 기본값 20
   ): Promise<{

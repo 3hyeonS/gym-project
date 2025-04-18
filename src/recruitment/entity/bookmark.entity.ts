@@ -1,6 +1,6 @@
-import { UserEntity } from 'src/auth/entity/user.entity';
 import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { RecruitmentEntity } from './recruitment.entity';
+import { UserEntity } from 'src/auth/entity/user/user.entity';
 
 @Entity({ name: 'bookmark' })
 export class BookmarkEntity {

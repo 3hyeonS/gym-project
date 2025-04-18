@@ -2,10 +2,8 @@ import { CenterEntity } from 'src/auth/entity/center.entity';
 import {
   Column,
   Entity,
-  JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BookmarkEntity } from './bookmark.entity';

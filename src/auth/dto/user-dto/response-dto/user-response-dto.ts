@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserEntity } from '../entity/user.entity';
-import { TRole } from '../entity/authority.entity';
-import { TPlatform } from '../entity/signWith.entity';
+import { TRole } from 'src/auth/entity/authority.entity';
+import { TPlatform } from 'src/auth/entity/user/signWith.entity';
+import { UserEntity } from 'src/auth/entity/user/user.entity';
 
 export class UserResponseDto {
   @ApiProperty({ example: 1 })

@@ -6,14 +6,14 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { RefreshTokenEntity } from './refreshToken.entity';
-import { SignWithEntity } from './signWith.entity';
-import { AuthorityEntity } from './authority.entity';
-import { KakaoKeyEntity } from './kakaoKey.entity';
-import { AppleKeyEntity } from './appleKey.entity';
 import { BookmarkEntity } from 'src/recruitment/entity/bookmark.entity';
 import { VillyEntity } from 'src/recruitment/entity/villy.entity';
-import { ResumeEntity } from './resume.entity';
+import { SignWithEntity } from './signWith.entity';
+import { KakaoKeyEntity } from './kakaoKey.entity';
+import { AppleKeyEntity } from './appleKey.entity';
+import { AuthorityEntity } from '../authority.entity';
+import { RefreshTokenEntity } from '../refreshToken.entity';
+import { ResumeEntity } from '../resume/resume.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CenterEntity } from '../entity/center.entity';
-import { TRole } from '../entity/authority.entity';
+import { TRole } from 'src/auth/entity/authority.entity';
+import { CenterEntity } from 'src/auth/entity/center.entity';
 
 export class CenterResponseDto {
   @ApiProperty({ example: 1 })

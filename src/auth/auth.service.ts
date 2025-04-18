@@ -11,32 +11,29 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Not, Repository } from 'typeorm';
-import { UserEntity } from './entity/user.entity';
-import { AdminSignUpRequestDto } from './dto/user-sign-up-request-dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
-import { CenterSignUpRequestDto } from './dto/center-sign-up-request-dto';
-import { CenterSignInRequestDto } from './dto/center-sign-in-request-dto';
+import { CenterSignUpRequestDto } from './dto/center-dto/request-dto/center-sign-up-request-dto';
+import { CenterSignInRequestDto } from './dto/center-dto/request-dto/center-sign-in-request-dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
-import { addressResponseDto } from './dto/address-response-dto';
+import { addressResponseDto } from './dto/center-dto/response-dto/address-response-dto';
 import { EmailService } from './email.service';
 import { EmailCodeEntity } from './entity/emailCode.entity';
-import { CenterModifyRequestDto } from './dto/center-modify-request-dto';
+import { CenterModifyRequestDto } from './dto/center-dto/request-dto/center-modify-request-dto';
 import appleSignin from 'apple-signin-auth';
-import { SignWithEntity } from './entity/signWith.entity';
+import { SignWithEntity } from './entity/user/signWith.entity';
 import { AuthorityEntity } from './entity/authority.entity';
-import { KakaoKeyEntity } from './entity/kakaoKey.entity';
-import { AppleKeyEntity } from './entity/appleKey.entity';
-import { AdminSignInRequestDto } from './dto/admin-sign-in-request-dto';
-import { ResumeRegisterRequestDto } from './dto/resume-register-request-dto';
-import { ResumeResponseDto } from './dto/resume-response-dto';
-import { ResumeEntity } from './entity/resume.entity';
-import { CareerEntity } from './entity/career.entity';
-import { AcademyEntity } from './entity/academy.entity';
-import { QualificationEntity } from './entity/qualification.entity';
+import { KakaoKeyEntity } from './entity/user/kakaoKey.entity';
+import { AppleKeyEntity } from './entity/user/appleKey.entity';
+import { AdminSignInRequestDto } from './dto/user-dto/request-dto/admin-sign-in-request-dto';
+import { ResumeRegisterRequestDto } from './dto/resume-dto/request-dto/resume-register-request-dto';
+import { ResumeResponseDto } from './dto/resume-dto/response-dto/resume-response-dto';
+import { CareerEntity } from './entity/resume/career.entity';
+import { AcademyEntity } from './entity/resume/academy.entity';
+import { QualificationEntity } from './entity/resume/qualification.entity';
 import {
   DeleteObjectCommand,
   PutObjectCommand,
@@ -44,15 +41,18 @@ import {
 } from '@aws-sdk/client-s3';
 import { RecruitmentService } from 'src/recruitment/recruitment.service';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
-import { PersonalModifyRequestDto } from './dto/personal-modify-request-dto';
-import { WorkConditionModifyRequestDto } from './dto/work-condition-modify-request-dto';
-import { CareerModifyRequestDto } from './dto/career-modify-request-dto';
-import { AdditionalModifyRequestDto } from './dto/additional-modify-request-dto';
-import { IntroductionModifyRequestDto } from './dto/introduction-modify-request-dto';
-import { AcademyModifyRequestDto } from './dto/academy-modify-request-dto';
-import { QualificationModifyRequestDto } from './dto/qualification-modify-request-dto';
-import { AwardModifyRequestDto } from './dto/award-modify-request-dto';
-import { ProfileImageModifyRequestDto } from './dto/profileImage-modify-request-dto';
+import { PersonalModifyRequestDto } from './dto/resume-dto/request-dto/personal-modify-request-dto';
+import { WorkConditionModifyRequestDto } from './dto/resume-dto/request-dto/work-condition-modify-request-dto';
+import { AdditionalModifyRequestDto } from './dto/resume-dto/request-dto/additional-modify-request-dto';
+import { IntroductionModifyRequestDto } from './dto/resume-dto/request-dto/introduction-modify-request-dto';
+import { AwardModifyRequestDto } from './dto/resume-dto/request-dto/award-modify-request-dto';
+import { ProfileImageModifyRequestDto } from './dto/resume-dto/request-dto/profileImage-modify-request-dto';
+import { UserEntity } from './entity/user/user.entity';
+import { ResumeEntity } from './entity/resume/resume.entity';
+import { AdminSignUpRequestDto } from './dto/user-dto/request-dto/user-sign-up-request-dto';
+import { CareerModifyRequestDto } from './dto/resume-dto/career-dto/career-modify-request-dto';
+import { QualificationModifyRequestDto } from './dto/resume-dto/qualification-dto/qualification-modify-request-dto';
+import { AcademyModifyRequestDto } from './dto/resume-dto/academy-dto/academy-modify-request-dto';
 
 @Injectable()
 export class AuthService {

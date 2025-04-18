@@ -7,32 +7,31 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SelectedOptionsDto } from './dto/selected-options-dto';
+import { SelectedOptionsRequestDto } from './dto/recruitment-dto/request-dto/selected-options-request-dto';
 import { RecruitmentEntity } from './entity/recruitment.entity';
-import { RecruitmentResponseDto } from './dto/recruitment-response-dto';
 import {
   RecruitmentRegisterRequestDto,
   TGender,
   TWeekendDuty,
-} from './dto/recruitment-register-request-dto';
+} from './dto/recruitment-dto/request-dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import {
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { WeekendDutyModifyRequestDto } from './dto/weekendDuty-modify-request-dto';
-import { ApplyConditionModifyRequestDto } from './dto/apply-condition-modify-request-dto';
-import { SalaryCondtionModifyRequestDto } from './dto/salary-condition-modify-request-dto';
-import { ApplyModifyRequestDto } from './dto/apply-modify-request-dto';
-import { DetailModifyRequestDto } from './dto/detail-modify-request-dto';
-import { UserEntity } from 'src/auth/entity/user.entity';
+import { ApplyConditionModifyRequestDto } from './dto/recruitment-dto/request-dto/apply-condition-modify-request-dto';
+import { SalaryCondtionModifyRequestDto } from './dto/recruitment-dto/request-dto/salary-condition-modify-request-dto';
+import { ApplyModifyRequestDto } from './dto/recruitment-dto/request-dto/apply-modify-request-dto';
+import { DetailModifyRequestDto } from './dto/recruitment-dto/request-dto/detail-modify-request-dto';
 import { BookmarkEntity } from './entity/bookmark.entity';
 import { VillyEntity } from './entity/villy.entity';
-import { ResumeResponseDto } from 'src/auth/dto/resume-response-dto';
-import { ResumeEntity } from 'src/auth/entity/resume.entity';
-import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-isProposed-response-dto';
-import { RecruitmentListLocationResponseDto } from './dto/recruitmentList-location-response-dto';
+import { ResumeisProposedResponseDto } from 'src/auth/dto/resume-dto/response-dto/resume-isProposed-response-dto';
+import { RecruitmentListLocationResponseDto } from './dto/recruitment-dto/response-dto/recruitmentList-location-response-dto';
+import { UserEntity } from 'src/auth/entity/user/user.entity';
+import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
+import { RecruitmentResponseDto } from './dto/recruitment-dto/response-dto/recruitment-response-dto';
+import { WeekendDutyModifyRequestDto } from './dto/recruitment-dto/request-dto/weekendDuty-modify-request-dto';
 
 @Injectable()
 export class RecruitmentService {
@@ -144,7 +143,7 @@ export class RecruitmentService {
 
   // method2 : 조건에 맞는 헬스장 리스트 가져오기
   async searchSelected(
-    selectedOptionsDto: SelectedOptionsDto,
+    selectedOptionsDto: SelectedOptionsRequestDto,
     page: number,
     limit: number,
     user?: UserEntity,

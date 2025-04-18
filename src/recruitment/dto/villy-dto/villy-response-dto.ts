@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RecruitmentEntity } from '../entity/recruitment.entity';
-import { Datetime } from 'aws-sdk/clients/costoptimizationhub';
-import { VillyEntity } from '../entity/villy.entity';
+import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 
 export class VillyResponseDto {
   @ApiProperty({

@@ -9,7 +9,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class SelectedOptionsDto {
+export class SelectedOptionsRequestDto {
   @ApiProperty({
     type: [Number],
     description:

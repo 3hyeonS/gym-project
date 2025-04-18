@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ResumeEntity } from '../entity/resume.entity';
-import { CareerResponseDto } from './career-response-dto';
-import { AcademyResponseDto } from './academy-response-dto';
-import { QualificationResponseDto } from './qualification-response-dto';
+import { AcademyResponseDto } from '../academy-dto/academy-response-dto';
+import { CareerResponseDto } from '../career-dto/career-response-dto';
+import { QualificationResponseDto } from '../qualification-dto/qualification-response-dto';
+import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 
 export class ResumeisProposedResponseDto {
   @ApiProperty({

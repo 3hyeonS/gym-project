@@ -1,6 +1,6 @@
 import { Entity, OneToMany, PrimaryColumn } from 'typeorm';
-import { UserEntity } from './user.entity';
 import { CenterEntity } from './center.entity';
+import { UserEntity } from './user/user.entity';
 
 export type TRole = 'CENTER' | 'USER' | 'ADMIN';
 

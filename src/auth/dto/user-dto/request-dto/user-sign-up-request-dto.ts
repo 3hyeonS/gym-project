@@ -1,6 +1,5 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, Length } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { TRole } from '../entity/authority.entity';
 
 export class AdminSignUpRequestDto {
   @ApiProperty({
