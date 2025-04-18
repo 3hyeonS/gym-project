@@ -16,7 +16,6 @@ import {
 } from './dto/recruitment-dto/request-dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import {
-  $Command,
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -51,8 +50,6 @@ export class RecruitmentService {
     private bookmarkRepository: Repository<BookmarkEntity>,
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
-    @InjectRepository(CenterEntity)
-    private centerRepository: Repository<CenterEntity>,
     @InjectRepository(ResumeEntity)
     private resumeRepository: Repository<ResumeEntity>,
     @InjectRepository(VillyEntity)

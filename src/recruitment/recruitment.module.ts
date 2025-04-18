@@ -18,6 +18,7 @@ import { AcademyEntity } from 'src/auth/entity/resume/academy.entity';
 import { QualificationEntity } from 'src/auth/entity/resume/qualification.entity';
 import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
+import { VillySchedulerService } from './villy.scheduler.service';
 
 @Module({
   imports: [
@@ -45,6 +46,11 @@ import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
   ],
   exports: [TypeOrmModule, PassportModule, JwtModule, RecruitmentService],
   controllers: [RecruitmentController],
-  providers: [RecruitmentService, JwtStrategy, KakaoStrategy],
+  providers: [
+    RecruitmentService,
+    JwtStrategy,
+    KakaoStrategy,
+    VillySchedulerService,
+  ],
 })
 export class RecruitmentModule {}
