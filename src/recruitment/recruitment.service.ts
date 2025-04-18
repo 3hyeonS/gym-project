@@ -1245,6 +1245,7 @@ export class RecruitmentService {
       where: {
         user: { id: user.id },
       },
+      order: { createdAt: 'DESC' },
     });
     return villies.map((villy) => new VillyResponseDto(villy));
   }
