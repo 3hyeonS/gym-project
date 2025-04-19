@@ -1259,7 +1259,7 @@ export class RecruitmentService {
   async getNewMatching(user: UserEntity): Promise<VillyResponseDto[]> {
     const matchedRecruitment =
       await this.villySchedulerService.getMatched(user);
-    if (matchedRecruitment) {
+    if (!matchedRecruitment) {
       throw new NotFoundException(
         'There is no more recruitment for your resume',
       );
