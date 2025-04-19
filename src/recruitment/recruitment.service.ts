@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { SelectedOptionsRequestDto } from './dto/recruitment-dto/request-dto/selected-options-request-dto';
 import { RecruitmentEntity } from './entity/recruitment.entity';
 import {
@@ -1257,6 +1257,14 @@ export class RecruitmentService {
 
   // 새로운 매칭보기
   async getNewMatching(user: UserEntity): Promise<VillyResponseDto[]> {
+    // 하루 세번 재한
+    const [matchedList, count] = await this.villyRepository.findAndCount({
+      where: {
+        messageType: 0,
+        user: { id: user.id },
+        createdAt: Raw((alias) => `DATE(${alias}) = CURDATE()`),
+      },
+    });
     const matchedRecruitment =
       await this.villySchedulerService.getMatched(user);
     if (!matchedRecruitment) {
