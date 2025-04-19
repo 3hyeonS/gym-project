@@ -1258,13 +1258,16 @@ export class RecruitmentService {
   // 새로운 매칭보기
   async getNewMatching(user: UserEntity): Promise<VillyResponseDto[]> {
     // 하루 세번 재한
-    const [matchedList, count] = await this.villyRepository.findAndCount({
+    const count = await this.villyRepository.count({
       where: {
         messageType: 0,
         user: { id: user.id },
         createdAt: Raw((alias) => `DATE(${alias}) = CURDATE()`),
       },
     });
+    if (count == 3) {
+      throw new ForbiddenException('Already matched three times today');
+    }
     const matchedRecruitment =
       await this.villySchedulerService.getMatched(user);
     if (!matchedRecruitment) {

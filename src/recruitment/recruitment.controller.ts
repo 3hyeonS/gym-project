@@ -1195,6 +1195,12 @@ export class RecruitmentController {
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
+    status: 403,
+    description: '하루 세번 제한',
+    message: 'Already matched three times today',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
     status: 404,
     description: '이력서에 적합한 채용공고가 더 이상 없음',
     message: 'There is no more recruitment for your resume',
