@@ -1668,6 +1668,7 @@ export class AuthController {
     error: 'UnauthorizedException',
   })
   @ResponseMsg('Signed out successfully')
+  @UseGuards(AuthGuard())
   @Post('/signout')
   async signout(
     @GetUser() member: UserEntity | CenterEntity,
