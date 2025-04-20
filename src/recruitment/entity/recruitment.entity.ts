@@ -26,6 +26,9 @@ export class RecruitmentEntity {
   @Column({ type: 'varchar', name: 'address', nullable: false })
   address: string;
 
+  @Column({ type: 'varchar', name: 'map', nullable: true })
+  map: string;
+
   @Column({ type: 'json', name: 'workType', nullable: false })
   workType: string[];
 

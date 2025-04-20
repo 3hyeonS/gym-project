@@ -1215,4 +1215,35 @@ export class RecruitmentController {
   ): Promise<VillyResponseDto[]> {
     return await this.recruitmentService.getNewMatching(user);
   }
+
+  // 노션 공고 업데이트
+  // @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '노션 공고 업데이트',
+  })
+  @NullApiResponse({
+    status: 200,
+    description: '노션 공고 업데이트 성공',
+    message: 'Notion recruitments updated successfully',
+  })
+  // @ErrorApiResponse({
+  //   status: 401,
+  //   description: '유효하지 않거나 기간이 만료된 acccessToken',
+  //   message: 'Invalid or expired accessToken',
+  //   error: 'UnauthorizedException',
+  // })
+  // @ErrorApiResponse({
+  //   status: 403,
+  //   description: '관리자 회원이 아님 (관리자 회원만 노션 공고 업데이트 가능)',
+  //   message: 'Not a member of the ADMIN (only ADMIN can call this api)',
+  //   error: 'ForbiddenException',
+  // })
+  @ResponseMsg('Notion recruitments updated successfully')
+  // @UseGuards(AuthGuard(), RolesGuard)
+  // @Roles('ADMIN')
+  @Get('notionRecruitmentsUpdate')
+  async notionRecruitmentsUpdate() // @GetUser() user: UserEntity,
+  : Promise<void> {
+    await this.recruitmentService.notionRecruitmentsUpdate();
+  }
 }

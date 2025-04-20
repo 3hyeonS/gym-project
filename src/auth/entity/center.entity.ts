@@ -3,11 +3,14 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { RefreshTokenEntity } from './refreshToken.entity';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 import { AuthorityEntity } from './authority.entity';
+import { FcmTokenEntity } from './fcmToken.entity';
+import { CommunityReleaseNotificationEntity } from './communityReleaseNotification.entity';
 
 @Entity({ name: 'center' })
 export class CenterEntity {
@@ -60,6 +63,24 @@ export class CenterEntity {
     cascade: true,
   })
   refreshTokens: RefreshTokenEntity[];
+
+  @OneToOne(() => FcmTokenEntity, (fcmToken) => fcmToken.center, {
+    eager: true,
+    cascade: true,
+    nullable: true,
+  })
+  fcmToken: FcmTokenEntity;
+
+  @OneToOne(
+    () => CommunityReleaseNotificationEntity,
+    (communityReleaseNotification) => communityReleaseNotification.center,
+    {
+      eager: true,
+      cascade: true,
+      nullable: true,
+    },
+  )
+  communityReleaseNotification: CommunityReleaseNotificationEntity;
 
   @OneToMany(() => RecruitmentEntity, (recruitment) => recruitment.center, {
     nullable: true,

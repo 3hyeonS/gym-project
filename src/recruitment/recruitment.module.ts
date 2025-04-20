@@ -20,6 +20,9 @@ import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 import { VillySchedulerService } from './villy.scheduler.service';
 import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
+import { FcmTokenEntity } from 'src/auth/entity/fcmToken.entity';
+import { FirebaseService } from 'src/firebase.service';
+import { CommunityReleaseNotificationEntity } from 'src/auth/entity/communityReleaseNotification.entity';
 
 @Module({
   imports: [
@@ -36,6 +39,8 @@ import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
       AcademyEntity,
       QualificationEntity,
       NotionRecruitmentEntity,
+      FcmTokenEntity,
+      CommunityReleaseNotificationEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
@@ -52,6 +57,7 @@ import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
     JwtModule,
     RecruitmentService,
     VillySchedulerService,
+    FirebaseService,
   ],
   controllers: [RecruitmentController],
   providers: [
@@ -59,6 +65,7 @@ import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
     JwtStrategy,
     KakaoStrategy,
     VillySchedulerService,
+    FirebaseService,
   ],
 })
 export class RecruitmentModule {}

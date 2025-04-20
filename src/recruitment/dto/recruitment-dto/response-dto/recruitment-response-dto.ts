@@ -38,6 +38,13 @@ export class RecruitmentResponseDto {
   address: string;
 
   @ApiProperty({
+    type: String,
+    description: '네이버 지도 url',
+    example: 'https://map.naver.com/p/entry/place/1030245786?c=13.96,0,0,0,dh',
+  })
+  map: string = null;
+
+  @ApiProperty({
     type: [String],
     description: '근무 형태',
     example: ['정규직, 프리랜서'],
@@ -230,6 +237,7 @@ export class RecruitmentResponseDto {
     this.city = recruitment.city;
     this.location = recruitment.location;
     this.address = recruitment.address;
+    this.map = recruitment.map;
     this.workType = recruitment.workType;
     this.workTime = recruitment.workTime;
 

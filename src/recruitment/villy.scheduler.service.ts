@@ -5,6 +5,7 @@ import { In, Repository } from 'typeorm';
 import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
+import { FirebaseService } from 'src/firebase.service';
 
 @Injectable()
 export class VillySchedulerService implements OnModuleInit {
@@ -15,6 +16,7 @@ export class VillySchedulerService implements OnModuleInit {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(RecruitmentEntity)
     private readonly recruitmentRepository: Repository<RecruitmentEntity>,
+    private firebaseService: FirebaseService,
   ) {}
 
   onModuleInit() {
@@ -22,7 +24,7 @@ export class VillySchedulerService implements OnModuleInit {
   }
 
   scheduleDailyVillyCreation() {
-    // 매일 오후 6시 실행 (한국시간 기준)
+    // 매일 오후 7시 실행 (한국시간 기준)
     cron.schedule('0 19 * * *', async () => {
       const users = await this.userRepository.find();
       for (const user of users) {
@@ -33,6 +35,16 @@ export class VillySchedulerService implements OnModuleInit {
             user,
             recruitment,
           });
+
+          if (user.fcmToken) {
+            const fcmToken = user.fcmToken.token; // DB에서 가져온 유저의 FCM 토큰
+            await this.firebaseService.sendPushToDevice(
+              fcmToken,
+              '새로운 추천 공고가 도착했습니다.',
+              `${recruitment.centerName}에서 당신을 기다리고 있어요!`,
+              'ChattingScreen',
+            );
+          }
         }
       }
     });

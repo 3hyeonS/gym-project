@@ -35,6 +35,7 @@ import { WeekendDutyModifyRequestDto } from './dto/recruitment-dto/request-dto/w
 import { VillyResponseDto } from './dto/villy-dto/villy-response-dto';
 import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
 import { VillySchedulerService } from './villy.scheduler.service';
+import { FirebaseService } from 'src/firebase.service';
 
 @Injectable()
 export class RecruitmentService {
@@ -51,6 +52,8 @@ export class RecruitmentService {
     private recruitmentRepository: Repository<RecruitmentEntity>,
     @InjectRepository(BookmarkEntity)
     private bookmarkRepository: Repository<BookmarkEntity>,
+    @InjectRepository(CenterEntity)
+    private centerRepository: Repository<CenterEntity>,
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
     @InjectRepository(ResumeEntity)
@@ -60,6 +63,7 @@ export class RecruitmentService {
     @InjectRepository(NotionRecruitmentEntity)
     private notionRecruitmentRepository: Repository<NotionRecruitmentEntity>,
     private villySchedulerService: VillySchedulerService,
+    private firebaseService: FirebaseService,
   ) {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
@@ -1037,6 +1041,17 @@ export class RecruitmentService {
       user,
       recruitment,
     });
+
+    const center = recruitment.center;
+    if (center.fcmToken) {
+      const fcmToken = center.fcmToken.token;
+      await this.firebaseService.sendPushToDevice(
+        fcmToken,
+        '새로운 이력서가 도착했습니다.',
+        `${user.resume.name}님의 이력서를 확인해주세요!`,
+        'MyRecruitmentListScreen',
+      );
+    }
   }
 
   // 지원한 공고 보기
@@ -1124,6 +1139,16 @@ export class RecruitmentService {
       user,
       recruitment,
     });
+
+    if (user.fcmToken) {
+      const fcmToken = user.fcmToken.token;
+      await this.firebaseService.sendPushToDevice(
+        fcmToken,
+        '면접을 제안받았습니다.',
+        `${recruitment.centerName}의 면접 제안을 확인해주세요!`,
+        'ChattingScreen',
+      );
+    }
   }
 
   // 내 주변 공고 불러오기
@@ -1284,7 +1309,7 @@ export class RecruitmentService {
   }
 
   // 파일 업데이트
-  async update(): Promise<void> {
+  async notionRecruitmentsUpdate(): Promise<void> {
     // 전체 데이터
     const notionRecruitments = await this.notionRecruitmentRepository.find();
     const dbRecruitments = await this.recruitmentRepository.findBy({

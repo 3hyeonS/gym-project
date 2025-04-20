@@ -14,6 +14,8 @@ import { AppleKeyEntity } from './appleKey.entity';
 import { AuthorityEntity } from '../authority.entity';
 import { RefreshTokenEntity } from '../refreshToken.entity';
 import { ResumeEntity } from '../resume/resume.entity';
+import { FcmTokenEntity } from '../fcmToken.entity';
+import { CommunityReleaseNotificationEntity } from '../communityReleaseNotification.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -74,6 +76,24 @@ export class UserEntity {
     nullable: true,
   })
   resume: ResumeEntity;
+
+  @OneToOne(() => FcmTokenEntity, (fcmToken) => fcmToken.user, {
+    eager: true,
+    cascade: true,
+    nullable: true,
+  })
+  fcmToken: FcmTokenEntity;
+
+  @OneToOne(
+    () => CommunityReleaseNotificationEntity,
+    (communityReleaseNotification) => communityReleaseNotification.user,
+    {
+      eager: true,
+      cascade: true,
+      nullable: true,
+    },
+  )
+  communityReleaseNotification: CommunityReleaseNotificationEntity;
 
   @OneToMany(() => VillyEntity, (villy) => villy.user, {
     nullable: true,

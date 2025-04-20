@@ -27,6 +27,9 @@ import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 import { RecruitmentService } from 'src/recruitment/recruitment.service';
 import { UserEntity } from './entity/user/user.entity';
 import { ResumeEntity } from './entity/resume/resume.entity';
+import { FcmTokenEntity } from './entity/fcmToken.entity';
+import { FirebaseService } from 'src/firebase.service';
+import { CommunityReleaseNotificationEntity } from './entity/communityReleaseNotification.entity';
 
 // .env 파일 로드
 dotenv.config();
@@ -50,6 +53,8 @@ dotenv.config();
       QualificationEntity,
       BookmarkEntity,
       VillyEntity,
+      FcmTokenEntity,
+      CommunityReleaseNotificationEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule,
@@ -64,7 +69,14 @@ dotenv.config();
     KakaoStrategy,
     EmailService,
     RecruitmentService,
+    FirebaseService,
   ],
-  exports: [AuthService, AuthModule, JwtModule, PassportModule],
+  exports: [
+    AuthService,
+    AuthModule,
+    JwtModule,
+    PassportModule,
+    FirebaseService,
+  ],
 })
 export class AuthModule {}
