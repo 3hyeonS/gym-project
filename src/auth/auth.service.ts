@@ -53,9 +53,9 @@ import { AdminSignUpRequestDto } from './dto/user-dto/request-dto/user-sign-up-r
 import { CareerModifyRequestDto } from './dto/resume-dto/career-dto/career-modify-request-dto';
 import { QualificationModifyRequestDto } from './dto/resume-dto/qualification-dto/qualification-modify-request-dto';
 import { AcademyModifyRequestDto } from './dto/resume-dto/academy-dto/academy-modify-request-dto';
-import { FcmTokenRequestDto } from './dto/token-dto/request-dto/fcmToken-request-dto';
 import { FcmTokenEntity } from './entity/fcmToken.entity';
 import { CommunityReleaseNotificationEntity } from './entity/communityReleaseNotification.entity';
+import { NotificationModifyRequestDto } from './dto/notification-modify-request-dto';
 
 @Injectable()
 export class AuthService {
@@ -1443,7 +1443,7 @@ export class AuthService {
   // 알림 허용: fcm 토큰 등록
   async registerFcmToken(
     member: UserEntity | CenterEntity,
-    fcmTokenRequestDto: FcmTokenRequestDto,
+    token: string,
   ): Promise<void> {
     const isUser = member instanceof UserEntity;
     const where = isUser
@@ -1455,11 +1455,11 @@ export class AuthService {
     if (existingFcmToken) {
       await this.fcmTokenRepository.save({
         id: existingFcmToken.id,
-        token: fcmTokenRequestDto.fcmToken,
+        token,
       });
     } else {
       await this.fcmTokenRepository.save({
-        token: fcmTokenRequestDto.fcmToken,
+        token,
         ...(isUser ? { user: member } : { center: member }),
       });
     }
@@ -1481,13 +1481,38 @@ export class AuthService {
     await this.fcmTokenRepository.delete(existingFcmToken.id);
   }
 
+  // 알림 설정 변경
+  async modifyNotification(
+    member: UserEntity | CenterEntity,
+    notificationModifyRequestDto: NotificationModifyRequestDto,
+  ): Promise<void> {
+    if (notificationModifyRequestDto.isAllowed) {
+      await this.registerFcmToken(
+        member,
+        notificationModifyRequestDto.fcmToken,
+      );
+    } else {
+      await this.deleteFcmToken(member);
+    }
+  }
+
   // 커뮤니티 출시 알림 등록
   async communityReleaseNotificationRegister(
     member: UserEntity | CenterEntity,
   ): Promise<void> {
     const isUser = member instanceof UserEntity;
-    await this.communityReleaseNotificationRepository.save({
-      ...(isUser ? { user: member } : { center: member }),
-    });
+    const where = isUser
+      ? { user: { id: member.id } }
+      : { center: { id: member.id } };
+
+    const alreadyRegistered =
+      await this.communityReleaseNotificationRepository.findOne({
+        where,
+      });
+    if (!alreadyRegistered) {
+      await this.communityReleaseNotificationRepository.save({
+        ...(isUser ? { user: member } : { center: member }),
+      });
+    }
   }
 }

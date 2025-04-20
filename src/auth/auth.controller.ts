@@ -68,7 +68,7 @@ import { UserEntity } from './entity/user/user.entity';
 import { CareerModifyRequestDto } from './dto/resume-dto/career-dto/career-modify-request-dto';
 import { AcademyModifyRequestDto } from './dto/resume-dto/academy-dto/academy-modify-request-dto';
 import { QualificationModifyRequestDto } from './dto/resume-dto/qualification-dto/qualification-modify-request-dto';
-import { FcmTokenRequestDto } from './dto/token-dto/request-dto/fcmToken-request-dto';
+import { NotificationModifyRequestDto } from './dto/notification-modify-request-dto';
 
 @ApiTags('Authorization')
 @UseInterceptors(ResponseTransformInterceptor)
@@ -130,7 +130,6 @@ export class AuthController {
       if (error instanceof ConflictException) {
         return false;
       }
-      // this.logger.error(`Error checking signId: ${error.message}`);
       throw error; // 다른 예외는 그대로 throw
     }
   }
@@ -1571,15 +1570,16 @@ export class AuthController {
     );
   }
 
-  // 알림 허용: fcm 토큰 등록
+  // 알림 설정 변경
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    summary: '알림 허용: fcm 토큰 등록',
+    summary: '알림 설정 변경',
+    description: 'fcm 토큰 등록 및 삭제',
   })
   @NullApiResponse({
     status: 201,
-    description: '알림 허용: fcm 토큰 등록 성공',
-    message: 'Notification allowed: fcm token registered successfully',
+    description: '알림 설정 변경 성공',
+    message: 'Notification setting modified successfully',
   })
   @ErrorApiResponse({
     status: 401,
@@ -1593,45 +1593,23 @@ export class AuthController {
     message: 'fcmToken must be a string',
     error: 'BadRequestException',
   })
-  @ResponseMsg('Notification allowed: fcm token registered successfully')
-  @UseGuards(AuthGuard())
-  @Post('/registerFcmToken')
-  async registerFcmToken(
-    @GetUser() member: UserEntity | CenterEntity,
-    @Body() fcmTokenRequestDto: FcmTokenRequestDto,
-  ): Promise<void> {
-    await this.authService.registerFcmToken(member, fcmTokenRequestDto);
-  }
-
-  // 알림 거절: fcm 토큰 삭제
-  @ApiBearerAuth('accessToken')
-  @ApiOperation({
-    summary: '알림 거절: fcm 토큰 삭제',
-  })
-  @NullApiResponse({
-    status: 200,
-    description: '알림 거절: fcm 토큰 삭제 성공',
-    message: 'Notification refuesed: fcm token deleted successfully',
-  })
-  @ErrorApiResponse({
-    status: 401,
-    description: '유효하지 않거나 기간이 만료된 accessToken',
-    message: 'Invalid or expired accessToken',
-    error: 'UnauthorizedException',
-  })
   @ErrorApiResponse({
     status: 404,
-    description: '보유 중인 fcm token이 없음',
+    description: '보유 중인 fcm token이 없음(isAllowed: false로 요청 시)',
     message: 'No fcm token in possession',
     error: 'NotFoundException',
   })
-  @ResponseMsg('Notification allowed: fcm token registered successfully')
+  @ResponseMsg('Notification setting modified successfully')
   @UseGuards(AuthGuard())
-  @Get('/deleteFcmToken')
-  async deleteFcmToken(
+  @Post('/modifyNotification')
+  async modifyNotification(
     @GetUser() member: UserEntity | CenterEntity,
+    @Body() notificationModifyRequestDto: NotificationModifyRequestDto,
   ): Promise<void> {
-    await this.authService.deleteFcmToken(member);
+    await this.authService.modifyNotification(
+      member,
+      notificationModifyRequestDto,
+    );
   }
 
   // 커뮤니티 출시 알림 등록
