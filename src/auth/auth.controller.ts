@@ -1658,4 +1658,57 @@ export class AuthController {
   ): Promise<void> {
     await this.authService.communityReleaseNotificationRegister(member);
   }
+
+  // 로그아웃: 해당 refreshToken, fcm 토큰 삭제
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '로그아웃',
+    description: '해당 refreshToken, fcm 토큰 삭제',
+  })
+  @GenericApiResponse({
+    status: 201,
+    description: '로그아웃 성공',
+    message: 'Signed out successfully',
+    model: TokenResponseDto,
+  })
+  @ErrorApiResponse({
+    status: 400,
+    description: 'Bad Request  \nbody 입력값의 필드 조건 및 JSON 형식 오류',
+    message: 'refreshToken must be a jwt string',
+    error: 'BadRequestException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 accessToken',
+    message: 'Invalid or expired accessToken',
+    error: 'UnauthorizedException',
+  })
+  @ErrorApiResponse({
+    status: 401,
+    description: '유효하지 않거나 기간이 만료된 refreshToken',
+    message: 'Invalid or expired refreshToken',
+    error: 'UnauthorizedException',
+  })
+  @ResponseMsg('Signed out successfully')
+  @Post('/signout')
+  async signout(
+    @GetUser() member: UserEntity | CenterEntity,
+    @Body() refreshTokenRequestDto: RefreshTokenRequestDto,
+  ): Promise<void> {
+    // refresh token 에서 signId 추출
+    const decodedToken = (await this.jwtService.decode(
+      refreshTokenRequestDto.refreshToken,
+    )) as any;
+    const email = decodedToken?.email;
+    if (!email) {
+      throw new UnauthorizedException('Invalid or expired refreshToken');
+    }
+    await this.authService.revokeRefreshToken(
+      refreshTokenRequestDto.refreshToken,
+    );
+
+    if (member.fcmToken) {
+      await this.authService.deleteFcmToken(member);
+    }
+  }
 }
