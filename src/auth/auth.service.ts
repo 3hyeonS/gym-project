@@ -17,7 +17,6 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, lastValueFrom, retry } from 'rxjs';
 import { CenterEntity } from './entity/center.entity';
 import { CenterSignUpRequestDto } from './dto/center-dto/request-dto/center-sign-up-request-dto';
-import { CenterSignInRequestDto } from './dto/center-dto/request-dto/center-sign-in-request-dto';
 import { RefreshTokenEntity } from './entity/refreshToken.entity';
 import { addressResponseDto } from './dto/center-dto/response-dto/address-response-dto';
 import { EmailService } from './email.service';
@@ -28,7 +27,6 @@ import { SignWithEntity } from './entity/user/signWith.entity';
 import { AuthorityEntity } from './entity/authority.entity';
 import { KakaoKeyEntity } from './entity/user/kakaoKey.entity';
 import { AppleKeyEntity } from './entity/user/appleKey.entity';
-import { AdminSignInRequestDto } from './dto/user-dto/request-dto/admin-sign-in-request-dto';
 import { ResumeRegisterRequestDto } from './dto/resume-dto/request-dto/resume-register-request-dto';
 import { ResumeResponseDto } from './dto/resume-dto/response-dto/resume-response-dto';
 import { CareerEntity } from './entity/resume/career.entity';
@@ -55,7 +53,6 @@ import { QualificationModifyRequestDto } from './dto/resume-dto/qualification-dt
 import { AcademyModifyRequestDto } from './dto/resume-dto/academy-dto/academy-modify-request-dto';
 import { FcmTokenEntity } from './entity/fcmToken.entity';
 import { CommunityReleaseNotificationEntity } from './entity/communityReleaseNotification.entity';
-import { NotificationModifyRequestDto } from './dto/notification-modify-request-dto';
 
 @Injectable()
 export class AuthService {
