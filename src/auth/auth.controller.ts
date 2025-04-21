@@ -595,7 +595,10 @@ export class AuthController {
   }> {
     // [1] 로그인 처리
     const { accessToken, refreshToken, admin } =
-      await this.authService.adminSignIn(adminSignInRequestDto);
+      await this.authService.adminSignIn(
+        adminSignInRequestDto.adminId,
+        adminSignInRequestDto.email,
+      );
 
     const userResponseDto = new UserResponseDto(admin);
 
@@ -640,7 +643,10 @@ export class AuthController {
   }> {
     // [1] 로그인 처리
     const { accessToken, refreshToken, center } =
-      await this.authService.centerSignIn(centerSignInRequestDto);
+      await this.authService.centerSignIn(
+        centerSignInRequestDto.signId,
+        centerSignInRequestDto.password,
+      );
 
     const centerResponseDto = new CenterResponseDto(center);
 
@@ -1608,7 +1614,8 @@ export class AuthController {
   ): Promise<void> {
     await this.authService.modifyNotification(
       member,
-      notificationModifyRequestDto,
+      notificationModifyRequestDto.isAllowed,
+      notificationModifyRequestDto.fcmToken,
     );
   }
 

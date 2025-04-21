@@ -329,13 +329,14 @@ export class AuthService {
   }
 
   // 관리자 로그인 메서드
-  async adminSignIn(adminSignInRequestDto: AdminSignInRequestDto): Promise<{
+  async adminSignIn(
+    adminId: string,
+    email: string,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
     admin: UserEntity;
   }> {
-    const { adminId, email } = adminSignInRequestDto;
-
     const existingAdmin = await this.userRepository.findOneBy({
       nickname: adminId,
       email,
@@ -356,13 +357,14 @@ export class AuthService {
   }
 
   // 센터 로그인 메서드
-  async centerSignIn(centerSignInRequestDto: CenterSignInRequestDto): Promise<{
+  async centerSignIn(
+    signId: string,
+    password: string,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
     center: CenterEntity;
   }> {
-    const { signId, password } = centerSignInRequestDto;
-
     // [1] 회원 정보 조회
     const existingCenter = await this.centerRepository.findOneBy({ signId });
 
@@ -1484,13 +1486,11 @@ export class AuthService {
   // 알림 설정 변경
   async modifyNotification(
     member: UserEntity | CenterEntity,
-    notificationModifyRequestDto: NotificationModifyRequestDto,
+    isAllowed: boolean,
+    token: string,
   ): Promise<void> {
-    if (notificationModifyRequestDto.isAllowed) {
-      await this.registerFcmToken(
-        member,
-        notificationModifyRequestDto.fcmToken,
-      );
+    if (isAllowed) {
+      await this.registerFcmToken(member, token);
     } else {
       await this.deleteFcmToken(member);
     }
