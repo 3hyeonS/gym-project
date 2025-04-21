@@ -1303,7 +1303,7 @@ export class RecruitmentService {
     await this.villyRepository.save({
       messageType: 0,
       user,
-      matchedRecruitment,
+      recruitment: matchedRecruitment,
     });
     return await this.getVillies(user);
   }
