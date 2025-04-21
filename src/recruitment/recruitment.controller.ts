@@ -448,7 +448,7 @@ export class RecruitmentController {
     summary: '내 공고 1개 불러오기',
   })
   @GenericApiResponse({
-    status: 200,
+    status: 201,
     description: '내 공고 1개 불러오기 성공',
     message: 'My Recruitment returned successfully',
     model: RecruitmentResponseDto,
@@ -828,7 +828,7 @@ export class RecruitmentController {
     summary: '공고 삭제하기',
   })
   @NullApiResponse({
-    status: 200,
+    status: 201,
     description: '공고 삭제 성공',
     message: 'Recruitment deleted successfully',
   })
