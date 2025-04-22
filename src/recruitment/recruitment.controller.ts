@@ -969,6 +969,12 @@ export class RecruitmentController {
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
+    status: 403,
+    description: '노션 공고에는 지원할 수 없음',
+    message: 'You cannot apply to notion recruitment',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
     status: 409,
     description: '이미 지원함',
     message: 'You already applied',
