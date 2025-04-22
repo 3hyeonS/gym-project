@@ -1079,10 +1079,9 @@ export class RecruitmentService {
 
   // 지원받은 이력서 보기
   async getAppliedResumes(id: number): Promise<ResumeisProposedResponseDto[]> {
-    const myRecruitment = await this.recruitmentRepository.findOneBy({ id });
     const applyVillies = await this.villyRepository.find({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id },
         messageType: 1,
       },
       order: { createdAt: 'DESC' }, // 최신순
@@ -1093,8 +1092,8 @@ export class RecruitmentService {
       const proposalVilly = await this.villyRepository.findOne({
         where: {
           user: { id: villy.user.id },
-          recruitment: { id: myRecruitment.id },
-          messageType: 1,
+          recruitment: { id },
+          messageType: 2,
         },
       });
       if (proposalVilly) {
