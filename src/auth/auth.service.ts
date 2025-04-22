@@ -1077,6 +1077,7 @@ export class AuthService {
     for (const qualifiaction of resumeRegisterRequestDto.qualifications ?? []) {
       if (qualifiaction.certificate == '생활체육지도자') {
         newResume.license = 1;
+        await this.resumeRepository.save(newResume);
       }
       await this.qualificationRepository.save({
         ...qualifiaction,

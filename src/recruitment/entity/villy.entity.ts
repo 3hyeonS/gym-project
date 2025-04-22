@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { RecruitmentEntity } from './recruitment.entity';
-import { UserEntity } from 'src/auth/entity/user/user.entity';
+import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 
 @Entity({ name: 'villy' })
 export class VillyEntity {
@@ -16,20 +16,13 @@ export class VillyEntity {
   @Column({ type: 'tinyint', name: 'messageType', nullable: true })
   messageType: number;
 
-  @CreateDateColumn({
-    type: 'datetime',
-    name: 'createdAt',
-    nullable: false,
-  })
-  createdAt: Date;
-
-  @ManyToOne(() => UserEntity, (user) => user.villies, {
+  @ManyToOne(() => ResumeEntity, (resume) => resume.villies, {
     eager: true,
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
-  user: UserEntity;
+  resume: ResumeEntity;
 
   @ManyToOne(() => RecruitmentEntity, (recruitment) => recruitment.villies, {
     eager: true,
@@ -38,4 +31,11 @@ export class VillyEntity {
     onDelete: 'CASCADE',
   })
   recruitment: RecruitmentEntity;
+
+  @CreateDateColumn({
+    type: 'datetime',
+    name: 'createdAt',
+    nullable: false,
+  })
+  createdAt: Date;
 }

@@ -1,7 +1,7 @@
 import {
   Column,
   Entity,
-  JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -10,6 +10,7 @@ import { CareerEntity } from './career.entity';
 import { AcademyEntity } from './academy.entity';
 import { QualificationEntity } from './qualification.entity';
 import { UserEntity } from '../user/user.entity';
+import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 
 @Entity({ name: 'resume' })
 export class ResumeEntity {
@@ -92,11 +93,17 @@ export class ResumeEntity {
   )
   qualifications: QualificationEntity[];
 
-  @OneToOne(() => UserEntity, (user) => user.resume, {
+  @ManyToOne(() => UserEntity, (user) => user.resumes, {
+    eager: true,
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'userId' })
   user: UserEntity;
+
+  @OneToMany(() => VillyEntity, (villy) => villy.resume, {
+    nullable: true,
+    cascade: true,
+  })
+  villies: VillyEntity[];
 }

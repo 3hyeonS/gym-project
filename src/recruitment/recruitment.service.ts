@@ -16,6 +16,7 @@ import {
 } from './dto/recruitment-dto/request-dto/recruitment-register-request-dto';
 import { CenterEntity } from 'src/auth/entity/center.entity';
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -36,6 +37,9 @@ import { VillyResponseDto } from './dto/villy-dto/villy-response-dto';
 import { NotionRecruitmentEntity } from './entity/notion-recruitment.entity';
 import { VillySchedulerService } from './villy.scheduler.service';
 import { FirebaseService } from 'src/firebase.service';
+import { CareerEntity } from 'src/auth/entity/resume/career.entity';
+import { AcademyEntity } from 'src/auth/entity/resume/academy.entity';
+import { QualificationEntity } from 'src/auth/entity/resume/qualification.entity';
 
 @Injectable()
 export class RecruitmentService {
@@ -62,6 +66,12 @@ export class RecruitmentService {
     private villyRepository: Repository<VillyEntity>,
     @InjectRepository(NotionRecruitmentEntity)
     private notionRecruitmentRepository: Repository<NotionRecruitmentEntity>,
+    @InjectRepository(CareerEntity)
+    private careerRepository: Repository<CareerEntity>,
+    @InjectRepository(AcademyEntity)
+    private academyRepository: Repository<AcademyEntity>,
+    @InjectRepository(QualificationEntity)
+    private qualificationRepository: Repository<QualificationEntity>,
     private villySchedulerService: VillySchedulerService,
     private firebaseService: FirebaseService,
   ) {
@@ -1092,16 +1102,127 @@ export class RecruitmentService {
       where: {
         messageType: 1,
         recruitment: { id },
-        user: { id: user.id },
+        resume: { user: { id: user.id } },
       },
     });
     if (existApplyVilly) {
       throw new ConflictException('You already applied');
     }
 
+    const myCurrentResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+        isSnapshot: 0,
+      },
+    });
+
+    // snapshot 이력서 생성
+    // 증명사진 s3 snapshot 복사
+    const number = await this.resumeRepository.count({
+      where: {
+        user: { id: user.id },
+        isSnapshot: 1,
+      },
+    });
+    const profileImageOldKey = myCurrentResume.profileImage.split('com/')[1];
+    const profileImageNewKey = `resume/${user.id}/snapshot/${number}/profileImage`;
+    await this.s3.send(
+      new CopyObjectCommand({
+        Bucket: this.bucketName,
+        CopySource: `${this.bucketName}/${profileImageOldKey}`, // 기존 파일
+        Key: profileImageNewKey, // 새로운 위치 또는 이름
+      }),
+    );
+
+    const snapshotResume = await this.resumeRepository.create({
+      profileImage: `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${profileImageNewKey}`,
+      name: myCurrentResume.name,
+      birth: myCurrentResume.birth,
+      phone: myCurrentResume.phone,
+      email: myCurrentResume.email,
+      gender: myCurrentResume.gender,
+      location: myCurrentResume.location,
+      isNew: myCurrentResume.isNew,
+      workType: myCurrentResume.workType,
+      workTime: myCurrentResume.workTime,
+      license: myCurrentResume.license,
+      award: myCurrentResume.award,
+      SNS: myCurrentResume.SNS,
+      introduction: myCurrentResume.introduction,
+      user,
+      isSnapshot: 1,
+    });
+
+    // 포트폴리오 파일 s3 snaphot 복사
+    if (myCurrentResume.portfolioFile) {
+      const portfolioFileOldKey =
+        myCurrentResume.portfolioFile.split('com/')[1];
+      const portfolioFileNewKey = `resume/${user.id}/snapshot/${number}/portfolio/file`;
+      await this.s3.send(
+        new CopyObjectCommand({
+          Bucket: this.bucketName,
+          CopySource: `${this.bucketName}/${portfolioFileOldKey}`, // 기존 파일
+          Key: portfolioFileNewKey, // 새로운 위치 또는 이름
+        }),
+      );
+      snapshotResume.portfolioFile = `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${portfolioFileNewKey}`;
+    }
+
+    // 포트폴리오 이미지 s3 snapshot 복사
+    if (myCurrentResume.portfolioImages) {
+      let i = 0;
+      const uploadedUrls: string[] = [];
+      for (const url of myCurrentResume.portfolioImages) {
+        const portfolioImagesOldKey = url.split('com/')[1];
+        const portfolioImagesNewKey = `resume/${user.id}/snapshot/${number}/portfolio/images/${i}`;
+        await this.s3.send(
+          new CopyObjectCommand({
+            Bucket: this.bucketName,
+            CopySource: `${this.bucketName}/${portfolioImagesOldKey}`, // 기존 파일
+            Key: portfolioImagesNewKey, // 새로운 위치 또는 이름
+          }),
+        );
+        uploadedUrls.push(
+          `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${portfolioImagesNewKey}`,
+        );
+        i += 1;
+      }
+      snapshotResume.portfolioImages = uploadedUrls;
+    }
+
+    await this.resumeRepository.save(snapshotResume);
+
+    if (myCurrentResume.careers) {
+      for (const career of myCurrentResume.careers) {
+        const { id, resume, ...rest } = career;
+        await this.careerRepository.save({
+          ...rest,
+          resume: snapshotResume,
+        });
+      }
+    }
+
+    if (myCurrentResume.academy) {
+      const { id, resume, ...rest } = myCurrentResume.academy;
+      await this.academyRepository.save({
+        ...rest,
+        resume: snapshotResume,
+      });
+    }
+
+    if (myCurrentResume.qualifications) {
+      for (const qualifiaction of myCurrentResume.qualifications) {
+        const { id, resume, ...rest } = qualifiaction;
+        await this.qualificationRepository.save({
+          ...rest,
+          resume: snapshotResume,
+        });
+      }
+    }
+
     await this.villyRepository.save({
       messageType: 1,
-      user,
+      resume: snapshotResume,
       recruitment,
     });
 
@@ -1111,7 +1232,7 @@ export class RecruitmentService {
       await this.firebaseService.sendPushToDevice(
         fcmToken,
         '새로운 이력서가 도착했습니다.',
-        `${user.resume.name}님의 이력서를 확인해주세요!`,
+        `${snapshotResume.name}님의 이력서를 확인해주세요!`,
         'MyRecruitmentListScreen',
       );
     }
@@ -1123,7 +1244,7 @@ export class RecruitmentService {
   ): Promise<RecruitmentResponseDto[]> {
     const applyVillies = await this.villyRepository.find({
       where: {
-        user: { id: user.id },
+        resume: { user: { id: user.id } },
         messageType: 1,
       },
       order: { createdAt: 'DESC' }, // 최신순
@@ -1150,19 +1271,16 @@ export class RecruitmentService {
     for (const villy of applyVillies) {
       const proposalVilly = await this.villyRepository.findOne({
         where: {
-          user: { id: villy.user.id },
+          resume: { id: villy.resume.id },
           recruitment: { id },
           messageType: 2,
         },
       });
+
       if (proposalVilly) {
-        resumeList.push(
-          new ResumeisProposedResponseDto(villy.user.resume, true),
-        );
+        resumeList.push(new ResumeisProposedResponseDto(villy.resume, true));
       } else {
-        resumeList.push(
-          new ResumeisProposedResponseDto(villy.user.resume, false),
-        );
+        resumeList.push(new ResumeisProposedResponseDto(villy.resume, false));
       }
     }
 
@@ -1178,31 +1296,27 @@ export class RecruitmentService {
       id: recruitmentId,
     });
 
-    const user = await this.userRepository.findOne({
-      where: {
-        resume: { id: resumeId },
-      },
-    });
-
     const existProposalVilly = await this.villyRepository.findOne({
       where: {
         messageType: 2,
         recruitment: { id: recruitment.id },
-        user: { id: user.id },
+        resume: { id: resumeId },
       },
     });
     if (existProposalVilly) {
       throw new ConflictException('You already proposed interview');
     }
 
+    const resume = await this.resumeRepository.findOneBy({ id: resumeId });
+
     await this.villyRepository.save({
       messageType: 2,
-      user,
+      resume,
       recruitment,
     });
 
-    if (user.fcmToken) {
-      const fcmToken = user.fcmToken.token;
+    if (resume.user.fcmToken) {
+      const fcmToken = resume.user.fcmToken.token;
       await this.firebaseService.sendPushToDevice(
         fcmToken,
         '면접을 제안받았습니다.',
@@ -1238,6 +1352,7 @@ export class RecruitmentService {
       const resume = await this.resumeRepository.findOne({
         where: {
           user: { id: member.id },
+          isSnapshot: 0,
         },
       });
 
@@ -1334,7 +1449,7 @@ export class RecruitmentService {
   async getVillies(user: UserEntity): Promise<VillyResponseDto[]> {
     const villies = await this.villyRepository.find({
       where: {
-        user: { id: user.id },
+        resume: { user: { id: user.id } },
       },
       order: { createdAt: 'ASC' }, // 오래된 순
     });
@@ -1347,7 +1462,7 @@ export class RecruitmentService {
     const count = await this.villyRepository.count({
       where: {
         messageType: 0,
-        user: { id: user.id },
+        resume: { user: { id: user.id } },
         createdAt: Raw((alias) => `DATE(${alias}) = CURDATE()`),
       },
     });

@@ -6,6 +6,7 @@ import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 import { UserEntity } from 'src/auth/entity/user/user.entity';
 import { RecruitmentEntity } from 'src/recruitment/entity/recruitment.entity';
 import { FirebaseService } from 'src/firebase.service';
+import { ResumeEntity } from 'src/auth/entity/resume/resume.entity';
 
 @Injectable()
 export class VillySchedulerService implements OnModuleInit {
@@ -16,6 +17,8 @@ export class VillySchedulerService implements OnModuleInit {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(RecruitmentEntity)
     private readonly recruitmentRepository: Repository<RecruitmentEntity>,
+    @InjectRepository(ResumeEntity)
+    private readonly resumeRepository: Repository<ResumeEntity>,
     private firebaseService: FirebaseService,
   ) {}
 
@@ -52,15 +55,20 @@ export class VillySchedulerService implements OnModuleInit {
 
   // 매칭 알고리즘
   async getMatched(user: UserEntity): Promise<RecruitmentEntity> {
-    const resume = user.resume;
-    if (!resume) {
+    const currentResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+        isSnapshot: 0,
+      },
+    });
+    if (!currentResume) {
       return null;
     }
 
     // 이미 매칭되었거나 지원한 공고 리스트
     const alreadyVillies = await this.villyRepository.find({
       where: {
-        user: { id: user.id },
+        resume: { user: { id: user.id } },
         messageType: In([0, 1]),
       },
     });
@@ -74,7 +82,7 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    if (resume.gender == 0) {
+    if (currentResume.gender == 0) {
       // 남성일 경우
       conditions1_1.push({
         condition: 'recruitment.gender IN (:...gd)',
@@ -105,7 +113,7 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    if (resume.gender == 0) {
+    if (currentResume.gender == 0) {
       // 남성일 경우
       conditions1_2.push({
         condition: 'recruitment.gender IN (:...gd)',
@@ -129,7 +137,7 @@ export class VillySchedulerService implements OnModuleInit {
     const locParameters: Record<string, any> = {};
 
     let index = 0;
-    for (const [city, districts] of Object.entries(resume.location)) {
+    for (const [city, districts] of Object.entries(currentResume.location)) {
       const cityKey = `city_${index}`;
       const cityAllKeyword = `${city.split(' ')[0]} 전체`; // "{city} 전체" 생성
 
@@ -166,7 +174,7 @@ export class VillySchedulerService implements OnModuleInit {
     const cityConditions: string[] = [];
     const cityParams: Record<string, any> = {};
 
-    Object.keys(resume.location).forEach((city, index) => {
+    Object.keys(currentResume.location).forEach((city, index) => {
       const cityKey = `city_${index}`;
       cityConditions.push(`recruitment.city = :${cityKey}`);
       cityParams[cityKey] = city;
@@ -182,11 +190,11 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    if (resume.workTime) {
+    if (currentResume.workTime) {
       conditions3.push({
         condition: 'JSON_OVERLAPS(recruitment.workTime, :wti) > 0',
         parameters: {
-          wti: JSON.stringify(resume.workTime),
+          wti: JSON.stringify(currentResume.workTime),
         },
       });
     } else {
@@ -200,11 +208,11 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    if (resume.workType) {
+    if (currentResume.workType) {
       conditions4.push({
         condition: 'JSON_OVERLAPS(recruitment.workType, :wty) > 0',
         parameters: {
-          wty: JSON.stringify(resume.workType),
+          wty: JSON.stringify(currentResume.workType),
         },
       });
     } else {
@@ -218,7 +226,7 @@ export class VillySchedulerService implements OnModuleInit {
       condition: string;
       parameters?: Record<string, any>;
     }[] = [];
-    if (resume.isNew == 0) {
+    if (currentResume.isNew == 0) {
       // 신입일 경우
       conditions5_1.push({
         condition: 'JSON_OVERLAPS(recruitment.qualification, :qlf)',
@@ -242,7 +250,7 @@ export class VillySchedulerService implements OnModuleInit {
       parameters?: Record<string, any>;
     }[] = [];
 
-    if (resume.isNew == 0) {
+    if (currentResume.isNew == 0) {
       // 신입일 경우
       conditions5_2.push({
         condition: 'NOT JSON_OVERLAPS(recruitment.qualification, :qlf)',

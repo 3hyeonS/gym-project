@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BookmarkEntity } from 'src/recruitment/entity/bookmark.entity';
-import { VillyEntity } from 'src/recruitment/entity/villy.entity';
 import { SignWithEntity } from './signWith.entity';
 import { KakaoKeyEntity } from './kakaoKey.entity';
 import { AppleKeyEntity } from './appleKey.entity';
@@ -70,12 +69,11 @@ export class UserEntity {
   })
   refreshTokens: RefreshTokenEntity[];
 
-  @OneToOne(() => ResumeEntity, (resume) => resume.user, {
-    eager: true,
+  @OneToMany(() => ResumeEntity, (resume) => resume.user, {
     cascade: true,
     nullable: true,
   })
-  resume: ResumeEntity;
+  resumes: ResumeEntity[];
 
   @OneToOne(() => FcmTokenEntity, (fcmToken) => fcmToken.user, {
     eager: true,
@@ -94,10 +92,4 @@ export class UserEntity {
     },
   )
   communityReleaseNotification: CommunityReleaseNotificationEntity;
-
-  @OneToMany(() => VillyEntity, (villy) => villy.user, {
-    nullable: true,
-    cascade: true,
-  })
-  villies: VillyEntity[];
 }
