@@ -1025,6 +1025,10 @@ export class RecruitmentService {
   async apply(user: UserEntity, id: number): Promise<void> {
     const recruitment = await this.recruitmentRepository.findOneBy({ id });
 
+    if (!recruitment.center) {
+      throw new ForbiddenException('You cannot apply to notion recruitment');
+    }
+
     const existApplyVilly = await this.villyRepository.findOne({
       where: {
         messageType: 1,
