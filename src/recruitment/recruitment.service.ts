@@ -804,6 +804,16 @@ export class RecruitmentService {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
+    const isApplied = await this.villyRepository.findOne({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+    });
+    if (isApplied) {
+      throw new ForbiddenException('Yon cannot modify applied recruitment');
+    }
+
     const weekendDutyMap = {
       [TWeekendDuty.YES]: 1,
       [TWeekendDuty.NO]: 2,
@@ -830,6 +840,16 @@ export class RecruitmentService {
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    const isApplied = await this.villyRepository.findOne({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+    });
+    if (isApplied) {
+      throw new ForbiddenException('Yon cannot modify applied recruitment');
     }
 
     const genderMap = {
@@ -863,6 +883,16 @@ export class RecruitmentService {
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    const isApplied = await this.villyRepository.findOne({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+    });
+    if (isApplied) {
+      throw new ForbiddenException('Yon cannot modify applied recruitment');
     }
 
     const toNullableArray = <T>(arr?: T[]): T[] | null =>
@@ -907,6 +937,16 @@ export class RecruitmentService {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
+    const isApplied = await this.villyRepository.findOne({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+    });
+    if (isApplied) {
+      throw new ForbiddenException('Yon cannot modify applied recruitment');
+    }
+
     myRecruitment.apply = applyModifyRequestDto.apply;
 
     const updatedRecruitment =
@@ -926,6 +966,16 @@ export class RecruitmentService {
     });
     if (!myRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
+    }
+
+    const isApplied = await this.villyRepository.findOne({
+      where: {
+        recruitment: { id: myRecruitment.id },
+        messageType: 1,
+      },
+    });
+    if (isApplied) {
+      throw new ForbiddenException('Yon cannot modify applied recruitment');
     }
 
     // 기존 이미지 url 중 유지하지 않는 url s3에서 삭제
@@ -986,6 +1036,15 @@ export class RecruitmentService {
     // 이미 등록된 이미지가 있으면 시작 번호 증가
     let number = 0;
     if (existRecruitment) {
+      const isApplied = await this.villyRepository.findOne({
+        where: {
+          recruitment: { id: existRecruitment.id },
+          messageType: 1,
+        },
+      });
+      if (isApplied) {
+        throw new ForbiddenException('Yon cannot modify applied recruitment');
+      }
       if (existRecruitment.image) {
         for (const url of existRecruitment.image) {
           const match = url.match(/image(\d+)/);

@@ -1019,7 +1019,7 @@ export class AuthController {
   @Roles('USER')
   @Get('/hasResume')
   async hasResume(@GetUser() user: UserEntity): Promise<boolean> {
-    return await this.authService.hasResume(user);
+    return await this.authService.hasCurrentResume(user);
   }
 
   // 이력서 등록
@@ -1105,7 +1105,7 @@ export class AuthController {
   @Roles('USER')
   @Get('getMyResume')
   async getMyResume(@GetUser() user: UserEntity): Promise<ResumeResponseDto> {
-    return await this.authService.getMyResume(user);
+    return await this.authService.getMyCurrentResume(user);
   }
 
   // 이력서 삭제하기

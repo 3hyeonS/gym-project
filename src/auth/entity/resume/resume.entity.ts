@@ -64,6 +64,9 @@ export class ResumeEntity {
   @Column({ type: 'text', name: 'introduction', nullable: true })
   introduction: string;
 
+  @Column({ type: 'tinyint', name: 'isSnapshot', nullable: false })
+  isSnapshot: number;
+
   @OneToMany(() => CareerEntity, (career) => career.resume, {
     eager: true,
     nullable: true,

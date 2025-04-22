@@ -320,6 +320,12 @@ export class RecruitmentController {
     message: 'Not a member of the CENTER (only CENTER can call this api)',
     error: 'ForbiddenException',
   })
+  @ErrorApiResponse({
+    status: 403,
+    description: '지원자가 있는 채용공고는 수정할 수 없음',
+    message: 'Yon cannot modify applied recruitment',
+    error: 'ForbiddenException',
+  })
   @ResponseMsg('Recruitment images uploaded successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -521,6 +527,12 @@ export class RecruitmentController {
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
+    status: 403,
+    description: '지원자가 있는 채용공고는 수정할 수 없음',
+    message: 'Yon cannot modify applied recruitment',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
     status: 404,
     description: '채용 중인 공고가 없음',
     message: 'There is no hring recruitment',
@@ -568,6 +580,12 @@ export class RecruitmentController {
     status: 403,
     description: '센터 회원이 아님 (센터 회원만 공고 수정 가능)',
     message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '지원자가 있는 채용공고는 수정할 수 없음',
+    message: 'Yon cannot modify applied recruitment',
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
@@ -622,6 +640,12 @@ export class RecruitmentController {
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
+    status: 403,
+    description: '지원자가 있는 채용공고는 수정할 수 없음',
+    message: 'Yon cannot modify applied recruitment',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
     status: 404,
     description: '채용 중인 공고가 없음',
     message: 'There is no hring recruitment',
@@ -673,6 +697,12 @@ export class RecruitmentController {
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
+    status: 403,
+    description: '지원자가 있는 채용공고는 수정할 수 없음',
+    message: 'Yon cannot modify applied recruitment',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
     status: 404,
     description: '채용 중인 공고가 없음',
     message: 'There is no hring recruitment',
@@ -720,6 +750,12 @@ export class RecruitmentController {
     status: 403,
     description: '센터 회원이 아님 (센터 회원만 공고 수정 가능)',
     message: 'Not a member of the CENTER (only CENTER can call this api)',
+    error: 'ForbiddenException',
+  })
+  @ErrorApiResponse({
+    status: 403,
+    description: '지원자가 있는 채용공고는 수정할 수 없음',
+    message: 'Yon cannot modify applied recruitment',
     error: 'ForbiddenException',
   })
   @ErrorApiResponse({
