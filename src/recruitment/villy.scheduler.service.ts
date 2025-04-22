@@ -32,10 +32,16 @@ export class VillySchedulerService implements OnModuleInit {
       const users = await this.userRepository.find();
       for (const user of users) {
         const recruitment = await this.getMatched(user);
+        const currentResume = await this.resumeRepository.findOne({
+          where: {
+            user: { id: user.id },
+            isSnapshot: 0,
+          },
+        });
         if (recruitment) {
           await this.villyRepository.save({
             messageType: 0,
-            user,
+            resume: currentResume,
             recruitment,
           });
 
