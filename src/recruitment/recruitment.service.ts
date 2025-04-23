@@ -1476,9 +1476,15 @@ export class RecruitmentService {
         'There is no more recruitment for your resume',
       );
     }
+    const myCurrentResume = await this.resumeRepository.findOne({
+      where: {
+        user: { id: user.id },
+        isSnapshot: 0,
+      },
+    });
     await this.villyRepository.save({
       messageType: 0,
-      user,
+      resume: myCurrentResume,
       recruitment: matchedRecruitment,
     });
     return await this.getVillies(user);
