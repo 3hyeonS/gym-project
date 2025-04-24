@@ -40,12 +40,12 @@ export class EmailService {
             안녕하세요, Village 인증 코드입니다.<br>
             아래 인증 코드를 입력하여 인증을 완료하세요.
           </p>
-          <div style="text-align: center; padding: 15px; background: #007bff; color: #fff; font-size: 24px; font-weight: bold; border-radius: 5px;">
+          <div style="text-align: center; padding: 15px; background: #21782B; color: #fff; font-size: 24px; font-weight: bold; border-radius: 5px;">
             ${code}
           </div>
           <p style="text-align: center; font-size: 14px; color: #777; margin-top: 15px;">
             본 메일은 자동 발송되었습니다.<br>
-            문의가 필요하시면 <a href="mailto:villageapp2025@gmail.com" style="color: #007bff; text-decoration: none;">villageapp2025@gmail.com</a>으로 연락주세요.
+            문의가 필요하시면 <a href="mailto:villageapp2025@gmail.com" style="color: #21782B; text-decoration: none;">villageapp2025@gmail.com</a>으로 연락주세요.
           </p>
           <p style="text-align: center; font-size: 12px; color: #aaa;">
             ⓒ 2025 Village. All rights reserved.
