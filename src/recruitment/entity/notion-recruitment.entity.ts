@@ -41,7 +41,7 @@ export class NotionRecruitmentEntity {
   @Column({ type: 'json', name: 'welfare', nullable: false })
   welfare: string[];
 
-  @Column({ type: 'json', name: 'qualifications', nullable: false })
+  @Column({ type: 'json', name: 'qualification', nullable: false })
   qualification: string[];
 
   @Column({ type: 'json', name: 'preference', nullable: false })
