@@ -27,8 +27,8 @@ export class VillySchedulerService implements OnModuleInit {
   }
 
   scheduleDailyVillyCreation() {
-    // 매일 오후 7시 실행 (한국시간 기준)
-    cron.schedule('0 10 * * *', async () => {
+    // 매일 오전 10시 실행 (한국시간 기준)
+    cron.schedule('45 16 * * *', async () => {
       const users = await this.userRepository.find();
       for (const user of users) {
         const recruitment = await this.getMatched(user);
