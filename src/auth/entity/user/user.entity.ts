@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -56,6 +57,13 @@ export class UserEntity {
     onDelete: 'CASCADE',
   })
   authority: AuthorityEntity;
+
+  @CreateDateColumn({
+    type: 'datetime',
+    name: 'createdAt',
+    nullable: false,
+  })
+  createdAt: Date;
 
   @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.user, {
     nullable: true,

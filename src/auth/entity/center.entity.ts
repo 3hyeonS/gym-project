@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -57,6 +58,13 @@ export class CenterEntity {
     onDelete: 'CASCADE',
   })
   authority: AuthorityEntity;
+
+  @CreateDateColumn({
+    type: 'datetime',
+    name: 'createdAt',
+    nullable: false,
+  })
+  createdAt: Date;
 
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.center, {
     nullable: true,

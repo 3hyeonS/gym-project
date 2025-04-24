@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -67,6 +68,13 @@ export class ResumeEntity {
 
   @Column({ type: 'tinyint', name: 'isSnapshot', nullable: false })
   isSnapshot: number;
+
+  @CreateDateColumn({
+    type: 'datetime',
+    name: 'createdAt',
+    nullable: false,
+  })
+  createdAt: Date;
 
   @OneToMany(() => CareerEntity, (career) => career.resume, {
     eager: true,
