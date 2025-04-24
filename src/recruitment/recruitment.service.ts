@@ -241,7 +241,7 @@ export class RecruitmentService {
 
     // workType 조건 처리
     if (selectedOptionsDto.selectedWorkType?.length) {
-      if (selectedOptionsDto.flexibleOptions[0] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedWorkType.push('명시 안 됨');
         selectedOptionsDto.selectedWorkType.push('채용공고참고');
       }
@@ -255,10 +255,11 @@ export class RecruitmentService {
 
     // workTime 조건 처리
     if (selectedOptionsDto.selectedWorkTime?.length) {
-      if (selectedOptionsDto.flexibleOptions[1] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedWorkTime.push('명시 안 됨');
         selectedOptionsDto.selectedWorkTime.push('채용공고참고');
       }
+      selectedOptionsDto.selectedWorkTime.push('협의 가능');
       conditions.push({
         condition: 'JSON_OVERLAPS(recruitment.workTime, :wti) > 0',
         parameters: {
@@ -269,7 +270,7 @@ export class RecruitmentService {
 
     // weekendDuty 조건 처리
     if (selectedOptionsDto.selectedWeekendDuty?.length) {
-      if (selectedOptionsDto.flexibleOptions[2] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedWeekendDuty.push('명시 안 됨');
         selectedOptionsDto.selectedWeekendDuty.push('채용공고참고');
       }
@@ -291,7 +292,7 @@ export class RecruitmentService {
 
     // gender 조건 처리
     if (selectedOptionsDto.selectedGender?.length) {
-      if (selectedOptionsDto.flexibleOptions[3] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedGender.push('명시 안 됨');
         selectedOptionsDto.selectedGender.push('성별 무관');
       }
@@ -315,7 +316,7 @@ export class RecruitmentService {
     if (selectedOptionsDto.selectedSalary?.length) {
       let slyConditions = [`JSON_CONTAINS(recruitment.salary, :sly) > 0`];
 
-      if (selectedOptionsDto.flexibleOptions[4] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         slyConditions.push(
           `JSON_CONTAINS(recruitment.salary, '["명시 안 됨"]') > 0`,
           `JSON_CONTAINS(recruitment.salary, '["채용공고참고"]') > 0`,
@@ -330,7 +331,7 @@ export class RecruitmentService {
 
     // maxClassFee 조건 처리
     if (selectedOptionsDto.selectedMaxClassFee) {
-      if (selectedOptionsDto.flexibleOptions[5] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         conditions.push({
           condition:
             '(recruitment.maxClassFee >= :mcf or recruitment.maxClassFee <= -1)',
@@ -346,7 +347,7 @@ export class RecruitmentService {
 
     // wellfare 조건 처리
     if (selectedOptionsDto.selectedWelfare?.length) {
-      if (selectedOptionsDto.flexibleOptions[6] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedWelfare.push('명시 안 됨');
       }
       conditions.push({
@@ -359,7 +360,7 @@ export class RecruitmentService {
 
     // qualification 조건 처리
     if (selectedOptionsDto.selectedQualification?.length) {
-      if (selectedOptionsDto.flexibleOptions[7] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedQualification.push('명시 안 됨');
         selectedOptionsDto.selectedQualification.push('채용공고참고');
       }
@@ -374,7 +375,7 @@ export class RecruitmentService {
 
     // preference 조건 처리
     if (selectedOptionsDto.selectedPreference?.length) {
-      if (selectedOptionsDto.flexibleOptions[8] == 1) {
+      if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedPreference.push('명시 안 됨');
         selectedOptionsDto.selectedPreference.push('채용공고참고');
       }
