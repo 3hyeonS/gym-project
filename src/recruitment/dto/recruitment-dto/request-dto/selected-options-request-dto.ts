@@ -12,13 +12,13 @@ export class SelectedOptionsRequestDto {
   @ApiProperty({
     type: Boolean,
     description:
-      '명시 안 됨, 채용공고 참고에 대한 옵션 체크 여부  \n0 : 포함하지 않음  \n1: 모두 포함',
+      '명시 안 됨, 채용공고 참고에 대한 옵션 체크 여부  \ntrue : 모두 포함  \nfalse(default): 포함하지 않음',
     example: true,
-    default: true,
+    default: false,
   })
   @IsBoolean()
   @IsOptional()
-  flexibleOption?: boolean = true;
+  flexibleOption?: boolean = false;
 
   @ApiProperty({
     type: String,
