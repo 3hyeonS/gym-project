@@ -1108,41 +1108,41 @@ export class AuthController {
     return await this.authService.getMyCurrentResume(user);
   }
 
-  // 이력서 삭제하기
-  @ApiBearerAuth('accessToken')
-  @ApiOperation({
-    summary: '이력서 삭제하기',
-  })
-  @NullApiResponse({
-    status: 200,
-    description: '이력서 삭제 성공',
-    message: 'Resume deleted successfully',
-  })
-  @ErrorApiResponse({
-    status: 401,
-    description: '유효하지 않거나 기간이 만료된 acccessToken',
-    message: 'Invalid or expired accessToken',
-    error: 'UnauthorizedException',
-  })
-  @ErrorApiResponse({
-    status: 403,
-    description: '유저 회원이 아님 (유저 회원만 이력서 삭제 가능)',
-    message: 'Not a member of the USER (only USER can call this api)',
-    error: 'ForbiddenException',
-  })
-  @ErrorApiResponse({
-    status: 404,
-    description: '등록한 이력서가 없음',
-    message: 'There is no registered resume',
-    error: 'NotFoundException',
-  })
-  @ResponseMsg('Resume deleted successfully')
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles('USER')
-  @Get('deleteResume')
-  async deleteResume(@GetUser() user: UserEntity): Promise<void> {
-    await this.authService.deleteResume(user);
-  }
+  // // 이력서 삭제하기
+  // @ApiBearerAuth('accessToken')
+  // @ApiOperation({
+  //   summary: '이력서 삭제하기',
+  // })
+  // @NullApiResponse({
+  //   status: 200,
+  //   description: '이력서 삭제 성공',
+  //   message: 'Resume deleted successfully',
+  // })
+  // @ErrorApiResponse({
+  //   status: 401,
+  //   description: '유효하지 않거나 기간이 만료된 acccessToken',
+  //   message: 'Invalid or expired accessToken',
+  //   error: 'UnauthorizedException',
+  // })
+  // @ErrorApiResponse({
+  //   status: 403,
+  //   description: '유저 회원이 아님 (유저 회원만 이력서 삭제 가능)',
+  //   message: 'Not a member of the USER (only USER can call this api)',
+  //   error: 'ForbiddenException',
+  // })
+  // @ErrorApiResponse({
+  //   status: 404,
+  //   description: '등록한 이력서가 없음',
+  //   message: 'There is no registered resume',
+  //   error: 'NotFoundException',
+  // })
+  // @ResponseMsg('Resume deleted successfully')
+  // @UseGuards(AuthGuard(), RolesGuard)
+  // @Roles('USER')
+  // @Get('deleteResume')
+  // async deleteResume(@GetUser() user: UserEntity): Promise<void> {
+  //   await this.authService.deleteResume(user);
+  // }
 
   // 이력서 증명사진 수정하기
   @ApiBearerAuth('accessToken')
