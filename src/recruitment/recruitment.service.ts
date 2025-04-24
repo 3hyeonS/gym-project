@@ -294,8 +294,8 @@ export class RecruitmentService {
     if (selectedOptionsDto.selectedGender?.length) {
       if (selectedOptionsDto.flexibleOption) {
         selectedOptionsDto.selectedGender.push('명시 안 됨');
-        selectedOptionsDto.selectedGender.push('성별 무관');
       }
+      selectedOptionsDto.selectedGender.push('성별 무관');
       const genderMap = {
         ['명시 안 됨']: 0,
         ['성별 무관']: 1,

@@ -12,7 +12,7 @@ export class SelectedOptionsRequestDto {
   @ApiProperty({
     type: Boolean,
     description:
-      '명시 안 됨, 채용공고 참고, 성별 무관에 대한 옵션 체크 여부  \n순서: 근무 형태, 근무 시간, 주말 당직, 성별, 급여 조건, 최대 수업료, 복리후생, 지원자격, 우대사항  \n0 : 포함하지 않음  \n1: 모두 포함',
+      '명시 안 됨, 채용공고 참고에 대한 옵션 체크 여부  \n0 : 포함하지 않음  \n1: 모두 포함',
     example: true,
     default: true,
   })
