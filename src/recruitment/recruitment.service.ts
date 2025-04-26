@@ -809,6 +809,7 @@ export class RecruitmentService {
     const myRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
       },
     });
     if (!myRecruitment) {
@@ -847,6 +848,7 @@ export class RecruitmentService {
     const myRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
       },
     });
     if (!myRecruitment) {
@@ -890,6 +892,7 @@ export class RecruitmentService {
     const myRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
       },
     });
     if (!myRecruitment) {
@@ -942,6 +945,7 @@ export class RecruitmentService {
     const myRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
       },
     });
     if (!myRecruitment) {
@@ -973,6 +977,7 @@ export class RecruitmentService {
     const myRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
       },
     });
     if (!myRecruitment) {
@@ -1041,6 +1046,7 @@ export class RecruitmentService {
     const existRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 1,
       },
     });
 
