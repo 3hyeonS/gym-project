@@ -897,12 +897,11 @@ export class AuthService {
       },
     });
 
-    // 증명사진이 기존에 있으면 번호 증가 후 삭제
-    let number = 0;
+    // 증명사진이 기존에 있으면 삭제
     if (myCurrentResume) {
-      const match = myCurrentResume.profileImage.match(/profileImage(\d+)/);
-      const urlNumber = parseInt(match[1], 10);
-      number = urlNumber + 1;
+      // const match = myCurrentResume.profileImage.match(/profileImage(\d+)/);
+      // const urlNumber = parseInt(match[1], 10);
+      // number = urlNumber + 1;
 
       const fileKey = myCurrentResume.profileImage.split('com/')[1];
       const params = {
@@ -911,8 +910,8 @@ export class AuthService {
       };
       await this.s3.send(new DeleteObjectCommand(params));
     }
-
-    const newFileKey = `resume/${user.id}/current/profileImage${number}`;
+    const randomString = Math.random().toString(36).substring(2, 12);
+    const newFileKey = `resume/${user.id}/current/profileImage/${randomString}`;
 
     // 업로드
     const params = {
@@ -938,12 +937,11 @@ export class AuthService {
       },
     });
 
-    // 포트폴리오 파일이 기존에 있으면 번호 증가 후 삭제
-    let number = 0;
+    // 포트폴리오 파일이 기존에 있으면 삭제
     if (myCurrentResume) {
-      const match = myCurrentResume.portfolioFile.match(/file(\d+)/);
-      const urlNumber = parseInt(match[1], 10);
-      number = urlNumber + 1;
+      // const match = myCurrentResume.portfolioFile.match(/file(\d+)/);
+      // const urlNumber = parseInt(match[1], 10);
+      // number = urlNumber + 1;
 
       const fileKey = myCurrentResume.portfolioFile.split('com/')[1];
       const params = {
@@ -952,8 +950,8 @@ export class AuthService {
       };
       await this.s3.send(new DeleteObjectCommand(params));
     }
-
-    const newFileKey = `resume/${user.id}/current/portfolio/file${number}`;
+    const randomString = Math.random().toString(36).substring(2, 12);
+    const newFileKey = `resume/${user.id}/current/portfolio/file${randomString}`;
 
     // 업로드
     const params = {
@@ -979,27 +977,27 @@ export class AuthService {
       },
     });
 
-    // 이미 등록된 이미지가 있으면 시작 번호 증가
-    let number = 0;
-    if (myCurrentResume) {
-      if (myCurrentResume.portfolioImages) {
-        for (const url of myCurrentResume.portfolioImages) {
-          const match = url.match(/image(\d+)/);
-          const urlNumber = parseInt(match[1], 10);
-          number = urlNumber > number ? urlNumber : number;
-        }
-        number = number + 1;
-      }
-    }
+    // // 이미 등록된 이미지가 있으면 시작 번호 증가
+    // let number = 0;
+    // if (myCurrentResume) {
+    //   if (myCurrentResume.portfolioImages) {
+    //     for (const url of myCurrentResume.portfolioImages) {
+    //       const match = url.match(/image(\d+)/);
+    //       const urlNumber = parseInt(match[1], 10);
+    //       number = urlNumber > number ? urlNumber : number;
+    //     }
+    //     number = number + 1;
+    //   }
+    // }
 
     if (!files || files.length === 0) {
       return [];
     }
     const uploadedUrls: string[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileKey = `resume/${user.id}/current/portfolio/images/image${i + number}`;
+    for (const file of files) {
+      const randomString = Math.random().toString(36).substring(2, 12);
+      const fileKey = `resume/${user.id}/current/portfolio/images/${randomString}`;
 
       const params = {
         Bucket: this.bucketName,

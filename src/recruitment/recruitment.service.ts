@@ -534,13 +534,13 @@ export class RecruitmentService {
 
   // 채용 공고 등록 가능 여부 확인
   async canRegisterRecruitment(center: CenterEntity): Promise<boolean> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (myRecruitment) {
+    if (myCurrentRecruitment) {
       return false;
     }
     return true;
@@ -665,24 +665,24 @@ export class RecruitmentService {
     myRecruitment: RecruitmentResponseDto | null;
     hiringApply: number;
   }> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       return { myRecruitment: null, hiringApply: 0 };
     }
 
     const applyVillies = await this.villyRepository.count({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id: myCurrentRecruitment.id },
         messageType: 1,
       },
     });
     return {
-      myRecruitment: new RecruitmentResponseDto(myRecruitment),
+      myRecruitment: new RecruitmentResponseDto(myCurrentRecruitment),
       hiringApply: applyVillies,
     };
   }
@@ -734,44 +734,78 @@ export class RecruitmentService {
 
   // method7: 내 채용 중 공고 끌어올리기
   async refreshMyRecruitment(center: CenterEntity): Promise<void> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     // 하루에 한 번만
-    const date = myRecruitment.date;
+    const date = myCurrentRecruitment.date;
     if (new Date(date).getDate() == new Date().getDate()) {
       throw new ForbiddenException('You already updated recruitment today');
     }
-    myRecruitment.date = new Date();
-    await this.recruitmentRepository.save(myRecruitment);
+    myCurrentRecruitment.date = new Date();
+    await this.recruitmentRepository.save(myCurrentRecruitment);
   }
 
   // method8: 내 채용 중 공고 만료시키기
   async expireMyRecruitment(center: CenterEntity): Promise<void> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hring recruitment');
+    }
+
+    const countExpiredGyms = await this.recruitmentRepository.count({
+      where: {
+        center: { id: center.id }, // 명시적으로 id 사용
+        isHiring: 0,
+      },
+    });
+
+    // s3 이미지 url 변경
+    if (myCurrentRecruitment.image) {
+      const uploadedUrls: string[] = [];
+      for (const url of myCurrentRecruitment.image) {
+        const randomString = Math.random().toString(36).substring(2, 12);
+        const imageOldKey = url.split('com/')[1];
+        const imageNewKey = `recruitment/registered/${center.id}/expired/${countExpiredGyms}/${randomString}`;
+        await this.s3.send(
+          new CopyObjectCommand({
+            Bucket: this.bucketName,
+            CopySource: `${this.bucketName}/${imageOldKey}`, // 기존 파일
+            Key: imageNewKey, // 새로운 위치 또는 이름
+          }),
+        );
+        const params = {
+          Bucket: this.bucketName,
+          Key: imageNewKey,
+        };
+        await this.s3.send(new DeleteObjectCommand(params));
+
+        uploadedUrls.push(
+          `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageNewKey}`,
+        );
+      }
+      myCurrentRecruitment.image = uploadedUrls;
     }
 
     // 북마크 모두 해제
     await this.bookmarkRepository.delete({
-      recruitment: { id: myRecruitment.id },
+      recruitment: { id: myCurrentRecruitment.id },
     });
 
-    myRecruitment.isHiring = 0;
-    await this.recruitmentRepository.save(myRecruitment);
+    myCurrentRecruitment.isHiring = 0;
+    await this.recruitmentRepository.save(myCurrentRecruitment);
   }
 
   // method9: 내 공고 삭제하기
@@ -806,19 +840,19 @@ export class RecruitmentService {
     center: CenterEntity,
     weekendDutyModifyRequestDto: WeekendDutyModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     const isApplied = await this.villyRepository.findOne({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id: myCurrentRecruitment.id },
         messageType: 1,
       },
     });
@@ -833,10 +867,10 @@ export class RecruitmentService {
     const transformedWeekendDuty =
       weekendDutyMap[weekendDutyModifyRequestDto.weekendDuty];
 
-    myRecruitment.weekendDuty = transformedWeekendDuty;
+    myCurrentRecruitment.weekendDuty = transformedWeekendDuty;
 
     const updatedRecruitment =
-      await this.recruitmentRepository.save(myRecruitment);
+      await this.recruitmentRepository.save(myCurrentRecruitment);
     return new RecruitmentResponseDto(updatedRecruitment);
   }
 
@@ -845,19 +879,19 @@ export class RecruitmentService {
     center: CenterEntity,
     applyConditionModifyRequestDto: ApplyConditionModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     const isApplied = await this.villyRepository.findOne({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id: myCurrentRecruitment.id },
         messageType: 1,
       },
     });
@@ -872,13 +906,13 @@ export class RecruitmentService {
     };
     const transformedGender = genderMap[applyConditionModifyRequestDto.gender];
 
-    await this.recruitmentRepository.update(myRecruitment.id, {
+    await this.recruitmentRepository.update(myCurrentRecruitment.id, {
       ...applyConditionModifyRequestDto,
       gender: transformedGender,
     });
 
     const updatedRecruitment = await this.recruitmentRepository.findOneBy({
-      id: myRecruitment.id,
+      id: myCurrentRecruitment.id,
     });
 
     return new RecruitmentResponseDto(updatedRecruitment);
@@ -889,19 +923,19 @@ export class RecruitmentService {
     center: CenterEntity,
     salaryCondtionModifyRequestDto: SalaryCondtionModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     const isApplied = await this.villyRepository.findOne({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id: myCurrentRecruitment.id },
         messageType: 1,
       },
     });
@@ -919,7 +953,7 @@ export class RecruitmentService {
       ? salaryCondtionModifyRequestDto.classFee[1]
       : -2;
 
-    await this.recruitmentRepository.update(myRecruitment.id, {
+    await this.recruitmentRepository.update(myCurrentRecruitment.id, {
       salary,
       basePay: toNullableArray(basePay),
       classPay: toNullableArray(classPay),
@@ -931,7 +965,7 @@ export class RecruitmentService {
     });
 
     const updatedRecruitment = await this.recruitmentRepository.findOneBy({
-      id: myRecruitment.id,
+      id: myCurrentRecruitment.id,
     });
 
     return new RecruitmentResponseDto(updatedRecruitment);
@@ -942,19 +976,19 @@ export class RecruitmentService {
     center: CenterEntity,
     applyModifyRequestDto: ApplyModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     const isApplied = await this.villyRepository.findOne({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id: myCurrentRecruitment.id },
         messageType: 1,
       },
     });
@@ -962,10 +996,10 @@ export class RecruitmentService {
       throw new ForbiddenException('Yon cannot modify applied recruitment');
     }
 
-    myRecruitment.apply = applyModifyRequestDto.apply;
+    myCurrentRecruitment.apply = applyModifyRequestDto.apply;
 
     const updatedRecruitment =
-      await this.recruitmentRepository.save(myRecruitment);
+      await this.recruitmentRepository.save(myCurrentRecruitment);
     return new RecruitmentResponseDto(updatedRecruitment);
   }
 
@@ -974,19 +1008,19 @@ export class RecruitmentService {
     center: CenterEntity,
     detailModifyRequestDto: DetailModifyRequestDto,
   ): Promise<RecruitmentResponseDto> {
-    const myRecruitment = await this.recruitmentRepository.findOne({
+    const myCurrentRecruitment = await this.recruitmentRepository.findOne({
       where: {
         center: { id: center.id }, // 명시적으로 id 사용
         isHiring: 1,
       },
     });
-    if (!myRecruitment) {
+    if (!myCurrentRecruitment) {
       throw new NotFoundException('There is no hiring recruitment');
     }
 
     const isApplied = await this.villyRepository.findOne({
       where: {
-        recruitment: { id: myRecruitment.id },
+        recruitment: { id: myCurrentRecruitment.id },
         messageType: 1,
       },
     });
@@ -995,10 +1029,10 @@ export class RecruitmentService {
     }
 
     // 기존 이미지 url 중 유지하지 않는 url s3에서 삭제
-    if (myRecruitment.image) {
+    if (myCurrentRecruitment.image) {
       if (detailModifyRequestDto.image) {
         const newUrl = new Set(detailModifyRequestDto.image);
-        for (const url of myRecruitment.image) {
+        for (const url of myCurrentRecruitment.image) {
           if (!newUrl.has(url)) {
             const fileKey = url.split('com/')[1];
             const params = {
@@ -1009,7 +1043,7 @@ export class RecruitmentService {
           }
         }
       } else {
-        for (const url of myRecruitment.image) {
+        for (const url of myCurrentRecruitment.image) {
           const fileKey = url.split('com/')[1];
           const params = {
             Bucket: this.bucketName,
@@ -1026,13 +1060,13 @@ export class RecruitmentService {
     const toNullableString = (value?: string): string | null =>
       !value || value.trim() === '' ? null : value;
 
-    await this.recruitmentRepository.update(myRecruitment.id, {
+    await this.recruitmentRepository.update(myCurrentRecruitment.id, {
       description: toNullableString(detailModifyRequestDto.description),
       image: toNullableArray(detailModifyRequestDto.image),
     });
 
     const updatedRecruitment = await this.recruitmentRepository.findOneBy({
-      id: myRecruitment.id,
+      id: myCurrentRecruitment.id,
     });
 
     return new RecruitmentResponseDto(updatedRecruitment);
@@ -1050,8 +1084,6 @@ export class RecruitmentService {
       },
     });
 
-    // 이미 등록된 이미지가 있으면 시작 번호 증가
-    let number = 0;
     if (existRecruitment) {
       const isApplied = await this.villyRepository.findOne({
         where: {
@@ -1062,14 +1094,15 @@ export class RecruitmentService {
       if (isApplied) {
         throw new ForbiddenException('Yon cannot modify applied recruitment');
       }
-      if (existRecruitment.image) {
-        for (const url of existRecruitment.image) {
-          const match = url.match(/image(\d+)/);
-          const urlNumber = parseInt(match[1], 10);
-          number = urlNumber > number ? urlNumber : number;
-        }
-        number = number + 1;
-      }
+      // 이미 등록된 이미지가 있으면 시작 번호 증가
+      // if (existRecruitment.image) {
+      //   for (const url of existRecruitment.image) {
+      //     const match = url.match(/image(\d+)/);
+      //     const urlNumber = parseInt(match[1], 10);
+      //     number = urlNumber > number ? urlNumber : number;
+      //   }
+      //   number = number + 1;
+      // }
     }
 
     if (!files || files.length === 0) {
@@ -1077,10 +1110,9 @@ export class RecruitmentService {
     }
     const uploadedUrls: string[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileKey = `recruitment/registered/${center.id}/images/image${i + number}`;
-
+    for (const file of files) {
+      const randomString = Math.random().toString(36).substring(2, 12);
+      const fileKey = `recruitment/registered/${center.id}/current/${randomString}`;
       const params = {
         Bucket: this.bucketName,
         Key: fileKey,
@@ -1131,8 +1163,11 @@ export class RecruitmentService {
         isSnapshot: 1,
       },
     });
+    const profileImageRandomString = Math.random()
+      .toString(36)
+      .substring(2, 12);
     const profileImageOldKey = myCurrentResume.profileImage.split('com/')[1];
-    const profileImageNewKey = `resume/${user.id}/snapshot/${number}/profileImage`;
+    const profileImageNewKey = `resume/${user.id}/snapshot/${number}/profileImage/${profileImageRandomString}`;
     await this.s3.send(
       new CopyObjectCommand({
         Bucket: this.bucketName,
@@ -1162,9 +1197,12 @@ export class RecruitmentService {
 
     // 포트폴리오 파일 s3 snaphot 복사
     if (myCurrentResume.portfolioFile) {
+      const portfolioFileRandomString = Math.random()
+        .toString(36)
+        .substring(2, 12);
       const portfolioFileOldKey =
         myCurrentResume.portfolioFile.split('com/')[1];
-      const portfolioFileNewKey = `resume/${user.id}/snapshot/${number}/portfolio/file`;
+      const portfolioFileNewKey = `resume/${user.id}/snapshot/${number}/portfolio/file/${portfolioFileRandomString}`;
       await this.s3.send(
         new CopyObjectCommand({
           Bucket: this.bucketName,
@@ -1177,11 +1215,13 @@ export class RecruitmentService {
 
     // 포트폴리오 이미지 s3 snapshot 복사
     if (myCurrentResume.portfolioImages) {
-      let i = 0;
       const uploadedUrls: string[] = [];
       for (const url of myCurrentResume.portfolioImages) {
+        const portfolioImagesRandomString = Math.random()
+          .toString(36)
+          .substring(2, 12);
         const portfolioImagesOldKey = url.split('com/')[1];
-        const portfolioImagesNewKey = `resume/${user.id}/snapshot/${number}/portfolio/images/${i}`;
+        const portfolioImagesNewKey = `resume/${user.id}/snapshot/${number}/portfolio/images/${portfolioImagesRandomString}`;
         await this.s3.send(
           new CopyObjectCommand({
             Bucket: this.bucketName,
@@ -1192,7 +1232,6 @@ export class RecruitmentService {
         uploadedUrls.push(
           `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${portfolioImagesNewKey}`,
         );
-        i += 1;
       }
       snapshotResume.portfolioImages = uploadedUrls;
     }
