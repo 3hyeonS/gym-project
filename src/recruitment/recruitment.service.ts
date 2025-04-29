@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Raw, Repository } from 'typeorm';
+import { IsNull, Not, Raw, Repository } from 'typeorm';
 import { SelectedOptionsRequestDto } from './dto/recruitment-dto/request-dto/selected-options-request-dto';
 import { RecruitmentEntity } from './entity/recruitment.entity';
 import {
@@ -120,14 +120,44 @@ export class RecruitmentService {
     totalRecruitments: number;
     totalPages: number;
   }> {
-    const [recruitmentList, totalCount] =
+    const offset = (page - 1) * limit;
+    const [registeredRecruitmentList, registeredCount] =
       await this.recruitmentRepository.findAndCount({
-        where: { isHiring: 1 },
-        order: { date: 'DESC' }, // 최신순 정렬
+        where: { isHiring: 1, center: Not(IsNull()) },
+        order: {
+          date: 'DESC',
+        }, // 최신순 정렬
         take: limit, // 한 페이지에 보여줄 개수
-        skip: (page - 1) * limit, // 페이지 계산
+        skip: offset, // 페이지 계산
         relations: ['center'],
       });
+
+    let recruitmentList = registeredRecruitmentList;
+    if (registeredRecruitmentList.length < limit) {
+      const remainLimit = limit - registeredRecruitmentList.length;
+      const remainOffset = Math.max(0, offset - registeredCount); // 부족분만큼 skip 재계산
+      const [notionRecruitmentList, notionCount] =
+        await this.recruitmentRepository.findAndCount({
+          where: { isHiring: 1, center: IsNull() },
+          order: {
+            date: 'DESC',
+          }, // 최신순 정렬
+          take: remainLimit, // 한 페이지에 보여줄 개수
+          skip: remainOffset, // 페이지 계산
+          relations: ['center'],
+        });
+
+      recruitmentList = [
+        ...registeredRecruitmentList,
+        ...notionRecruitmentList,
+      ];
+    }
+
+    // 전체 채용 공고 개수
+    const totalCount = await this.recruitmentRepository.countBy({
+      isHiring: 1,
+    });
+
     // 비회원 처리
     if (!user) {
       return {
@@ -171,7 +201,7 @@ export class RecruitmentService {
     totalRecruitments: number;
     totalPages: number;
   }> {
-    const queryBuilder = this.recruitmentRepository
+    const baseQueryBuilder = this.recruitmentRepository
       .createQueryBuilder('recruitment')
       .leftJoinAndSelect('recruitment.center', 'center');
     const conditions: {
@@ -391,28 +421,49 @@ export class RecruitmentService {
     // 쿼리 빌더에 조건 추가
     conditions.forEach((condition, index) => {
       if (index === 0) {
-        queryBuilder.where(condition.condition, condition.parameters);
+        baseQueryBuilder.where(condition.condition, condition.parameters);
       } else {
-        queryBuilder.andWhere(condition.condition, condition.parameters);
+        baseQueryBuilder.andWhere(condition.condition, condition.parameters);
       }
     });
 
-    // date 내림차순 정렬 추가
-    queryBuilder.orderBy('recruitment.date', 'DESC');
+    // center NOT NULL 공고 가져오기
+    const offset = (page - 1) * limit;
+    const centerQueryBuilder = baseQueryBuilder.clone();
+    centerQueryBuilder.andWhere('recruitment.center IS NOT NULL');
+    centerQueryBuilder.orderBy('recruitment.date', 'DESC');
+    centerQueryBuilder.take(limit);
+    centerQueryBuilder.skip(offset);
+
+    const registeredRecruitmentList = await centerQueryBuilder.getMany();
+    const registeredCount = await centerQueryBuilder.getCount();
+
+    let recruitmentList = registeredRecruitmentList;
+
+    // 부족하면 center NULL 공고 가져오기
+    if (recruitmentList.length < limit) {
+      const remainLimit = limit - recruitmentList.length;
+      const remainOffset = Math.max(0, offset - registeredCount); // 부족분만큼 skip 재계산
+      const centerNullQueryBuilder = baseQueryBuilder.clone();
+      centerNullQueryBuilder.andWhere('recruitment.center IS NULL');
+      centerNullQueryBuilder.orderBy('recruitment.date', 'DESC');
+      centerNullQueryBuilder.take(remainLimit);
+      centerNullQueryBuilder.skip(remainOffset); // center NULL 쪽은 항상 0부터 시작
+
+      const nullCenterRecruitments = await centerNullQueryBuilder.getMany();
+      recruitmentList = [
+        ...registeredRecruitmentList,
+        ...nullCenterRecruitments,
+      ];
+    }
 
     // 총 개수 가져오기
-    const totalCount = await queryBuilder.getCount();
-
-    // 페이징 처리
-    queryBuilder.take(limit).skip((page - 1) * limit);
-
-    // 최종 데이터 가져오기
-    const objectList = await queryBuilder.getMany();
+    const totalCount = await baseQueryBuilder.getCount();
 
     // 비회원 처리
     if (!user) {
       return {
-        recruitmentList: objectList.map(
+        recruitmentList: recruitmentList.map(
           (recruitment) => new RecruitmentResponseDto(recruitment),
         ),
         page,
@@ -428,7 +479,7 @@ export class RecruitmentService {
     });
     const bookmarkedIds = new Set(bookmarks.map((b) => b.recruitment.id));
 
-    const mappedRecruitmentList = objectList.map((recruitment) => {
+    const mappedRecruitmentList = recruitmentList.map((recruitment) => {
       const isBookmarked = bookmarkedIds.has(recruitment.id);
       return new RecruitmentResponseDto(recruitment, isBookmarked);
     });
@@ -1072,7 +1123,7 @@ export class RecruitmentService {
     return new RecruitmentResponseDto(updatedRecruitment);
   }
 
-  // method12: 다중 이미지 S3 업로드
+  // 다중 이미지 S3 업로드
   async uploadImages(
     center: CenterEntity,
     files: Express.Multer.File[],
@@ -1377,7 +1428,7 @@ export class RecruitmentService {
     num: number,
     member?: UserEntity | CenterEntity,
   ): Promise<RecruitmentListLocationResponseDto> {
-    const queryBuilder = this.recruitmentRepository
+    const baseQueryBuilder = this.recruitmentRepository
       .createQueryBuilder('recruitment')
       .leftJoinAndSelect('recruitment.center', 'center');
     const conditions: {
@@ -1447,20 +1498,32 @@ export class RecruitmentService {
     // 쿼리 빌더에 조건 추가
     conditions.forEach((condition, index) => {
       if (index === 0) {
-        queryBuilder.where(condition.condition, condition.parameters);
+        baseQueryBuilder.where(condition.condition, condition.parameters);
       } else {
-        queryBuilder.andWhere(condition.condition, condition.parameters);
+        baseQueryBuilder.andWhere(condition.condition, condition.parameters);
       }
     });
 
-    // date 내림차순 정렬 추가
-    queryBuilder.orderBy('recruitment.date', 'DESC');
+    // center NOT NULL 공고 가져오기
+    const centerQueryBuilder = baseQueryBuilder.clone();
+    centerQueryBuilder.andWhere('recruitment.center IS NOT NULL');
+    centerQueryBuilder.orderBy('recruitment.date', 'DESC');
+    centerQueryBuilder.take(num);
 
-    // 개수 처리
-    queryBuilder.take(num);
+    const registeredRecruitmentList = await centerQueryBuilder.getMany();
+    let objectList = registeredRecruitmentList;
 
-    // 최종 데이터 가져오기
-    const objectList = await queryBuilder.getMany();
+    // 부족하면 center NULL 공고 가져오기
+    if (objectList.length < num) {
+      const remainNum = num - objectList.length;
+      const centerNullQueryBuilder = baseQueryBuilder.clone();
+      centerNullQueryBuilder.andWhere('recruitment.center IS NULL');
+      centerNullQueryBuilder.orderBy('recruitment.date', 'DESC');
+      centerNullQueryBuilder.take(remainNum);
+
+      const nullCenterRecruitments = await centerNullQueryBuilder.getMany();
+      objectList = [...registeredRecruitmentList, ...nullCenterRecruitments];
+    }
 
     const recruitmentList = objectList.map(
       (recruitment) => new RecruitmentResponseDto(recruitment),
