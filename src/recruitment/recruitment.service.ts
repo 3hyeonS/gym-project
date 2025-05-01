@@ -1604,7 +1604,7 @@ export class RecruitmentService {
     // 전체 데이터
     const notionRecruitments = await this.notionRecruitmentRepository.find();
     const dbRecruitments = await this.recruitmentRepository.findBy({
-      center: null,
+      center: IsNull(),
     });
 
     // 비교 Map
