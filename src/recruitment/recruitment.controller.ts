@@ -1288,4 +1288,39 @@ export class RecruitmentController {
   : Promise<void> {
     await this.recruitmentService.notionRecruitmentsUpdate();
   }
+
+  // 수동 매칭
+  // @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    summary: '수동 매칭',
+  })
+  @NullApiResponse({
+    status: 201,
+    description: '수동 매칭 성공',
+    message: 'Matched successfully',
+  })
+  // @ErrorApiResponse({
+  //   status: 401,
+  //   description: '유효하지 않거나 기간이 만료된 acccessToken',
+  //   message: 'Invalid or expired accessToken',
+  //   error: 'UnauthorizedException',
+  // })
+  // @ErrorApiResponse({
+  //   status: 403,
+  //   description: '관리자 회원이 아님 (관리자 회원만 노션 공고 업데이트 가능)',
+  //   message: 'Not a member of the ADMIN (only ADMIN can call this api)',
+  //   error: 'ForbiddenException',
+  // })
+  @ResponseMsg('Matched successfully')
+  // @UseGuards(AuthGuard(), RolesGuard)
+  // @Roles('ADMIN')
+  @Post('manulMatching')
+  async manualMatching(
+    @Body() doubleIdRequestDto: DoubleIdRequestDto,
+  ): Promise<void> {
+    return await this.recruitmentService.manualMatching(
+      doubleIdRequestDto.recruitmentId,
+      doubleIdRequestDto.resumeId,
+    );
+  }
 }

@@ -1642,4 +1642,29 @@ export class RecruitmentService {
       }
     }
   }
+
+  // 수동 주작
+  async manualMatching(recruitmentId: number, resumeId): Promise<void> {
+    const resume = await this.resumeRepository.findOneBy({ id: resumeId });
+    const recruitment = await this.recruitmentRepository.findOneBy({
+      id: recruitmentId,
+    });
+
+    await this.villyRepository.save({
+      messageType: 0,
+      resume,
+      recruitment,
+    });
+
+    const user = resume.user;
+    if (user.fcmToken) {
+      const fcmToken = user.fcmToken.token; // DB에서 가져온 유저의 FCM 토큰
+      await this.firebaseService.sendPushToDevice(
+        fcmToken,
+        '새로운 추천 공고가 도착했습니다.',
+        `${recruitment.centerName}에서 당신을 기다리고 있어요!`,
+        'ChattingScreen',
+      );
+    }
+  }
 }
