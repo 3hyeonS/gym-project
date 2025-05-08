@@ -1643,7 +1643,7 @@ export class RecruitmentService {
     }
   }
 
-  // 수동 주작
+  // 수동 매칭
   async manualMatching(recruitmentId: number, resumeId): Promise<void> {
     const resume = await this.resumeRepository.findOneBy({ id: resumeId });
     const recruitment = await this.recruitmentRepository.findOneBy({
