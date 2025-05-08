@@ -203,11 +203,10 @@ export class ResumeRegisterRequestDto {
 
   @ApiProperty({
     type: String,
-    description: '포트폴리오 파일 url(100자 이내)',
+    description: '포트폴리오 파일 url',
     example: 'url',
   })
   @IsOptional()
-  @Length(1, 100)
   @IsString()
   portfolioFile?: string;
 
