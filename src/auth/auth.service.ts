@@ -938,7 +938,7 @@ export class AuthService {
     });
 
     // 포트폴리오 파일이 기존에 있으면 삭제
-    if (myCurrentResume.portfolioFile) {
+    if (myCurrentResume?.portfolioFile) {
       // const match = myCurrentResume.portfolioFile.match(/file(\d+)/);
       // const urlNumber = parseInt(match[1], 10);
       // number = urlNumber + 1;
